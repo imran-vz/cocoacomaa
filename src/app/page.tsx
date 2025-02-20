@@ -1,52 +1,41 @@
-import { Navbar } from "@/components/Navbar";
-import { DessertCard } from "@/components/DessertCard";
-import { CartProvider } from "@/providers/CartProvider";
-
-const desserts = [
-	{
-		id: 1,
-		name: "Chocolate Cake",
-		price: 5.99,
-		image: "/placeholder.svg?height=200&width=200",
-	},
-	{
-		id: 2,
-		name: "Strawberry Cheesecake",
-		price: 6.99,
-		image: "/placeholder.svg?height=200&width=200",
-	},
-	{
-		id: 3,
-		name: "Vanilla Ice Cream",
-		price: 3.99,
-		image: "/placeholder.svg?height=200&width=200",
-	},
-	{
-		id: 4,
-		name: "Apple Pie",
-		price: 4.99,
-		image: "/placeholder.svg?height=200&width=200",
-	},
-];
-
 export default function Home() {
 	return (
-		<CartProvider>
-			<div className="min-h-screen bg-gray-100">
-				<Navbar />
-				<main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-					<div className="px-4 py-6 sm:px-0">
-						<h1 className="text-3xl font-bold text-gray-900 mb-6">
-							Our Desserts
-						</h1>
-						<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-							{desserts.map((dessert) => (
-								<DessertCard key={dessert.id} {...dessert} />
-							))}
-						</div>
-					</div>
-				</main>
+		<main
+			className="max-w-7xl min-h-screen mx-auto"
+			style={{
+				position: "relative",
+			}}
+		>
+			<div
+				style={{
+					position: "absolute",
+					zIndex: -20,
+					top: 0,
+					left: 0,
+					right: 0,
+					bottom: 0,
+					backgroundImage:
+						"url(https://img1.wsimg.com/isteam/stock/NrG2BY8/:/rs=w:1534,m)",
+					backgroundSize: "cover",
+					backgroundPosition: "center",
+				}}
+			/>
+			<div className="absolute inset-0 -z-10 bg-black opacity-30" />
+
+			<div className="flex justify-center items-center py-8">
+				<h1 className="text-2xl md:text-xl tracking-[0.2rem] font-medium uppercase text-white mb-4 ">
+					Cocoa Comaa
+				</h1>
 			</div>
-		</CartProvider>
+			<p className="text-xl text-white mb-6 font-serif">
+				Indulge in the finest desserts crafted with love and passion.
+			</p>
+
+			<div className="bg-white p-4 font-sans rounded-2xl shadow-lg">
+				<span className="text-lg font-semibold text-gray-700">
+					Coming Soon...
+				</span>
+			</div>
+		</main>
 	);
 }

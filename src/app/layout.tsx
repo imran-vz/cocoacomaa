@@ -1,7 +1,23 @@
 import "./globals.css";
-import { Inter } from "next/font/google";
+import { Montserrat, Playfair_Display } from "next/font/google";
 
-const inter = Inter({ subsets: ["latin"] });
+const montserrat = Montserrat({
+	subsets: ["latin"],
+	variable: "--font-montserrat",
+	weight: ["400", "500"],
+	fallback: ["sans-serif"],
+	preload: true,
+	display: "swap",
+});
+
+const serif = Playfair_Display({
+	subsets: ["latin"],
+	variable: "--font-serif",
+	weight: ["400"],
+	fallback: ["serif"],
+	preload: true,
+	display: "swap",
+});
 
 export const metadata = {
 	title: "Dessert Shop",
@@ -15,7 +31,7 @@ export default function RootLayout({
 }) {
 	return (
 		<html lang="en">
-			<body className={inter.className}>{children}</body>
+			<body className={montserrat.className}>{children}</body>
 		</html>
 	);
 }
