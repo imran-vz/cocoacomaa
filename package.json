@@ -33,5 +33,9 @@
       "@tailwindcss/oxide",
       "sharp"
     ]
+  },
+  "packageManager": "pnpm@10.7.0",
+  "engines": {
+    "node": ">=22"
   }
 }
