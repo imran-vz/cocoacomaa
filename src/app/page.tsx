@@ -1,4 +1,6 @@
-import { Form } from "./form";
+import { EmailForm } from "./form";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function Home() {
 	return (
@@ -30,6 +32,15 @@ export default function Home() {
 					<p className="max-w-sm mx-auto text-4xl text-center leading-12 font-normal tracking-widest text-white mb-6 font-serif">
 						Indulge in the finest desserts crafted with love and passion.
 					</p>
+					<div className="mt-8">
+						<Button
+							asChild
+							size="lg"
+							className="bg-white text-black hover:bg-gray-100"
+						>
+							<Link href="/order">Order Now</Link>
+						</Button>
+					</div>
 				</div>
 				<div className="flex justify-center items-center py-8 bg-zinc-800">
 					<div className="relative h-full flex flex-col justify-between px-6 pt-8 space-y-8">
@@ -39,7 +50,7 @@ export default function Home() {
 								Sign up to be the first to get updates.
 							</p>
 
-							<Form />
+							<EmailForm />
 						</div>
 
 						<div className="flex items-end">
