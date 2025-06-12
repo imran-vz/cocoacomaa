@@ -1,27 +1,14 @@
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
-import { Montserrat, Playfair_Display } from "next/font/google";
+import { CartProvider } from "@/lib/cart-context";
+import { Toaster } from "sonner";
 
-const montserrat = Montserrat({
-	subsets: ["latin"],
-	variable: "--font-montserrat",
-	weight: ["400", "500"],
-	fallback: ["sans-serif"],
-	preload: true,
-	display: "swap",
-});
+const inter = Inter({ subsets: ["latin"] });
 
-const serif = Playfair_Display({
-	subsets: ["latin"],
-	variable: "--font-serif",
-	weight: ["400"],
-	fallback: ["serif"],
-	preload: true,
-	display: "swap",
-});
-
-export const metadata = {
-	title: "Dessert Shop",
-	description: "A delicious selection of desserts",
+export const metadata: Metadata = {
+	title: "Dessert Ordering Platform",
+	description: "Order custom desserts online",
 };
 
 export default function RootLayout({
@@ -31,8 +18,11 @@ export default function RootLayout({
 }) {
 	return (
 		<html lang="en">
-			<body className={`${montserrat.variable} ${serif.variable}`}>
-				{children}
+			<body className={inter.className}>
+				<CartProvider>
+					{children}
+					<Toaster />
+				</CartProvider>
 			</body>
 		</html>
 	);

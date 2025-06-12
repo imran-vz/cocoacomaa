@@ -1,36 +1,92 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Dessert Ordering Platform
 
-## Getting Started
+A production-ready dessert ordering platform built with Next.js, Shadcn UI, Drizzle ORM, and SQLite.
 
-First, run the development server:
+## Features
+
+- Custom cake ordering system
+- Secure payment processing with Stripe
+- Order management dashboard
+- Real-time order status updates
+- Responsive design with modern UI
+
+## Prerequisites
+
+- Node.js 22 or higher
+- pnpm 10.7.0 or higher
+- Stripe account for payment processing
+
+## Setup
+
+1. Clone the repository:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repository-url>
+cd dessert-ordering-platform
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+pnpm install
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. Copy the environment variables:
 
-## Learn More
+```bash
+cp .env.example .env
+```
 
-To learn more about Next.js, take a look at the following resources:
+4. Update the environment variables in `.env` with your Stripe API keys and other configuration.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+5. Initialize the database:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+pnpm drizzle-kit push:sqlite
+```
 
-## Deploy on Vercel
+6. Start the development server:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+pnpm dev
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Environment Variables
+
+- `STRIPE_SECRET_KEY`: Your Stripe secret key
+- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`: Your Stripe publishable key
+- `STRIPE_WEBHOOK_SECRET`: Your Stripe webhook secret
+- `DATABASE_URL`: SQLite database URL
+
+## Project Structure
+
+```
+src/
+  ├── app/                 # Next.js app directory
+  │   ├── admin/          # Admin dashboard
+  │   ├── api/            # API routes
+  │   └── order-confirmation/  # Order confirmation page
+  ├── components/         # React components
+  │   └── ui/            # Shadcn UI components
+  └── lib/               # Utility functions and configurations
+      └── db/            # Database configuration and schema
+```
+
+## Development
+
+- Run the development server: `pnpm dev`
+- Build for production: `pnpm build`
+- Start production server: `pnpm start`
+- Run linting: `pnpm lint`
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
