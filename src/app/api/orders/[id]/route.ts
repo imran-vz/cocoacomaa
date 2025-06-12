@@ -6,59 +6,59 @@ import { eq } from "drizzle-orm";
 
 export async function GET(
 	request: NextRequest,
-	{ params }: { params: { id: string } },
+	{ params }: { params: Promise<{ id: string }> },
 ) {
 	try {
-		const orderId = params.id;
+		const { id } = await params;
 
-		if (!orderId) {
+		if (!id) {
 			return NextResponse.json({ error: "Invalid order ID" }, { status: 400 });
 		}
 
-		// Fetch order with customer and order items
-		const orderData = await db
-			.select({
-				id: orders.id,
-				total: orders.total,
-				status: orders.status,
-				paymentStatus: orders.paymentStatus,
-				pickupDateTime: orders.pickupDateTime,
-				createdAt: orders.createdAt,
-				razorpayOrderId: orders.razorpayOrderId,
-				razorpayPaymentId: orders.razorpayPaymentId,
-				notes: orders.notes,
-				customerName: customers.name,
-				customerEmail: customers.email,
-				customerPhone: customers.phone,
-			})
-			.from(orders)
-			.innerJoin(customers, eq(orders.customerId, customers.id))
-			.where(eq(orders.id, orderId))
-			.limit(1);
+		const order = await db.query.orders.findFirst({
+			where: eq(orders.id, id),
+			columns: {
+				id: true,
+				total: true,
+				status: true,
+				paymentStatus: true,
+				pickupDateTime: true,
+				createdAt: true,
+				razorpayOrderId: true,
+				razorpayPaymentId: true,
+				notes: true,
+			},
+			with: {
+				customer: {
+					columns: {
+						name: true,
+						email: true,
+						phone: true,
+					},
+				},
+				orderItems: {
+					with: {
+						dessert: {
+							columns: {
+								name: true,
+								description: true,
+								price: true,
+							},
+						},
+					},
+				},
+			},
+		});
 
-		if (orderData.length === 0) {
+		if (!order) {
 			return NextResponse.json({ error: "Order not found" }, { status: 404 });
 		}
-
-		// Fetch order items with dessert details
-		const items = await db
-			.select({
-				quantity: orderItems.quantity,
-				price: orderItems.price,
-				dessertName: desserts.name,
-				dessertDescription: desserts.description,
-			})
-			.from(orderItems)
-			.innerJoin(desserts, eq(orderItems.dessertId, desserts.id))
-			.where(eq(orderItems.orderId, orderId));
-
-		const order = orderData[0];
 
 		return NextResponse.json({
 			success: true,
 			order: {
 				...order,
-				items,
+				items: order.orderItems,
 				pickupDate: order.pickupDateTime
 					? order.pickupDateTime.toISOString().split("T")[0]
 					: null,

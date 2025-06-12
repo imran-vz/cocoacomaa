@@ -40,10 +40,20 @@ interface OrderDetails {
 	razorpayOrderId: string | null;
 	razorpayPaymentId: string | null;
 	notes: string | null;
-	customerName: string;
-	customerEmail: string;
-	customerPhone: string;
-	items: OrderItem[];
+	customer: {
+		name: string;
+		email: string;
+		phone: string;
+	};
+	items: {
+		quantity: number;
+		price: string;
+		dessert: {
+			name: string;
+			description: string;
+			price: string;
+		};
+	}[];
 	pickupDate: string | null;
 	pickupTime: string | null;
 }
@@ -278,14 +288,14 @@ export default function OrderDetailsPage() {
 								<div className="space-y-4">
 									{order.items.map((item, index) => (
 										<div
-											key={`${item.dessertName}-${index}`}
+											key={`${item.dessert.name}-${index}`}
 											className="flex justify-between items-start gap-4"
 										>
 											<div className="flex-1 min-w-0">
-												<h4 className="font-medium">{item.dessertName}</h4>
-												{item.dessertDescription && (
+												<h4 className="font-medium">{item.dessert.name}</h4>
+												{item.dessert.description && (
 													<p className="text-sm text-muted-foreground mt-1">
-														{item.dessertDescription}
+														{item.dessert.description}
 													</p>
 												)}
 												<p className="text-sm text-muted-foreground">
@@ -341,18 +351,18 @@ export default function OrderDetailsPage() {
 								<div className="flex items-center gap-2">
 									<User className="h-4 w-4 text-muted-foreground" />
 									<span className="text-sm capitalize">
-										{order.customerName}
+										{order.customer.name}
 									</span>
 								</div>
 								<div className="flex items-center gap-2">
 									<Mail className="h-4 w-4 text-muted-foreground" />
 									<span className="text-sm break-all">
-										{order.customerEmail}
+										{order.customer.email}
 									</span>
 								</div>
 								<div className="flex items-center gap-2">
 									<Phone className="h-4 w-4 text-muted-foreground" />
-									<span className="text-sm">{order.customerPhone}</span>
+									<span className="text-sm">{order.customer.phone}</span>
 								</div>
 							</CardContent>
 						</Card>
