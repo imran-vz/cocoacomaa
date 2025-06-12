@@ -21,13 +21,7 @@ export default function Home() {
 			/>
 			<div className="absolute inset-0 -z-10 bg-black opacity-30" />
 
-			<main className="">
-				<div className="flex justify-center items-center py-8">
-					<h1 className="text-2xl md:text-xl tracking-[0.2rem] font-medium uppercase text-white mb-4 ">
-						COCOA COMAA
-					</h1>
-				</div>
-
+			<main>
 				<div className="min-h-[calc(100vh-12rem)] flex justify-center flex-col items-center">
 					<p className="max-w-sm mx-auto text-4xl text-center leading-12 font-normal tracking-widest text-white mb-6 font-serif">
 						Indulge in the finest desserts crafted with love and passion.

@@ -132,7 +132,10 @@ export default function OrderPage() {
 							{desserts.map((dessert) => {
 								const quantity = getItemQuantity(dessert.id);
 								return (
-									<Card key={dessert.id} className="overflow-hidden">
+									<Card
+										key={dessert.id}
+										className="overflow-hidden flex flex-col justify-between"
+									>
 										<CardHeader className="pb-3 sm:pb-4">
 											<div className="flex justify-between items-start gap-2">
 												<CardTitle className="text-lg sm:text-xl leading-tight">
@@ -206,7 +209,8 @@ export default function OrderPage() {
 
 				{/* Cart */}
 				<div className="lg:col-span-1">
-					<Card className="lg:sticky lg:top-8">
+					<div className="h-0 lg:h-[66px] " />
+					<Card className="lg:sticky lg:top-20">
 						<CardHeader className="pb-3 sm:pb-4">
 							<CardTitle className="flex items-center text-lg sm:text-xl">
 								<ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
