@@ -32,6 +32,54 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { format } from "date-fns";
+import { useEffect, useState } from "react";
+
+// Razorpay types
+interface RazorpayOptions {
+	key: string;
+	amount: number;
+	currency: string;
+	name: string;
+	description: string;
+	order_id: string;
+	handler: (response: RazorpayResponse) => void;
+	modal?: {
+		ondismiss?: () => void;
+	};
+	prefill: {
+		name: string;
+		email: string;
+		contact: string;
+	};
+	theme: {
+		color: string;
+	};
+}
+
+interface RazorpayResponse {
+	razorpay_payment_id: string;
+	razorpay_order_id: string;
+	razorpay_signature: string;
+}
+
+interface RazorpayOrderData {
+	success: boolean;
+	orderId: string;
+	razorpayOrderId: string;
+	amount: number;
+	currency: string;
+	key: string;
+}
+
+declare global {
+	interface Window {
+		Razorpay: new (
+			options: RazorpayOptions,
+		) => {
+			open: () => void;
+		};
+	}
+}
 
 // Generate available time slots from 12pm to 6pm
 const timeSlots = [
@@ -104,6 +152,8 @@ type CheckoutFormValues = z.infer<typeof checkoutFormSchema>;
 export default function CheckoutPage() {
 	const router = useRouter();
 	const { items, total, clearCart } = useCart();
+	const [isProcessing, setIsProcessing] = useState(false);
+	const [processingStep, setProcessingStep] = useState("");
 
 	const form = useForm<CheckoutFormValues>({
 		resolver: zodResolver(checkoutFormSchema),
@@ -115,25 +165,137 @@ export default function CheckoutPage() {
 		},
 	});
 
+	// Load Razorpay script
+	useEffect(() => {
+		const script = document.createElement("script");
+		script.src = "https://checkout.razorpay.com/v1/checkout.js";
+		script.async = true;
+		document.body.appendChild(script);
+
+		return () => {
+			document.body.removeChild(script);
+		};
+	}, []);
+
+	const handlePayment = async (
+		orderData: CheckoutFormValues,
+		orderId: string,
+		razorpayOrderData: RazorpayOrderData,
+	) => {
+		setProcessingStep("Opening payment gateway...");
+
+		const options: RazorpayOptions = {
+			key: razorpayOrderData.key,
+			amount: razorpayOrderData.amount,
+			currency: razorpayOrderData.currency,
+			name: "Cocoa Comaa",
+			description: "Dessert Order Payment",
+			order_id: razorpayOrderData.razorpayOrderId,
+			handler: async (response: RazorpayResponse) => {
+				try {
+					setProcessingStep("Verifying payment...");
+
+					// Verify payment
+					const verifyResponse = await fetch("/api/orders/verify", {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify({
+							razorpay_order_id: response.razorpay_order_id,
+							razorpay_payment_id: response.razorpay_payment_id,
+							razorpay_signature: response.razorpay_signature,
+							orderId,
+						}),
+					});
+
+					if (verifyResponse.ok) {
+						setProcessingStep("Finalizing order...");
+
+						// Clear the cart
+						clearCart();
+
+						// Show success message
+						toast.success("Payment successful! Order confirmed.");
+
+						// Redirect to confirmation page with order ID
+						router.push(`/order-confirmation?orderId=${orderId}`);
+					} else {
+						throw new Error("Payment verification failed");
+					}
+				} catch (error) {
+					console.error("Payment verification error:", error);
+					toast.error("Payment verification failed. Please contact support.");
+					setIsProcessing(false);
+					setProcessingStep("");
+				}
+			},
+			modal: {
+				ondismiss: () => {
+					setIsProcessing(false);
+					setProcessingStep("");
+				},
+			},
+			prefill: {
+				name: orderData.name,
+				email: orderData.email,
+				contact: orderData.phone,
+			},
+			theme: {
+				color: "#000000",
+			},
+		};
+
+		const razorpay = new window.Razorpay(options);
+		razorpay.open();
+	};
+
 	const onSubmit = async (data: CheckoutFormValues) => {
 		try {
-			// Here you would typically process the order
-			console.log("Order data:", { ...data, items, total });
+			setIsProcessing(true);
+			setProcessingStep("Creating your order...");
 
-			// Simulate API call
-			await new Promise((resolve) => setTimeout(resolve, 2000));
+			// Create order in database and get Razorpay order
+			const orderResponse = await fetch("/api/orders", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					name: data.name,
+					email: data.email,
+					phone: data.phone,
+					pickupDate: data.pickupDate.toISOString(),
+					pickupTime: data.pickupTime,
+					items: items.map((item) => ({
+						id: item.id,
+						name: item.name,
+						price: item.price,
+						quantity: item.quantity,
+					})),
+					total,
+				}),
+			});
 
-			// Clear the cart
-			clearCart();
+			if (!orderResponse.ok) {
+				throw new Error("Failed to create order");
+			}
 
-			// Show success message
-			toast.success("Order placed successfully!");
+			const orderData = await orderResponse.json();
 
-			// Redirect to confirmation page
-			router.push("/order-confirmation");
+			if (!orderData.success) {
+				throw new Error("Failed to create order");
+			}
+
+			setProcessingStep("Preparing payment...");
+
+			// Initiate payment
+			await handlePayment(data, orderData.orderId, orderData);
 		} catch (error) {
-			console.error("Error placing order:", error);
-			toast.error("Failed to place order. Please try again.");
+			console.error("Error creating order:", error);
+			toast.error("Failed to create order. Please try again.");
+			setIsProcessing(false);
+			setProcessingStep("");
 		}
 	};
 
@@ -158,7 +320,25 @@ export default function CheckoutPage() {
 	}
 
 	return (
-		<div className="container mx-auto py-4 sm:py-6 lg:py-8 px-4">
+		<div className="container mx-auto py-4 sm:py-6 lg:py-8 px-4 relative">
+			{/* Loading Overlay */}
+			{isProcessing && (
+				<div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+					<div className="bg-white rounded-lg p-6 sm:p-8 max-w-sm mx-4 text-center shadow-xl">
+						<div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-primary mx-auto mb-4" />
+						<h3 className="text-lg sm:text-xl font-semibold mb-2">
+							Processing Order
+						</h3>
+						<p className="text-sm sm:text-base text-muted-foreground">
+							{processingStep || "Please wait..."}
+						</p>
+						<p className="text-xs text-muted-foreground mt-2">
+							Do not close this window
+						</p>
+					</div>
+				</div>
+			)}
+
 			<h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 lg:mb-8">
 				Checkout
 			</h1>
@@ -175,7 +355,7 @@ export default function CheckoutPage() {
 						<Form {...form}>
 							<form
 								onSubmit={form.handleSubmit(onSubmit)}
-								className="space-y-4 sm:space-y-6"
+								className={`space-y-4 sm:space-y-6 ${isProcessing ? "opacity-50 pointer-events-none" : ""}`}
 							>
 								<FormField
 									control={form.control}
@@ -373,12 +553,12 @@ export default function CheckoutPage() {
 								<Button
 									type="submit"
 									className="w-full text-sm sm:text-base"
-									disabled={form.formState.isSubmitting}
+									disabled={form.formState.isSubmitting || isProcessing}
 									size="lg"
 								>
-									{form.formState.isSubmitting
+									{form.formState.isSubmitting || isProcessing
 										? "Processing..."
-										: "Place Order"}
+										: "Place Order & Pay"}
 								</Button>
 							</form>
 						</Form>

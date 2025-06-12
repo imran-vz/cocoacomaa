@@ -1,5 +1,6 @@
 import { relations } from "drizzle-orm";
 import { pgTable, primaryKey } from "drizzle-orm/pg-core";
+import { createId } from "@paralleldrive/cuid2";
 
 export const desserts = pgTable("desserts", (d) => {
 	return {
@@ -32,26 +33,52 @@ export const customersRelations = relations(customers, ({ many }) => ({
 
 export const orders = pgTable("orders", (d) => {
 	return {
-		id: d.integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		id: d
+			.text("id")
+			.primaryKey()
+			.$defaultFn(() => createId()),
 		customerId: d
 			.integer("customer_id")
 			.notNull()
 			.references(() => customers.id),
 		createdAt: d.timestamp("created_at").notNull().defaultNow(),
-		deliveryCost: d
-			.numeric("delivery_cost", { precision: 5, scale: 2 })
-			.notNull()
-			.default("0.00"),
+		updatedAt: d.timestamp("updated_at").notNull().defaultNow(),
 		total: d.numeric("total", { precision: 10, scale: 2 }).notNull(),
 		status: d
 			.varchar("status", {
-				enum: ["pending", "completed"],
+				enum: [
+					"pending",
+					"payment_pending",
+					"paid",
+					"confirmed",
+					"preparing",
+					"ready",
+					"completed",
+					"cancelled",
+				],
 			})
-			.notNull(),
+			.notNull()
+			.default("pending"),
 		isDeleted: d.boolean("is_deleted").notNull().default(false),
-		paymentScreenshotUrl: d.varchar("payment_screenshot_url", {
-			length: 255,
-		}),
+		pickupDateTime: d.timestamp("pickup_date_time"),
+		// Razorpay fields
+		razorpayOrderId: d.varchar("razorpay_order_id", { length: 255 }),
+		razorpayPaymentId: d.varchar("razorpay_payment_id", { length: 255 }),
+		razorpaySignature: d.varchar("razorpay_signature", { length: 255 }),
+		paymentStatus: d
+			.varchar("payment_status", {
+				enum: [
+					"pending",
+					"created",
+					"authorized",
+					"captured",
+					"refunded",
+					"failed",
+				],
+			})
+			.notNull()
+			.default("pending"),
+		notes: d.text("notes"),
 	};
 });
 
@@ -68,7 +95,7 @@ export const orderItems = pgTable(
 	(d) => {
 		return {
 			orderId: d
-				.integer("order_id")
+				.text("order_id")
 				.notNull()
 				.references(() => orders.id),
 			dessertId: d
@@ -76,6 +103,7 @@ export const orderItems = pgTable(
 				.notNull()
 				.references(() => desserts.id),
 			quantity: d.integer("quantity").notNull(),
+			price: d.numeric("price", { precision: 10, scale: 2 }).notNull(),
 		};
 	},
 	(t) => [

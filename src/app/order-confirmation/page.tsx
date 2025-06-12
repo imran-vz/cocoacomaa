@@ -1,12 +1,14 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Clock, Phone, Mail } from "lucide-react";
+import { CheckCircle, Clock, Phone, Mail, Eye } from "lucide-react";
 
 export default function OrderConfirmationPage() {
 	const router = useRouter();
+	const searchParams = useSearchParams();
+	const orderId = searchParams.get("orderId");
 
 	return (
 		<div className="container mx-auto py-4 sm:py-6 lg:py-8 px-4">
@@ -21,7 +23,39 @@ export default function OrderConfirmationPage() {
 						Thank you for your order. We've received your request and will begin
 						preparing your delicious desserts.
 					</p>
+					{orderId && (
+						<p className="text-xs sm:text-sm text-muted-foreground mt-2">
+							Order ID: {orderId}
+						</p>
+					)}
 				</div>
+
+				{/* Order Details Link */}
+				{orderId && (
+					<Card className="mb-4 sm:mb-6">
+						<CardContent className="py-4 sm:py-6">
+							<div className="flex items-center justify-between">
+								<div>
+									<h3 className="font-semibold text-sm sm:text-base">
+										View Order Details
+									</h3>
+									<p className="text-xs sm:text-sm text-muted-foreground">
+										Track your order status and view pickup information
+									</p>
+								</div>
+								<Button
+									onClick={() => router.push(`/order/${orderId}`)}
+									variant="outline"
+									size="sm"
+									className="shrink-0"
+								>
+									<Eye className="h-4 w-4 mr-2" />
+									View Details
+								</Button>
+							</div>
+						</CardContent>
+					</Card>
+				)}
 
 				{/* Order Details Card */}
 				<Card className="mb-4 sm:mb-6">
