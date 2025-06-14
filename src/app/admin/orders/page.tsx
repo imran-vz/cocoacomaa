@@ -11,6 +11,7 @@ export default async function OrdersPage() {
 			id: true,
 			total: true,
 			status: true,
+			createdAt: true,
 		},
 		with: {
 			customer: {

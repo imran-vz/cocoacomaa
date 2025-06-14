@@ -67,35 +67,40 @@ export default async function AdminDashboard() {
 		.then((res) => res[0].count);
 
 	return (
-		<div className="container mx-auto py-6">
-			<h1 className="text-3xl font-bold mb-6">Dashboard</h1>
+		<div className="container mx-auto p-4 sm:p-6">
+			<h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Dashboard</h1>
 
-			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-				<Card>
+			{/* Main Stats Grid */}
+			<div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+				<Card className="hover:shadow-md transition-shadow">
 					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 						<CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
 						<DollarSign className="h-4 w-4 text-muted-foreground" />
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold">
+						<div className="text-xl sm:text-2xl font-bold">
 							{formatCurrency(totalRevenue)}
 						</div>
-						<p className="text-xs text-muted-foreground">All time revenue</p>
+						<p className="text-xs text-muted-foreground mt-1">
+							All time revenue
+						</p>
 					</CardContent>
 				</Card>
 
-				<Card>
+				<Card className="hover:shadow-md transition-shadow">
 					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 						<CardTitle className="text-sm font-medium">Total Orders</CardTitle>
 						<Package className="h-4 w-4 text-muted-foreground" />
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold">{totalOrders}</div>
-						<p className="text-xs text-muted-foreground">All time orders</p>
+						<div className="text-xl sm:text-2xl font-bold">{totalOrders}</div>
+						<p className="text-xs text-muted-foreground mt-1">
+							All time orders
+						</p>
 					</CardContent>
 				</Card>
 
-				<Card>
+				<Card className="hover:shadow-md transition-shadow">
 					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 						<CardTitle className="text-sm font-medium">
 							Total Desserts
@@ -103,12 +108,14 @@ export default async function AdminDashboard() {
 						<TrendingUp className="h-4 w-4 text-muted-foreground" />
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold">{totalDesserts}</div>
-						<p className="text-xs text-muted-foreground">Available desserts</p>
+						<div className="text-xl sm:text-2xl font-bold">{totalDesserts}</div>
+						<p className="text-xs text-muted-foreground mt-1">
+							Available desserts
+						</p>
 					</CardContent>
 				</Card>
 
-				<Card>
+				<Card className="hover:shadow-md transition-shadow">
 					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 						<CardTitle className="text-sm font-medium">
 							Total Customers
@@ -116,27 +123,30 @@ export default async function AdminDashboard() {
 						<Users className="h-4 w-4 text-muted-foreground" />
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold">{totalCustomers}</div>
-						<p className="text-xs text-muted-foreground">
+						<div className="text-xl sm:text-2xl font-bold">
+							{totalCustomers}
+						</div>
+						<p className="text-xs text-muted-foreground mt-1">
 							Registered customers
 						</p>
 					</CardContent>
 				</Card>
 			</div>
 
-			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-4">
-				<Card>
+			{/* Secondary Stats Grid */}
+			<div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mt-4">
+				<Card className="hover:shadow-md transition-shadow">
 					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 						<CardTitle className="text-sm font-medium">Recent Orders</CardTitle>
 						<Clock className="h-4 w-4 text-muted-foreground" />
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold">{recentOrders}</div>
-						<p className="text-xs text-muted-foreground">Last 7 days</p>
+						<div className="text-xl sm:text-2xl font-bold">{recentOrders}</div>
+						<p className="text-xs text-muted-foreground mt-1">Last 7 days</p>
 					</CardContent>
 				</Card>
 
-				<Card>
+				<Card className="hover:shadow-md transition-shadow">
 					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 						<CardTitle className="text-sm font-medium">
 							Pending Orders
@@ -144,14 +154,14 @@ export default async function AdminDashboard() {
 						<XCircle className="h-4 w-4 text-muted-foreground" />
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold">{pendingOrders}</div>
-						<p className="text-xs text-muted-foreground">
+						<div className="text-xl sm:text-2xl font-bold">{pendingOrders}</div>
+						<p className="text-xs text-muted-foreground mt-1">
 							Awaiting confirmation
 						</p>
 					</CardContent>
 				</Card>
 
-				<Card>
+				<Card className="hover:shadow-md transition-shadow">
 					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 						<CardTitle className="text-sm font-medium">
 							Completed Orders
@@ -159,12 +169,62 @@ export default async function AdminDashboard() {
 						<CheckCircle2 className="h-4 w-4 text-muted-foreground" />
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold">{completedOrders}</div>
-						<p className="text-xs text-muted-foreground">
+						<div className="text-xl sm:text-2xl font-bold">
+							{completedOrders}
+						</div>
+						<p className="text-xs text-muted-foreground mt-1">
 							Successfully delivered
 						</p>
 					</CardContent>
 				</Card>
+			</div>
+
+			{/* Quick Actions Section */}
+			<div className="mt-8">
+				<h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
+				<div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+					<Card className="hover:shadow-md transition-shadow cursor-pointer">
+						<CardContent className="p-4">
+							<div className="flex items-center space-x-4">
+								<Package className="h-6 w-6 text-primary" />
+								<div>
+									<h3 className="font-medium">View Orders</h3>
+									<p className="text-sm text-muted-foreground">
+										Manage all orders
+									</p>
+								</div>
+							</div>
+						</CardContent>
+					</Card>
+
+					<Card className="hover:shadow-md transition-shadow cursor-pointer">
+						<CardContent className="p-4">
+							<div className="flex items-center space-x-4">
+								<TrendingUp className="h-6 w-6 text-primary" />
+								<div>
+									<h3 className="font-medium">Manage Desserts</h3>
+									<p className="text-sm text-muted-foreground">
+										Add or edit desserts
+									</p>
+								</div>
+							</div>
+						</CardContent>
+					</Card>
+
+					<Card className="hover:shadow-md transition-shadow cursor-pointer">
+						<CardContent className="p-4">
+							<div className="flex items-center space-x-4">
+								<Users className="h-6 w-6 text-primary" />
+								<div>
+									<h3 className="font-medium">View Customers</h3>
+									<p className="text-sm text-muted-foreground">
+										Manage customer accounts
+									</p>
+								</div>
+							</div>
+						</CardContent>
+					</Card>
+				</div>
 			</div>
 		</div>
 	);

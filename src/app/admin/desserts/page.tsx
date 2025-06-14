@@ -9,6 +9,12 @@ import Link from "next/link";
 export default async function DessertsPage() {
 	const dessertsList = await db.query.desserts.findMany({
 		orderBy: (desserts, { desc }) => [desc(desserts.createdAt)],
+		columns: {
+			id: true,
+			name: true,
+			price: true,
+			createdAt: true,
+		},
 	});
 
 	return (

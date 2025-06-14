@@ -107,24 +107,45 @@ export function Navigation() {
 				{/* Mobile Menu */}
 				{isMenuOpen && (
 					<div className="md:hidden border-t bg-white">
-						<div className="px-2 pt-2 pb-3 space-y-1">
-							<Button
-								variant="ghost"
-								asChild
-								className="w-full justify-start"
-								onClick={() => setIsMenuOpen(false)}
-							>
-								<Link href="/">Home</Link>
-							</Button>
-							<Button
-								variant="ghost"
-								asChild
-								className="w-full justify-start"
-								onClick={() => setIsMenuOpen(false)}
-							>
-								<Link href="/order">Order</Link>
-							</Button>
-						</div>
+						{isAdmin ? (
+							<div className="px-2 pt-2 pb-3 space-y-1">
+								<Button
+									variant="ghost"
+									asChild
+									className="w-full justify-start"
+									onClick={() => setIsMenuOpen(false)}
+								>
+									<Link href="/admin/orders">Orders</Link>
+								</Button>
+								<Button
+									variant="ghost"
+									asChild
+									className="w-full justify-start"
+									onClick={() => setIsMenuOpen(false)}
+								>
+									<Link href="/admin/desserts">Desserts</Link>
+								</Button>
+							</div>
+						) : (
+							<div className="px-2 pt-2 pb-3 space-y-1">
+								<Button
+									variant="ghost"
+									asChild
+									className="w-full justify-start"
+									onClick={() => setIsMenuOpen(false)}
+								>
+									<Link href="/">Home</Link>
+								</Button>
+								<Button
+									variant="ghost"
+									asChild
+									className="w-full justify-start"
+									onClick={() => setIsMenuOpen(false)}
+								>
+									<Link href="/order">Order</Link>
+								</Button>
+							</div>
+						)}
 					</div>
 				)}
 			</div>
