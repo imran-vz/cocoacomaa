@@ -8,7 +8,7 @@ export async function GET() {
 		const availableDesserts = await db
 			.select()
 			.from(desserts)
-			.where(eq(desserts.enabled, true));
+			.where(eq(desserts.status, "available"));
 
 		return NextResponse.json(availableDesserts);
 	} catch (error) {

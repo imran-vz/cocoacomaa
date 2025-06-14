@@ -1,72 +1,166 @@
 import "dotenv/config";
 import { db } from ".";
-import { desserts } from "./schema";
+import { customers, desserts, orderItems, orders } from "./schema";
 import { faker } from "@faker-js/faker";
+import { eq, not } from "drizzle-orm";
 
 async function seed() {
-	await db.delete(desserts).execute();
+	try {
+		await db.delete(orderItems).execute();
 
-	console.log("Seeding desserts...");
+		await db.delete(desserts).execute();
 
-	const dessertNames = [
-		"Chocolate Lava Cake",
-		"Vanilla Bean Cheesecake",
-		"Strawberry Shortcake",
-		"Tiramisu",
-		"Red Velvet Cupcake",
-		"Lemon Tart",
-		"Chocolate Truffle",
-		"Apple Pie",
-		"Crème Brûlée",
-		"Macarons",
-		"Brownies",
-		"Fruit Tart",
-		"Panna Cotta",
-		"Chocolate Mousse",
-		"Carrot Cake",
-		"Ice Cream Sundae",
-		"Banana Bread",
-		"Key Lime Pie",
-		"Pecan Pie",
-		"Éclair",
-	];
+		console.log("Seeding desserts...");
 
-	const dessertDescriptions = [
-		"Rich chocolate cake with a molten center",
-		"Creamy cheesecake with vanilla bean specks",
-		"Light sponge cake with fresh strawberries and cream",
-		"Italian coffee-flavored dessert with mascarpone",
-		"Moist red velvet cake with cream cheese frosting",
-		"Tangy lemon curd in a buttery pastry shell",
-		"Decadent chocolate truffle with cocoa powder",
-		"Classic apple pie with cinnamon spice",
-		"French custard dessert with caramelized sugar",
-		"Delicate French sandwich cookies",
-		"Fudgy chocolate brownies with nuts",
-		"Fresh seasonal fruits on pastry cream",
-		"Smooth Italian dessert with berry coulis",
-		"Light and airy chocolate mousse",
-		"Spiced carrot cake with cream cheese frosting",
-		"Ice cream with toppings and sauces",
-		"Moist banana bread with walnuts",
-		"Tart lime pie with graham cracker crust",
-		"Rich pecan pie with caramel filling",
-		"French pastry filled with cream",
-	];
+		const dessertNames = [
+			"Chocolate Lava Cake",
+			"Vanilla Bean Cheesecake",
+			"Strawberry Shortcake",
+			"Tiramisu",
+			"Red Velvet Cupcake",
+			"Lemon Tart",
+			"Chocolate Truffle",
+			"Apple Pie",
+			"Crème Brûlée",
+			"Macarons",
+			"Brownies",
+			"Fruit Tart",
+			"Panna Cotta",
+			"Chocolate Mousse",
+			"Carrot Cake",
+			"Ice Cream Sundae",
+			"Banana Bread",
+			"Key Lime Pie",
+			"Pecan Pie",
+			"Éclair",
+		];
 
-	const dessertData: (typeof desserts.$inferInsert)[] = dessertNames.map(
-		(name, index) => ({
-			name,
-			price: faker.number.int({ min: 800, max: 3500 }), // $8-$35
-			description: dessertDescriptions[index],
-			isDeleted: false,
-			enabled: true,
-		}),
-	);
+		const dessertDescriptions = [
+			"Rich chocolate cake with a molten center",
+			"Creamy cheesecake with vanilla bean specks",
+			"Light sponge cake with fresh strawberries and cream",
+			"Italian coffee-flavored dessert with mascarpone",
+			"Moist red velvet cake with cream cheese frosting",
+			"Tangy lemon curd in a buttery pastry shell",
+			"Decadent chocolate truffle with cocoa powder",
+			"Classic apple pie with cinnamon spice",
+			"French custard dessert with caramelized sugar",
+			"Delicate French sandwich cookies",
+			"Fudgy chocolate brownies with nuts",
+			"Fresh seasonal fruits on pastry cream",
+			"Smooth Italian dessert with berry coulis",
+			"Light and airy chocolate mousse",
+			"Spiced carrot cake with cream cheese frosting",
+			"Ice cream with toppings and sauces",
+			"Moist banana bread with walnuts",
+			"Tart lime pie with graham cracker crust",
+			"Rich pecan pie with caramel filling",
+			"French pastry filled with cream",
+		];
 
-	await db.insert(desserts).values(dessertData).execute();
+		const dessertData: (typeof desserts.$inferInsert)[] = dessertNames.map(
+			(name, index) => ({
+				name,
+				price: faker.number.int({ min: 800, max: 3500 }).toString(), // $8-$35
+				description: dessertDescriptions[index],
+				status: "available",
+			}),
+		);
 
-	console.log("Seeded desserts");
+		await db.insert(desserts).values(dessertData).execute();
+
+		console.log("Seeded desserts");
+
+		console.log("deleting customers");
+		await db.delete(orders).execute();
+		await db.delete(customers).execute();
+
+		const customerData: (typeof customers.$inferInsert)[] = [
+			{
+				name: faker.person.fullName(),
+				email: faker.internet.email(),
+				phone: faker.phone.number(),
+			},
+			{
+				name: faker.person.fullName(),
+				email: faker.internet.email(),
+				phone: faker.phone.number(),
+			},
+		];
+
+		await db.insert(customers).values(customerData).execute();
+		console.log("Seeded customers");
+
+		const customersDa = await db.query.customers.findMany({
+			columns: { id: true },
+		});
+
+		console.log("Deleting orders...");
+		const orderData: (typeof orders.$inferInsert)[] = [
+			{
+				customerId: customersDa[0].id,
+				total: "1000",
+				status: "pending",
+				paymentStatus: "pending",
+				razorpayOrderId: faker.string.uuid(),
+				razorpayPaymentId: faker.string.uuid(),
+				razorpaySignature: faker.string.uuid(),
+				notes: faker.lorem.sentence(),
+				pickupDateTime: faker.date.future(),
+			},
+			{
+				customerId: customersDa[1].id,
+				total: "1000",
+				status: "ready",
+				paymentStatus: "captured",
+				razorpayOrderId: faker.string.uuid(),
+				razorpayPaymentId: faker.string.uuid(),
+				razorpaySignature: faker.string.uuid(),
+				notes: faker.lorem.sentence(),
+				pickupDateTime: faker.date.future(),
+			},
+			{
+				customerId: customersDa[0].id,
+				total: "1000",
+				status: "paid",
+				paymentStatus: "captured",
+				razorpayOrderId: faker.string.uuid(),
+				razorpayPaymentId: faker.string.uuid(),
+				razorpaySignature: faker.string.uuid(),
+				notes: faker.lorem.sentence(),
+				pickupDateTime: faker.date.future(),
+			},
+			{
+				customerId: customersDa[1].id,
+				total: "1000",
+				status: "confirmed",
+				paymentStatus: "captured",
+				razorpayOrderId: faker.string.uuid(),
+				razorpayPaymentId: faker.string.uuid(),
+				razorpaySignature: faker.string.uuid(),
+				notes: faker.lorem.sentence(),
+				pickupDateTime: faker.date.future(),
+			},
+			{
+				customerId: customersDa[0].id,
+				total: "1000",
+				status: "completed",
+				paymentStatus: "captured",
+				razorpayOrderId: faker.string.uuid(),
+				razorpayPaymentId: faker.string.uuid(),
+				razorpaySignature: faker.string.uuid(),
+				notes: faker.lorem.sentence(),
+				pickupDateTime: faker.date.future(),
+			},
+		];
+
+		await db.insert(orders).values(orderData).execute();
+
+		console.log("Seeded orders");
+	} catch (error) {
+		console.error(error);
+		process.exit(1);
+	}
 }
 
 void seed().finally(() => {

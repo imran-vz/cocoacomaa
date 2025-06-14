@@ -11,3 +11,11 @@ export function formatCurrency(amount: number) {
 		currency: "INR",
 	}).format(amount);
 }
+
+export function formatDate(date: Date) {
+	return new Date(date).toLocaleDateString("en-IN", {
+		year: "numeric",
+		month: "long",
+		day: "numeric",
+	});
+}

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/lib/cart-context";
 import { Plus, Minus, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
+import { formatCurrency } from "@/lib/utils";
 
 interface Dessert {
 	id: number;
@@ -47,7 +48,7 @@ export default function OrderPage() {
 		addItem({
 			id: dessert.id,
 			name: dessert.name,
-			price: dessert.price / 100, // Convert paise to rupees
+			price: Number(dessert.price),
 			quantity: 1,
 			customization: "",
 		});
@@ -145,7 +146,7 @@ export default function OrderPage() {
 													variant="secondary"
 													className="shrink-0 text-xs sm:text-sm"
 												>
-													₹{(dessert.price / 100).toFixed(0)}
+													{formatCurrency(Number(dessert.price))}
 												</Badge>
 											</div>
 										</CardHeader>
@@ -234,7 +235,7 @@ export default function OrderPage() {
 													{item.name}
 												</h4>
 												<p className="text-xs sm:text-sm text-muted-foreground">
-													₹{item.price.toFixed(0)} x {item.quantity}
+													{formatCurrency(Number(item.price))} x {item.quantity}
 												</p>
 											</div>
 											<div className="flex items-center space-x-1 shrink-0">
@@ -268,7 +269,7 @@ export default function OrderPage() {
 									<div className="border-t pt-3 sm:pt-4 space-y-3 sm:space-y-4">
 										<div className="flex justify-between items-center font-medium text-base sm:text-lg">
 											<span>Total:</span>
-											<span>₹{total.toFixed(0)}</span>
+											<span>{formatCurrency(Number(total))}</span>
 										</div>
 
 										<Button

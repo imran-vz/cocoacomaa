@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
+import { formatCurrency } from "@/lib/utils";
 
 // Razorpay types
 interface RazorpayOptions {
@@ -582,11 +583,11 @@ export default function CheckoutPage() {
 											{item.name}
 										</h4>
 										<p className="text-xs sm:text-sm text-muted-foreground">
-											₹{item.price.toFixed(0)} x {item.quantity}
+											{formatCurrency(Number(item.price))} x {item.quantity}
 										</p>
 									</div>
 									<div className="font-medium text-sm sm:text-base shrink-0">
-										₹{(item.price * item.quantity).toFixed(0)}
+										{formatCurrency(Number(item.price) * item.quantity)}
 									</div>
 								</div>
 							))}
@@ -594,7 +595,7 @@ export default function CheckoutPage() {
 							<div className="border-t pt-3 sm:pt-4">
 								<div className="flex justify-between items-center font-medium text-base sm:text-lg">
 									<span>Total:</span>
-									<span>₹{total.toFixed(0)}</span>
+									<span>{formatCurrency(Number(total))}</span>
 								</div>
 							</div>
 

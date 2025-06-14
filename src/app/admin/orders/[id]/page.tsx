@@ -101,7 +101,7 @@ const formatStatus = (status: string) => {
 		.join(" ");
 };
 
-export default function OrderDetailsPage() {
+export default function AdminOrderDetailsPage() {
 	const params = useParams();
 	const router = useRouter();
 	const [order, setOrder] = useState<OrderDetails | null>(null);
@@ -197,10 +197,15 @@ export default function OrderDetailsPage() {
 									"The order you're looking for doesn't exist or has been removed."}
 							</p>
 							<div className="flex flex-col sm:flex-row gap-3 justify-center">
-								<Button onClick={() => router.push("/order")} variant="outline">
-									Browse Desserts
+								<Button
+									onClick={() => router.push("/admin/orders")}
+									variant="outline"
+								>
+									Back to Orders
 								</Button>
-								<Button onClick={() => router.push("/")}>Back to Home</Button>
+								<Button onClick={() => router.push("/admin")}>
+									Back to Dashboard
+								</Button>
 							</div>
 						</CardContent>
 					</Card>
@@ -458,14 +463,10 @@ export default function OrderDetailsPage() {
 						{/* Action Buttons */}
 						<div className="space-y-3">
 							<Button
-								onClick={() => router.push("/order")}
+								onClick={() => router.push("/admin/orders")}
 								className="w-full"
-								variant="outline"
 							>
-								Order More Desserts
-							</Button>
-							<Button onClick={() => router.push("/")} className="w-full">
-								Back to Home
+								Back to Orders
 							</Button>
 						</div>
 					</div>
