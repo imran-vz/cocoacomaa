@@ -1,8 +1,7 @@
-import { db } from "@/lib/db";
-import { desserts } from "@/lib/db/schema";
-import { DataTable } from "@/components/ui/data-table";
 import { columns } from "@/components/desserts/columns";
 import { Button } from "@/components/ui/button";
+import { DataTable } from "@/components/ui/data-table";
+import { db } from "@/lib/db";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 
@@ -18,8 +17,8 @@ export default async function DessertsPage() {
 	});
 
 	return (
-		<div className="container mx-auto py-6">
-			<div className="flex items-center justify-between mb-6">
+		<div className="container mx-auto p-4 sm:p-6">
+			<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
 				<h1 className="text-3xl font-bold">Desserts</h1>
 				<Button asChild>
 					<Link href="/admin/desserts/new">
@@ -28,7 +27,17 @@ export default async function DessertsPage() {
 					</Link>
 				</Button>
 			</div>
-			<DataTable columns={columns} data={dessertsList} />
+
+			<div className="rounded-md">
+				<div className="overflow-x-auto">
+					<DataTable
+						columns={columns}
+						data={dessertsList}
+						searchKey="name"
+						searchPlaceholder="Filter Desserts..."
+					/>
+				</div>
+			</div>
 		</div>
 	);
 }

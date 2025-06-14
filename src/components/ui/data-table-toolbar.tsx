@@ -1,43 +1,60 @@
 "use client";
 
 import type { Table } from "@tanstack/react-table";
-import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DataTableViewOptions } from "@/components/ui/data-table-view-options";
 import { DataTableFacetedFilter } from "@/components/ui/data-table-faceted-filter";
+import { X } from "lucide-react";
 
 interface DataTableToolbarProps<TData> {
 	table: Table<TData>;
+	searchKey?: string;
+	searchPlaceholder?: string;
+	filterableColumns?: {
+		id: string;
+		title: string;
+		options: {
+			label: string;
+			value: string;
+			icon?: React.ComponentType<{ className?: string }>;
+		}[];
+	}[];
 }
 
 export function DataTableToolbar<TData>({
 	table,
+	searchKey,
+	searchPlaceholder = "Filter...",
+	filterableColumns = [],
 }: DataTableToolbarProps<TData>) {
 	const isFiltered = table.getState().columnFilters.length > 0;
 
 	return (
-		<div className="flex items-center justify-between">
-			<div className="flex flex-1 items-center space-x-2">
-				<Input
-					placeholder="Filter orders..."
-					value={
-						(table.getColumn("customerName")?.getFilterValue() as string) ?? ""
-					}
-					onChange={(event) =>
-						table.getColumn("customerName")?.setFilterValue(event.target.value)
-					}
-					className="h-8 w-[150px] lg:w-[250px]"
-				/>
-				{table.getColumn("status") && (
-					<DataTableFacetedFilter
-						column={table.getColumn("status")}
-						title="Status"
-						options={[
-							{ label: "Pending", value: "pending" },
-							{ label: "Completed", value: "completed" },
-						]}
+		<div className="flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
+			<div className="flex flex-1 flex-col sm:flex-row items-center gap-2">
+				{searchKey && (
+					<Input
+						placeholder={searchPlaceholder}
+						value={
+							(table.getColumn(searchKey)?.getFilterValue() as string) ?? ""
+						}
+						onChange={(event) =>
+							table.getColumn(searchKey)?.setFilterValue(event.target.value)
+						}
+						className="h-8 w-full sm:w-[150px] lg:w-[250px]"
 					/>
+				)}
+				{filterableColumns.map(
+					(column) =>
+						table.getColumn(column.id) && (
+							<DataTableFacetedFilter
+								key={column.id}
+								column={table.getColumn(column.id)}
+								title={column.title}
+								options={column.options}
+							/>
+						),
 				)}
 				{isFiltered && (
 					<Button

@@ -2,7 +2,6 @@
 
 import { DataTableRowActions } from "@/components/orders/data-table-row-actions";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -76,6 +75,7 @@ export const columns: ColumnDef<{
 								? "destructive"
 								: "secondary"
 					}
+					className="whitespace-nowrap"
 				>
 					{status}
 				</Badge>
@@ -93,7 +93,9 @@ export const columns: ColumnDef<{
 		cell: ({ row }) => {
 			return (
 				<div className="flex w-[100px] items-center">
-					<span>{formatDate(row.getValue("createdAt"))}</span>
+					<span className="whitespace-nowrap">
+						{formatDate(row.getValue("createdAt"))}
+					</span>
 				</div>
 			);
 		},
