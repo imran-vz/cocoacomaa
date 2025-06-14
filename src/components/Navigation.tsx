@@ -7,6 +7,7 @@ import { useCart } from "@/lib/cart-context";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 export function Navigation() {
 	const { items } = useCart();
@@ -14,9 +15,10 @@ export function Navigation() {
 	const itemCount = items.reduce((total, item) => total + item.quantity, 0);
 	const pathname = usePathname();
 	const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+	const session = useSession();
 
 	const isLogin = pathname.startsWith("/login");
-	const isAdmin = pathname.startsWith("/admin");
+	const isAdmin = !!session.data?.user;
 
 	if (isLogin) return null;
 
@@ -27,7 +29,7 @@ export function Navigation() {
 					{/* Logo */}
 					<div className="shrink-0 flex items-center">
 						<Link
-							href="/"
+							href={isAdmin ? "/admin" : "/"}
 							className="text-xl sm:text-2xl uppercase font-bold text-gray-800"
 						>
 							Cocoa Comaa
