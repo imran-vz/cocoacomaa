@@ -69,7 +69,12 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": [
-      "bcrypt"
+      "@tailwindcss/oxide",
+      "bcrypt",
+      "better-sqlite3",
+      "bufferutil",
+      "esbuild",
+      "sharp"
     ]
   },
   "packageManager": "pnpm@10.7.0",
