@@ -27,15 +27,19 @@ import {
 import { DataTablePagination } from "@/components/ui/data-table-pagination";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { useState } from "react";
+import Loading from "@/app/loading";
+import { Loader2 } from "lucide-react";
 
 interface DataTableProps<TData, TValue> {
 	columns: ColumnDef<TData, TValue>[];
 	data: TData[];
+	isLoading?: boolean;
 }
 
 export function DataTable<TData, TValue>({
 	columns,
 	data,
+	isLoading = false,
 }: DataTableProps<TData, TValue>) {
 	const [rowSelection, setRowSelection] = useState({});
 	const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -88,7 +92,16 @@ export function DataTable<TData, TValue>({
 						))}
 					</TableHeader>
 					<TableBody>
-						{table.getRowModel().rows?.length ? (
+						{isLoading ? (
+							<TableRow>
+								<TableCell
+									colSpan={columns.length}
+									className="h-24 text-center"
+								>
+									<Loader2 className="w-6 h-6 mx-auto animate-spin" />
+								</TableCell>
+							</TableRow>
+						) : table.getRowModel().rows?.length ? (
 							table.getRowModel().rows.map((row) => (
 								<TableRow
 									key={row.id}
