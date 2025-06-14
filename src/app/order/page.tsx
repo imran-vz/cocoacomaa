@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCart } from "@/lib/cart-context";
-import { Plus, Minus, ShoppingCart } from "lucide-react";
-import { toast } from "sonner";
 import { formatCurrency } from "@/lib/utils";
+import { Minus, Plus, ShoppingCart } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+
+export const dynamic = "force-dynamic";
 
 interface Dessert {
 	id: number;
@@ -52,7 +54,6 @@ export default function OrderPage() {
 			quantity: 1,
 			customization: "",
 		});
-		toast.success(`${dessert.name} added to cart`);
 	};
 
 	const getItemQuantity = (dessertId: number) => {
@@ -63,7 +64,6 @@ export default function OrderPage() {
 	const handleQuantityChange = (dessertId: number, newQuantity: number) => {
 		if (newQuantity <= 0) {
 			removeItem(dessertId);
-			toast.success("Item removed from cart");
 		} else {
 			updateQuantity(dessertId, newQuantity);
 		}

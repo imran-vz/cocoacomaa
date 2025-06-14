@@ -15,6 +15,8 @@ import {
 import Link from "next/link";
 import { Suspense } from "react";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminDashboard() {
 	// Get total orders
 	const totalOrdersPromise = db

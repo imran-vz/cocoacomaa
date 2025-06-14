@@ -3,9 +3,8 @@ import { DataTable } from "@/components/ui/data-table";
 import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
 import { desc } from "drizzle-orm";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import Link from "next/link";
+
+export const dynamic = "force-dynamic";
 
 const statuses = [
 	{
