@@ -1,22 +1,23 @@
 "use client";
 
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { ShoppingCart, Menu, X } from "lucide-react";
-import { useCart } from "@/lib/cart-context";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { useCart } from "@/lib/cart-context";
+import { Menu, ShoppingCart, X } from "lucide-react";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
 
 export function Navigation() {
-	const { items } = useCart();
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
-	const itemCount = items.reduce((total, item) => total + item.quantity, 0);
 	const pathname = usePathname();
-	const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 	const session = useSession();
+	const { items } = useCart();
 
+	const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+
+	const itemCount = items.reduce((total, item) => total + item.quantity, 0);
 	const isLogin = pathname.startsWith("/login");
 	const isAdmin = !!session.data?.user;
 
