@@ -1,56 +1,26 @@
-"use client";
-
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { db } from "@/lib/db";
+import { orders } from "@/lib/db/schema";
 import { formatCurrency } from "@/lib/utils";
 import { format } from "date-fns";
+import { eq } from "drizzle-orm";
 import {
 	AlertCircle,
-	ArrowLeft,
 	Calendar,
 	Clock,
-	Copy,
 	CreditCard,
-	Loader2,
 	Mail,
 	MapPin,
 	Package,
 	Phone,
 	User,
 } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
-
-interface OrderDetails {
-	id: string;
-	total: string;
-	status: string;
-	paymentStatus: string;
-	pickupDateTime: string | null;
-	createdAt: string;
-	razorpayOrderId: string | null;
-	razorpayPaymentId: string | null;
-	notes: string | null;
-	customer: {
-		name: string;
-		email: string;
-		phone: string;
-	};
-	items: {
-		quantity: number;
-		price: string;
-		dessert: {
-			name: string;
-			description: string;
-			price: string;
-		};
-	}[];
-	pickupDate: string | null;
-	pickupTime: string | null;
-}
+import BackButton from "./back-button";
+import CopyAddressButton from "./copy-address-button";
+import CopyPhoneButton from "./copy-phone-button";
+import NavButton from "./nav-button";
 
 const getStatusColor = (status: string) => {
 	switch (status) {
@@ -101,90 +71,37 @@ const formatStatus = (status: string) => {
 		.join(" ");
 };
 
-export default function OrderDetailsPage() {
-	const params = useParams();
-	const router = useRouter();
-	const [order, setOrder] = useState<OrderDetails | null>(null);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
+export default async function AdminOrderDetailsPage({
+	params,
+}: {
+	params: Promise<{ id: string }>;
+}) {
+	const { id } = await params;
 
-	const orderId = params.id as string;
+	const order = await db.query.orders.findFirst({
+		where: eq(orders.id, id),
+		with: {
+			orderItems: {
+				columns: {
+					quantity: true,
+					price: true,
+				},
+				with: {
+					dessert: true,
+				},
+			},
 
-	useEffect(() => {
-		if (orderId) {
-			fetchOrderDetails();
-		}
-	}, [orderId]);
+			customer: {
+				columns: {
+					name: true,
+					email: true,
+					phone: true,
+				},
+			},
+		},
+	});
 
-	const fetchOrderDetails = async () => {
-		try {
-			setLoading(true);
-			setError(null);
-
-			const response = await fetch(`/api/orders/${orderId}`);
-
-			if (!response.ok) {
-				if (response.status === 404) {
-					throw new Error("Order not found");
-				}
-				throw new Error("Failed to fetch order details");
-			}
-
-			const data = await response.json();
-
-			if (data.success) {
-				setOrder(data.order);
-			} else {
-				throw new Error("Failed to load order details");
-			}
-		} catch (error) {
-			console.error("Error fetching order:", error);
-			setError(error instanceof Error ? error.message : "Failed to load order");
-			toast.error("Failed to load order details");
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	const copyAddress = async () => {
-		const address =
-			"Akshaya Gold Apartment, Pipe Line Rd, VGS Layout, Ejipura, Bengaluru - 560047";
-		try {
-			await navigator.clipboard.writeText(address);
-			toast.success("Address copied to clipboard!");
-		} catch (error) {
-			console.error("Failed to copy address:", error);
-			toast.error("Failed to copy address");
-		}
-	};
-
-	const copyPhone = async () => {
-		const phone = "+91 98765 43210";
-		try {
-			await navigator.clipboard.writeText(phone);
-			toast.success("Phone number copied to clipboard!");
-		} catch (error) {
-			console.error("Failed to copy phone number:", error);
-			toast.error("Failed to copy phone number");
-		}
-	};
-
-	if (loading) {
-		return (
-			<div className="container mx-auto py-4 sm:py-6 lg:py-8 px-4">
-				<div className="max-w-4xl mx-auto">
-					<div className="flex items-center justify-center min-h-[400px]">
-						<div className="text-center">
-							<Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-							<p className="text-muted-foreground">Loading order details...</p>
-						</div>
-					</div>
-				</div>
-			</div>
-		);
-	}
-
-	if (error || !order) {
+	if (!order) {
 		return (
 			<div className="container mx-auto py-4 sm:py-6 lg:py-8 px-4">
 				<div className="max-w-4xl mx-auto">
@@ -193,14 +110,12 @@ export default function OrderDetailsPage() {
 							<AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
 							<h2 className="text-xl font-bold mb-2">Order Not Found</h2>
 							<p className="text-muted-foreground mb-6">
-								{error ||
-									"The order you're looking for doesn't exist or has been removed."}
+								{
+									"The order you're looking for doesn't exist or has been removed."
+								}
 							</p>
 							<div className="flex flex-col sm:flex-row gap-3 justify-center">
-								<Button onClick={() => router.push("/order")} variant="outline">
-									Browse Desserts
-								</Button>
-								<Button onClick={() => router.push("/")}>Back to Home</Button>
+								<NavButton />
 							</div>
 						</CardContent>
 					</Card>
@@ -214,14 +129,7 @@ export default function OrderDetailsPage() {
 			<div className="max-w-4xl mx-auto">
 				{/* Header */}
 				<div className="flex items-center gap-4 mb-6">
-					<Button
-						variant="outline"
-						size="icon"
-						onClick={() => router.back()}
-						className="shrink-0"
-					>
-						<ArrowLeft className="h-4 w-4" />
-					</Button>
+					<BackButton />
 					<div className="min-w-0 flex-1">
 						<h1 className="text-2xl sm:text-3xl font-bold truncate">
 							Order Details
@@ -280,7 +188,7 @@ export default function OrderDetailsPage() {
 							</CardHeader>
 							<CardContent>
 								<div className="space-y-4">
-									{order.items.map((item, index) => (
+									{order.orderItems.map((item, index) => (
 										<div
 											key={`${item.dessert.name}-${index}`}
 											className="flex justify-between items-start gap-4"
@@ -405,28 +313,12 @@ export default function OrderDetailsPage() {
 											Ejipura, Bengaluru - 560047{" "}
 										</p>
 									</div>
-									<Button
-										variant="outline"
-										size="icon"
-										className="h-8 w-8 shrink-0"
-										onClick={copyAddress}
-										title="Copy address"
-									>
-										<Copy className="h-3 w-3" />
-									</Button>
+									<CopyAddressButton />
 								</div>
 								<div className="flex items-center gap-2">
 									<Phone className="h-4 w-4 text-muted-foreground" />
 									<span className="text-sm flex-1">+91 98765 43210</span>
-									<Button
-										variant="outline"
-										size="icon"
-										className="h-8 w-8 shrink-0"
-										onClick={copyPhone}
-										title="Copy phone number"
-									>
-										<Copy className="h-3 w-3" />
-									</Button>
+									<CopyPhoneButton />
 								</div>
 							</CardContent>
 						</Card>
@@ -457,16 +349,7 @@ export default function OrderDetailsPage() {
 
 						{/* Action Buttons */}
 						<div className="space-y-3">
-							<Button
-								onClick={() => router.push("/order")}
-								className="w-full"
-								variant="outline"
-							>
-								Order More Desserts
-							</Button>
-							<Button onClick={() => router.push("/")} className="w-full">
-								Back to Home
-							</Button>
+							<NavButton />
 						</div>
 					</div>
 				</div>
