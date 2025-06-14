@@ -21,6 +21,7 @@ import BackButton from "./back-button";
 import CopyAddressButton from "./copy-address-button";
 import CopyPhoneButton from "./copy-phone-button";
 import NavButton from "./nav-button";
+import { TZDateMini } from "@date-fns/tz";
 
 const getStatusColor = (status: string) => {
 	switch (status) {
@@ -172,7 +173,10 @@ export default async function AdminOrderDetailsPage({
 								<div className="text-sm text-muted-foreground">
 									<p>
 										Order placed on{" "}
-										{format(new Date(order.createdAt), "PPP 'at' p")}
+										{format(
+											new TZDateMini(order.createdAt, "Asia/Kolkata"),
+											"PPP 'at' p",
+										)}
 									</p>
 									{order.razorpayPaymentId && (
 										<p>Payment ID: {order.razorpayPaymentId}</p>
@@ -279,7 +283,7 @@ export default async function AdminOrderDetailsPage({
 										<Calendar className="h-4 w-4 text-muted-foreground" />
 										<span className="text-sm">
 											{format(
-												new Date(order.pickupDateTime),
+												new TZDateMini(order.pickupDateTime, "Asia/Kolkata"),
 												"EEEE, MMMM d, yyyy",
 											)}
 										</span>
@@ -287,7 +291,10 @@ export default async function AdminOrderDetailsPage({
 									<div className="flex items-center gap-2">
 										<Clock className="h-4 w-4 text-muted-foreground" />
 										<span className="text-sm">
-											{format(new Date(order.pickupDateTime), "h:mm a")}
+											{format(
+												new TZDateMini(order.pickupDateTime, "Asia/Kolkata"),
+												"h:mm a",
+											)}
 										</span>
 									</div>
 								</CardContent>
