@@ -6,13 +6,19 @@ import { ShoppingCart, Menu, X } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 
 export function Navigation() {
 	const { items } = useCart();
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
 	const itemCount = items.reduce((total, item) => total + item.quantity, 0);
-
+	const pathname = usePathname();
 	const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+
+	const isLogin = pathname.startsWith("/login");
+	const isAdmin = pathname.startsWith("/admin");
+
+	if (isLogin) return null;
 
 	return (
 		<nav className="bg-white shadow-md border-b sticky top-0 z-50">
@@ -30,12 +36,25 @@ export function Navigation() {
 
 					{/* Desktop Navigation */}
 					<div className="hidden md:flex items-center space-x-4">
-						<Button variant="ghost" asChild>
-							<Link href="/">Home</Link>
-						</Button>
-						<Button variant="ghost" asChild>
-							<Link href="/order">Order</Link>
-						</Button>
+						{isAdmin ? (
+							<>
+								<Button variant="ghost" asChild>
+									<Link href="/admin/orders">Orders</Link>
+								</Button>
+								<Button variant="ghost" asChild>
+									<Link href="/admin/desserts">Desserts</Link>
+								</Button>
+							</>
+						) : (
+							<>
+								<Button variant="ghost" asChild>
+									<Link href="/">Home</Link>
+								</Button>
+								<Button variant="ghost" asChild>
+									<Link href="/order">Order</Link>
+								</Button>
+							</>
+						)}
 						<Button variant="outline" asChild className="relative">
 							<Link href="/order" className="flex items-center">
 								<ShoppingCart className="h-4 w-4 mr-2" />

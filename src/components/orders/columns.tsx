@@ -4,37 +4,23 @@ import { DataTableRowActions } from "@/components/orders/data-table-row-actions"
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
-import type { orders } from "@/lib/db/schema";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { ColumnDef } from "@tanstack/react-table";
 
-export const columns: ColumnDef<
-	typeof orders.$inferSelect & { customerName: string }
->[] = [
-	{
-		id: "select",
-		header: ({ table }) => (
-			<Checkbox
-				checked={
-					table.getIsAllPageRowsSelected() ||
-					(table.getIsSomePageRowsSelected() && "indeterminate")
-				}
-				onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-				aria-label="Select all"
-				className="translate-y-[2px]"
-			/>
-		),
-		cell: ({ row }) => (
-			<Checkbox
-				checked={row.getIsSelected()}
-				onCheckedChange={(value) => row.toggleSelected(!!value)}
-				aria-label="Select row"
-				className="translate-y-[2px]"
-			/>
-		),
-		enableSorting: false,
-		enableHiding: false,
-	},
+export const columns: ColumnDef<{
+	id: string;
+	total: string;
+	status:
+		| "completed"
+		| "pending"
+		| "payment_pending"
+		| "paid"
+		| "confirmed"
+		| "preparing"
+		| "ready"
+		| "cancelled";
+	customerName: string;
+}>[] = [
 	{
 		accessorKey: "id",
 		header: ({ column }) => (

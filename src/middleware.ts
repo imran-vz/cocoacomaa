@@ -1,18 +1,13 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
+import { auth } from "./app/api/auth/[...nextauth]/auth";
 
-export function middleware(request: NextRequest) {
-	// const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
-
-	// if (isAdminRoute) {
-	// 	// In a real application, you would check for authentication here
-	// 	// For now, we'll just redirect to the home page
-	// 	return NextResponse.redirect(new URL("/", request.url));
-	// }
-
-	return NextResponse.next();
+export default async function middleware(req: NextRequest) {
+	const session = await auth();
+	if (!session?.user) {
+		return NextResponse.redirect(new URL("/", req.url));
+	}
 }
 
 export const config = {
-	matcher: "/admin/:path*",
+	matcher: ["/admin/:path*"],
 };
