@@ -23,13 +23,6 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-interface OrderItem {
-	quantity: number;
-	price: string;
-	dessertName: string;
-	dessertDescription: string | null;
-}
-
 interface OrderDetails {
 	id: string;
 	total: string;

@@ -1,11 +1,11 @@
+import { db } from "@/lib/db";
+import { orders } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { orders, customers, orderItems, desserts } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
 
 export async function GET(
-	request: NextRequest,
+	_: NextRequest,
 	{ params }: { params: Promise<{ id: string }> },
 ) {
 	try {

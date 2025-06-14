@@ -1,17 +1,22 @@
-import { relations } from "drizzle-orm";
-import { pgTable, primaryKey } from "drizzle-orm/pg-core";
 import { createId } from "@paralleldrive/cuid2";
+import { relations, sql } from "drizzle-orm";
+import { pgTable, primaryKey } from "drizzle-orm/pg-core";
 
 export const desserts = pgTable("desserts", (d) => {
 	return {
 		id: d.integer("id").primaryKey().generatedAlwaysAsIdentity(),
 		name: d.varchar("name", { length: 255 }).notNull(),
-		price: d.integer("price").notNull(),
-		description: d.varchar("description", { length: 255 }),
-		isDeleted: d.boolean("is_deleted").notNull().default(false),
-		enabled: d.boolean("enabled").notNull().default(true),
-		createdAt: d.timestamp("created_at").notNull().defaultNow(),
-		updatedAt: d.timestamp("updated_at").notNull().defaultNow(),
+		description: d.text("description").notNull(),
+		price: d.varchar("price", { length: 10 }).notNull(),
+		status: d.varchar("status", { length: 50 }).notNull().default("available"),
+		createdAt: d
+			.timestamp("created_at")
+			.default(sql`CURRENT_TIMESTAMP`)
+			.notNull(),
+		updatedAt: d
+			.timestamp("updated_at")
+			.default(sql`CURRENT_TIMESTAMP`)
+			.notNull(),
 	};
 });
 
