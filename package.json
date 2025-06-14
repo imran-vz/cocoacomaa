@@ -31,7 +31,7 @@
     "@stripe/stripe-js": "^7.3.1",
     "@tanstack/react-table": "^8.21.3",
     "@vercel/postgres": "^0.10.0",
-    "bcryptjs": "^3.0.2",
+    "bcrypt": "^6.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -56,6 +56,7 @@
   "devDependencies": {
     "@faker-js/faker": "^9.8.0",
     "@tailwindcss/postcss": "^4.1.10",
+    "@types/bcrypt": "^5.0.2",
     "@types/node": "^22.15.31",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
@@ -66,7 +67,11 @@
     "tsx": "^4.20.2",
     "typescript": "^5.8.3"
   },
-  "pnpm": {},
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "bcrypt"
+    ]
+  },
   "packageManager": "pnpm@10.7.0",
   "engines": {
     "node": ">=22"
