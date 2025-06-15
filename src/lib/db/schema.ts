@@ -1,7 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
 import { relations, sql } from "drizzle-orm";
 import { pgTable, primaryKey } from "drizzle-orm/pg-core";
-import { text, timestamp } from "drizzle-orm/pg-core";
 
 export const desserts = pgTable("desserts", (d) => {
 	return {
@@ -131,11 +130,16 @@ export const orderItemsRelations = relations(orderItems, ({ one }) => ({
 	}),
 }));
 
-export const users = pgTable("users", {
-	id: text("id").primaryKey(),
-	name: text("name"),
-	email: text("email").notNull().unique(),
-	password: text("password"),
-	createdAt: timestamp("created_at").defaultNow().notNull(),
-	updatedAt: timestamp("updated_at").defaultNow().notNull(),
+export const users = pgTable("users", (d) => {
+	return {
+		id: d
+			.text("id")
+			.primaryKey()
+			.$defaultFn(() => createId()),
+		name: d.text("name"),
+		email: d.text("email").notNull().unique(),
+		password: d.text("password"),
+		createdAt: d.timestamp("created_at").defaultNow().notNull(),
+		updatedAt: d.timestamp("updated_at").defaultNow().notNull(),
+	};
 });

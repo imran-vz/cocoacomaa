@@ -1,10 +1,11 @@
-import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import type { NextAuthConfig } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
+import { authOptions } from "@/auth.config";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import bcrypt from "bcrypt";
+import { eq } from "drizzle-orm";
+import NextAuth from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { z } from "zod";
 
 const loginSchema = z.object({
@@ -12,14 +13,11 @@ const loginSchema = z.object({
 	password: z.string(),
 });
 
-export const authOptions: NextAuthConfig = {
+export const { auth, handlers, signIn, signOut } = NextAuth({
+	...authOptions,
+
 	adapter: DrizzleAdapter(db),
-	session: {
-		strategy: "jwt",
-	},
-	pages: {
-		signIn: "/login",
-	},
+
 	providers: [
 		CredentialsProvider({
 			name: "credentials",
@@ -58,21 +56,4 @@ export const authOptions: NextAuthConfig = {
 			},
 		}),
 	],
-	callbacks: {
-		async jwt({ token, user }) {
-			if (user) {
-				return { ...token };
-			}
-			return token;
-		},
-		async session({ session, token }) {
-			return {
-				...session,
-				user: {
-					...session.user,
-					role: token.role,
-				},
-			};
-		},
-	},
-};
+});

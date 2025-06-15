@@ -1,8 +1,8 @@
 import "dotenv/config";
+
+import { faker } from "@faker-js/faker";
 import { db } from ".";
 import { customers, desserts, orderItems, orders } from "./schema";
-import { faker } from "@faker-js/faker";
-import { eq, not } from "drizzle-orm";
 
 async function seed() {
 	try {
