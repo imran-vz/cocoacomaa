@@ -56,40 +56,46 @@ export function Navigation() {
 								<Button variant="ghost" asChild>
 									<Link href="/order">Order</Link>
 								</Button>
+								<Button variant="outline" asChild className="relative">
+									<Link href="/order" className="flex items-center">
+										<ShoppingCart className="h-4 w-4 mr-2" />
+										Cart
+										{itemCount > 0 && (
+											<Badge
+												variant="destructive"
+												className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs"
+											>
+												{itemCount}
+											</Badge>
+										)}
+									</Link>
+								</Button>
 							</>
 						)}
-						<Button variant="outline" asChild className="relative">
-							<Link href="/order" className="flex items-center">
-								<ShoppingCart className="h-4 w-4 mr-2" />
-								Cart
-								{itemCount > 0 && (
-									<Badge
-										variant="destructive"
-										className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs"
-									>
-										{itemCount}
-									</Badge>
-								)}
-							</Link>
-						</Button>
 					</div>
 
 					{/* Mobile Menu Button */}
 					<div className="md:hidden flex items-center space-x-2">
-						{/* Mobile Cart */}
-						<Button variant="outline" asChild size="icon" className="relative">
-							<Link href="/order">
-								<ShoppingCart className="h-4 w-4" />
-								{itemCount > 0 && (
-									<Badge
-										variant="destructive"
-										className="absolute -top-2 -right-2 h-4 w-4 p-0 flex items-center justify-center text-[10px]"
-									>
-										{itemCount}
-									</Badge>
-								)}
-							</Link>
-						</Button>
+						{isAdmin ? null : (
+							<Button
+								variant="outline"
+								asChild
+								size="icon"
+								className="relative"
+							>
+								<Link href="/order">
+									<ShoppingCart className="h-4 w-4" />
+									{itemCount > 0 && (
+										<Badge
+											variant="destructive"
+											className="absolute -top-2 -right-2 h-4 w-4 p-0 flex items-center justify-center text-[10px]"
+										>
+											{itemCount}
+										</Badge>
+									)}
+								</Link>
+							</Button>
+						)}
 
 						{/* Hamburger Menu Button */}
 						<Button

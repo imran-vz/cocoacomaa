@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 export default function CopyPhoneButton() {
 	const copyPhone = async () => {
-		const phone = "+91 98765 43210";
+		const phone = process.env.NEXT_PUBLIC_PHONE_NUMBER || "";
 		try {
 			await navigator.clipboard.writeText(phone);
 			toast.success("Phone number copied to clipboard!");

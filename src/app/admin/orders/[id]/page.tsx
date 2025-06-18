@@ -324,7 +324,9 @@ export default async function AdminOrderDetailsPage({
 								</div>
 								<div className="flex items-center gap-2">
 									<Phone className="h-4 w-4 text-muted-foreground" />
-									<span className="text-sm flex-1">+91 98765 43210</span>
+									<span className="text-sm flex-1">
+										{process.env.NEXT_PUBLIC_BUSINESS_PHONE}
+									</span>
 									<CopyPhoneButton />
 								</div>
 							</CardContent>

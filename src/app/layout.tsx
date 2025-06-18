@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Toaster } from "sonner";
 import { Providers } from "./providers";
+import { Footer } from "@/components/Footer";
 
 import "./globals.css";
 
@@ -26,6 +27,7 @@ export default function RootLayout({
 					<CartProvider>
 						<Navigation />
 						{children}
+						<Footer />
 						<Toaster />
 					</CartProvider>
 				</Providers>

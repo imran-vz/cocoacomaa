@@ -126,7 +126,7 @@ export default function OrderConfirmationPage() {
 								<div className="min-w-0">
 									<p className="font-medium text-sm sm:text-base">Call Us</p>
 									<p className="text-xs sm:text-sm text-muted-foreground">
-										+91 98765 43210
+										{process.env.NEXT_PUBLIC_BUSINESS_PHONE}
 									</p>
 								</div>
 							</div>
