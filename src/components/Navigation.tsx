@@ -48,9 +48,6 @@ export function Navigation() {
 								<Button variant="ghost" asChild>
 									<Link href="/">Home</Link>
 								</Button>
-								<Button variant="ghost" asChild>
-									<Link href="/order">Order</Link>
-								</Button>
 								<Button variant="outline" asChild className="relative">
 									<Link href="/order" className="flex items-center">
 										<ShoppingCart className="h-4 w-4 mr-2" />
@@ -148,14 +145,6 @@ export function Navigation() {
 									onClick={() => setIsMenuOpen(false)}
 								>
 									<Link href="/">Home</Link>
-								</Button>
-								<Button
-									variant="ghost"
-									asChild
-									className="w-full justify-start"
-									onClick={() => setIsMenuOpen(false)}
-								>
-									<Link href="/order">Order</Link>
 								</Button>
 								{session.data?.user?.id ? (
 									<Button

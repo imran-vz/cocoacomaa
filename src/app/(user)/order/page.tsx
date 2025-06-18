@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCart } from "@/lib/cart-context";
 import { formatCurrency } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 import { Minus, Plus, ShoppingCart } from "lucide-react";
 import { useSession } from "next-auth/react";
 import lazyLoading from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 export const dynamic = "force-dynamic";
@@ -26,33 +28,27 @@ const LoginModal = lazyLoading(() => import("@/components/LoginModal"), {
 	ssr: false,
 });
 
+const fetchDesserts = async () => {
+	try {
+		const { data } = await axios.get<Dessert[]>("/api/desserts");
+		return data;
+	} catch (error) {
+		console.error("Error fetching desserts:", error);
+		toast.error("Failed to load desserts");
+	} finally {
+	}
+};
+
 export default function OrderPage() {
 	const router = useRouter();
-	const [desserts, setDesserts] = useState<Dessert[]>([]);
-	const [loading, setLoading] = useState(true);
 	const { items, addItem, removeItem, updateQuantity, total } = useCart();
 	const { data: session } = useSession();
 	const [showLogin, setShowLogin] = useState(false);
 
-	useEffect(() => {
-		fetchDesserts();
-	}, []);
-
-	const fetchDesserts = async () => {
-		try {
-			const response = await fetch("/api/desserts");
-			if (!response.ok) {
-				throw new Error("Failed to fetch desserts");
-			}
-			const data = await response.json();
-			setDesserts(data);
-		} catch (error) {
-			console.error("Error fetching desserts:", error);
-			toast.error("Failed to load desserts");
-		} finally {
-			setLoading(false);
-		}
-	};
+	const { data: desserts, isLoading } = useQuery({
+		queryKey: ["desserts"],
+		queryFn: () => fetchDesserts(),
+	});
 
 	const handleAddToCart = (dessert: Dessert) => {
 		addItem({
@@ -82,10 +78,11 @@ export default function OrderPage() {
 			setShowLogin(true);
 			return;
 		}
+
 		router.push("/checkout");
 	};
 
-	if (loading) {
+	if (isLoading) {
 		return (
 			<div className="container min-h-[calc(100svh-10rem)] mx-auto py-4 sm:py-6 lg:py-8 px-4">
 				<div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
@@ -215,7 +212,7 @@ export default function OrderPage() {
 						Our Desserts
 					</h1>
 
-					{desserts.length === 0 ? (
+					{desserts?.length === 0 ? (
 						<Card>
 							<CardContent className="py-6 sm:py-8 text-center">
 								<p className="text-muted-foreground text-sm sm:text-base">
@@ -225,7 +222,7 @@ export default function OrderPage() {
 						</Card>
 					) : (
 						<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-							{desserts.map((dessert) => {
+							{desserts?.map((dessert) => {
 								const quantity = getItemQuantity(dessert.id);
 								return (
 									<Card

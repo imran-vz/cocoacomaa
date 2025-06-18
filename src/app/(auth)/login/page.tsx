@@ -1,6 +1,5 @@
 "use client";
 
-import { Icons } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,18 +12,20 @@ import { toast } from "sonner";
 
 export default function LoginPage() {
 	const router = useRouter();
+	const { data } = useSession();
 	const [isLoading, setIsLoading] = useState(false);
 	const [showPassword, setShowPassword] = useState(false);
-	const { data } = useSession();
 	const searchParams = useSearchParams();
 	const redirect = searchParams.get("redirect");
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: we only want to run this effect once
 	useEffect(() => {
 		if (data?.user.id) {
+			console.log("redirecting to /");
 			router.replace("/");
 			return;
 		}
-	}, [data?.user?.id, router]);
+	}, []);
 
 	async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();
@@ -47,8 +48,10 @@ export default function LoginPage() {
 			}
 
 			if (redirect) {
+				console.log("redirect", redirect);
 				router.push(redirect);
 			} else {
+				console.log("no redirect");
 				router.push("/admin");
 			}
 
