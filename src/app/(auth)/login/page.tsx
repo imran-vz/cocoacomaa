@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { signIn, useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -16,6 +16,8 @@ export default function LoginPage() {
 	const [isLoading, setIsLoading] = useState(false);
 	const [showPassword, setShowPassword] = useState(false);
 	const { data } = useSession();
+	const searchParams = useSearchParams();
+	const redirect = searchParams.get("redirect");
 
 	useEffect(() => {
 		if (data?.user.id) {
@@ -44,7 +46,12 @@ export default function LoginPage() {
 				return;
 			}
 
-			router.push("/admin");
+			if (redirect) {
+				router.push(redirect);
+			} else {
+				router.push("/admin");
+			}
+
 			router.refresh();
 		} catch (error) {
 			toast.error("Something went wrong");
@@ -126,7 +133,10 @@ export default function LoginPage() {
 				</Card>
 				<div className="text-center text-sm text-muted-foreground mt-2">
 					Don&apos;t have an account?{" "}
-					<a href="/signup" className="underline underline-offset-4">
+					<a
+						href={`/signup${redirect ? `?redirect=${redirect}` : ""}`}
+						className="underline underline-offset-4"
+					>
 						Sign up
 					</a>
 				</div>

@@ -21,11 +21,11 @@ export default function LoginModal({
 					Please log in or sign up to proceed to checkout. <br />
 					Your cart will be saved and you can continue shopping.
 				</DialogDescription>
-				<DialogFooter className="flex flex-col gap-2">
+				<DialogFooter className="flex flex-col gap-2 sm:flex-col">
 					<Button
 						type="button"
 						className="w-full"
-						onClick={() => router.push("/login")}
+						onClick={() => router.push("/login?redirect=/order")}
 					>
 						Log In
 					</Button>
@@ -33,7 +33,7 @@ export default function LoginModal({
 						type="button"
 						className="w-full"
 						variant="outline"
-						onClick={() => router.push("/login/register")}
+						onClick={() => router.push("/login/register?redirect=/order")}
 					>
 						Sign Up
 					</Button>

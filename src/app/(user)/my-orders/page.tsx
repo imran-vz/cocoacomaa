@@ -1,9 +1,9 @@
 import { auth } from "@/auth";
+import { Icons } from "@/components/icons";
 import { DataTable } from "@/components/ui/data-table";
 import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
 import { desc, eq } from "drizzle-orm";
-import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -46,7 +46,7 @@ export default async function MyOrdersPage() {
 				<Suspense
 					fallback={
 						<div>
-							<Loader2 className="w-4 h-4 animate-spin" />
+							<Icons.spinner className="w-4 h-4 animate-spin" />
 						</div>
 					}
 				>

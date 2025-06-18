@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { EyeIcon, EyeOffIcon, Info } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -27,6 +27,8 @@ export default function RegisterPage() {
 	const [showPhoneDialog, setShowPhoneDialog] = useState(false);
 	const [phoneDialogAcknowledged, setPhoneDialogAcknowledged] = useState(false);
 	const { data } = useSession();
+	const searchParams = useSearchParams();
+	const redirect = searchParams.get("redirect");
 
 	useEffect(() => {
 		if (data?.user.id) {
@@ -52,12 +54,7 @@ export default function RegisterPage() {
 		try {
 			await axios.post(
 				"/api/register",
-				{
-					name,
-					email,
-					password,
-					phone,
-				},
+				{ name, email, password, phone },
 				{
 					headers: {
 						"Content-Type": "application/json",
@@ -67,16 +64,11 @@ export default function RegisterPage() {
 			);
 
 			toast.success("Registration successful! Please log in.");
-			router.push("/login");
+			router.push(`/login${redirect ? `?redirect=${redirect}` : ""}`);
 			router.refresh();
 		} catch (error: unknown) {
 			if (axios.isAxiosError(error)) {
 				if (error.response?.data.errors) {
-					console.log(
-						" :67 | onSubmit | error.response?.data.errors:",
-						error.response?.data.errors,
-					);
-
 					const errors = Object.keys(error.response?.data.errors).map((key) =>
 						error.response?.data.errors[key]?.join("\n"),
 					);
@@ -90,15 +82,19 @@ export default function RegisterPage() {
 								</ul>
 							</div>,
 						);
-					} else {
-						toast.error(error.response?.data.message || "Something went wrong");
+						return;
 					}
-				} else {
+
 					toast.error(error.response?.data.message || "Something went wrong");
+					return;
 				}
-			} else {
-				toast.error("Something went wrong");
+
+				toast.error(error.response?.data.message || "Something went wrong");
+				return;
 			}
+
+			toast.error("Something went wrong");
+			return;
 		} finally {
 			setIsLoading(false);
 		}
@@ -260,7 +256,10 @@ export default function RegisterPage() {
 				</Card>
 				<div className="text-center text-sm text-muted-foreground mt-2">
 					Already have an account?{" "}
-					<a href="/login" className="underline">
+					<a
+						href={`/login${redirect ? `?redirect=${redirect}` : ""}`}
+						className="underline"
+					>
 						Sign in
 					</a>
 				</div>

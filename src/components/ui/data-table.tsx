@@ -26,9 +26,9 @@ import {
 
 import { DataTablePagination } from "@/components/ui/data-table-pagination";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
-import { Loader2 } from "lucide-react";
-import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useState } from "react";
+import { Icons } from "../icons";
 
 interface DataTableProps<TData, TValue> {
 	columns: ColumnDef<TData, TValue>[];
@@ -118,7 +118,7 @@ export function DataTable<TData, TValue>({
 										colSpan={columns.length}
 										className="h-24 text-center"
 									>
-										<Loader2 className="w-6 h-6 mx-auto animate-spin" />
+										<Icons.spinner className="w-6 h-6 mx-auto animate-spin" />
 									</TableCell>
 								</TableRow>
 							) : table.getRowModel().rows?.length ? (
