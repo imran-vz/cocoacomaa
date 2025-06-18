@@ -75,7 +75,7 @@ export default function OrderPage() {
 
 	if (loading) {
 		return (
-			<div className="container mx-auto py-4 sm:py-6 lg:py-8 px-4">
+			<div className="container min-h-[calc(100svh-10rem)] mx-auto py-4 sm:py-6 lg:py-8 px-4">
 				<div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
 					<div className="lg:col-span-2">
 						<div className="h-6 sm:h-8 w-32 sm:w-48 bg-gray-200 rounded animate-pulse mb-4 sm:mb-6 lg:mb-8" />

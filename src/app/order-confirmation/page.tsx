@@ -4,11 +4,25 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Clock, Phone, Mail, Eye } from "lucide-react";
+import confetti from "canvas-confetti";
+import { useEffect } from "react";
 
 export default function OrderConfirmationPage() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const orderId = searchParams.get("orderId");
+
+	useEffect(() => {
+		// make the spread and particle count dynamic based on the screen size
+		const screenWidth = window.innerWidth;
+		const particleCount = screenWidth > 768 ? 240 : 100;
+		const spread = screenWidth > 768 ? 200 : 100;
+		confetti({
+			particleCount: particleCount,
+			spread: spread,
+			origin: { y: 0.6 },
+		});
+	}, []);
 
 	return (
 		<div className="container mx-auto py-4 sm:py-6 lg:py-8 px-4">
