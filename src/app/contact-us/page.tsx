@@ -22,7 +22,12 @@ export default function ContactUs() {
 
 				<div>
 					<h2 className="text-xl font-semibold">Phone / WhatsApp</h2>
-					<p className="text-brown-700">+91 84318 73579</p>
+					<a
+						href={`tel:${process.env.NEXT_PUBLIC_BUSINESS_PHONE}`}
+						className="text-brown-700 underline"
+					>
+						{process.env.NEXT_PUBLIC_BUSINESS_PHONE}
+					</a>
 					<div className="flex items-center gap-2">
 						<WhatsAppIcon className="w-5 h-5" />
 						<a

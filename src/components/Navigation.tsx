@@ -6,22 +6,17 @@ import { useCart } from "@/lib/cart-context";
 import { Menu, ShoppingCart, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 export function Navigation() {
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
-	const pathname = usePathname();
 	const session = useSession();
 	const { items } = useCart();
 
 	const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
 	const itemCount = items.reduce((total, item) => total + item.quantity, 0);
-	const isLogin = pathname.startsWith("/login");
 	const isAdmin = !!session.data?.user;
-
-	if (isLogin) return null;
 
 	return (
 		<nav className="bg-white shadow-md border-b sticky top-0 z-50">
@@ -69,6 +64,9 @@ export function Navigation() {
 											</Badge>
 										)}
 									</Link>
+								</Button>
+								<Button variant="ghost" asChild>
+									<Link href="/login">Login</Link>
 								</Button>
 							</>
 						)}
@@ -152,6 +150,14 @@ export function Navigation() {
 									onClick={() => setIsMenuOpen(false)}
 								>
 									<Link href="/order">Order</Link>
+								</Button>
+								<Button
+									variant="ghost"
+									asChild
+									className="w-full justify-start"
+									onClick={() => setIsMenuOpen(false)}
+								>
+									<Link href="/login">Login</Link>
 								</Button>
 							</div>
 						)}

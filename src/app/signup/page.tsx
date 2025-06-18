@@ -5,12 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
-export default function LoginPage() {
+export default function RegisterPage() {
 	const router = useRouter();
 	const [isLoading, setIsLoading] = useState(false);
 
@@ -19,25 +18,31 @@ export default function LoginPage() {
 		setIsLoading(true);
 
 		const formData = new FormData(event.currentTarget);
+		const name = formData.get("name") as string;
 		const email = formData.get("email") as string;
 		const password = formData.get("password") as string;
 
 		try {
-			const result = await signIn("credentials", {
-				email,
-				password,
-				redirect: false,
+			const res = await fetch("/api/register", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ name, email, password }),
 			});
 
-			if (result?.error) {
-				toast.error("Invalid credentials");
-				return;
+			if (!res.ok) {
+				const data = await res.json();
+				throw new Error(data.message || "Registration failed");
 			}
 
-			router.push("/admin");
+			toast.success("Registration successful! Please log in.");
+			router.push("/login");
 			router.refresh();
-		} catch (error) {
-			toast.error("Something went wrong");
+		} catch (error: unknown) {
+			const message =
+				typeof error === "object" && error && "message" in error
+					? (error as { message?: string }).message
+					: undefined;
+			toast.error(message || "Something went wrong");
 		} finally {
 			setIsLoading(false);
 		}
@@ -68,55 +73,62 @@ export default function LoginPage() {
 				<div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
 					<div className="flex flex-col space-y-2 text-center">
 						<h1 className="text-2xl font-semibold tracking-tight">
-							Welcome back
+							Create an account
 						</h1>
 						<p className="text-sm text-muted-foreground">
-							Enter your credentials to sign in to your account
+							Sign up to order desserts and more
 						</p>
 					</div>
 					<Card>
 						<CardContent className="pt-6">
-							<form onSubmit={onSubmit}>
-								<div className="flex flex-col gap-6">
-									<div className="grid gap-3">
-										<Label htmlFor="email">Email</Label>
-										<Input
-											id="email"
-											type="email"
-											placeholder="m@example.com"
-											required
-										/>
-									</div>
-									<div className="grid gap-3">
-										<div className="flex items-center">
-											<Label htmlFor="password">Password</Label>
-											<a
-												href="/forgot-password"
-												className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-											>
-												Forgot your password?
-											</a>
-										</div>
-										<Input id="password" type="password" required />
-									</div>
-									<div className="flex flex-col gap-3">
-										<Button type="submit" className="w-full">
-											Login
-										</Button>
-										<Button variant="outline" className="w-full">
-											Login with Google
-										</Button>
-									</div>
+							<form onSubmit={onSubmit} className="space-y-4">
+								<div className="space-y-2">
+									<Label htmlFor="name">Name</Label>
+									<Input
+										id="name"
+										name="name"
+										type="text"
+										placeholder="Your name"
+										required
+										disabled={isLoading}
+									/>
 								</div>
-								<div className="mt-4 text-center text-sm">
-									Don&apos;t have an account?{" "}
-									<a href="/signup" className="underline underline-offset-4">
-										Sign up
-									</a>
+								<div className="space-y-2">
+									<Label htmlFor="email">Email</Label>
+									<Input
+										id="email"
+										name="email"
+										type="email"
+										placeholder="name@example.com"
+										required
+										disabled={isLoading}
+									/>
 								</div>
+								<div className="space-y-2">
+									<Label htmlFor="password">Password</Label>
+									<Input
+										id="password"
+										name="password"
+										type="password"
+										required
+										disabled={isLoading}
+									/>
+								</div>
+								<Button className="w-full" type="submit" disabled={isLoading}>
+									{isLoading && (
+										<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+									)}
+									Sign Up
+								</Button>
 							</form>
 						</CardContent>
 					</Card>
+					<div className="text-center text-sm text-muted-foreground mt-2">
+						Already have an account?{" "}
+						<a href="/login" className="underline">
+							Sign in
+						</a>
+					</div>
 				</div>
 			</div>
 		</div>
