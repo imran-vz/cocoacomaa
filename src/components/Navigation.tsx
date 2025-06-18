@@ -16,7 +16,7 @@ export function Navigation() {
 	const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
 	const itemCount = items.reduce((total, item) => total + item.quantity, 0);
-	const isAdmin = !!session.data?.user;
+	const isAdmin = session.data?.user?.role === "admin";
 
 	return (
 		<nav className="bg-white shadow-md border-b sticky top-0 z-50">
@@ -65,9 +65,15 @@ export function Navigation() {
 										)}
 									</Link>
 								</Button>
-								<Button variant="ghost" asChild>
-									<Link href="/login">Login</Link>
-								</Button>
+								{!session.data?.user?.id ? (
+									<Button variant="ghost" asChild>
+										<Link href="/login">Login</Link>
+									</Button>
+								) : (
+									<Button variant="ghost" asChild>
+										<Link href="/my-orders">My Orders</Link>
+									</Button>
+								)}
 							</>
 						)}
 					</div>
@@ -151,14 +157,16 @@ export function Navigation() {
 								>
 									<Link href="/order">Order</Link>
 								</Button>
-								<Button
-									variant="ghost"
-									asChild
-									className="w-full justify-start"
-									onClick={() => setIsMenuOpen(false)}
-								>
-									<Link href="/login">Login</Link>
-								</Button>
+								{session.data?.user?.id ? (
+									<Button
+										variant="ghost"
+										asChild
+										className="w-full justify-start"
+										onClick={() => setIsMenuOpen(false)}
+									>
+										<Link href="/my-orders">My Orders</Link>
+									</Button>
+								) : null}
 							</div>
 						)}
 					</div>

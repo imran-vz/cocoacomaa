@@ -14,8 +14,8 @@ export default function NavButton() {
 			>
 				Order More Desserts
 			</Button>
-			<Button onClick={() => router.push("/")} className="w-full">
-				Back to Home
+			<Button onClick={() => router.push("/my-orders")} className="w-full">
+				Back to Orders
 			</Button>
 		</>
 	);

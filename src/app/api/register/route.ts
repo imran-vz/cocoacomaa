@@ -81,6 +81,7 @@ export async function POST(request: Request) {
 			{ status: 201 },
 		);
 	} catch (error) {
+		console.error(" :84 | POST | error:", error);
 		return NextResponse.json({ message: "Server error." }, { status: 500 });
 	}
 }

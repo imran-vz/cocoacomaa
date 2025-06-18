@@ -5,6 +5,7 @@ import { Inter } from "next/font/google";
 import { Toaster } from "sonner";
 import { Providers } from "./providers";
 import { Footer } from "@/components/Footer";
+import Link from "next/link";
 
 import "./globals.css";
 

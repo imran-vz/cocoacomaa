@@ -28,6 +28,7 @@ import { DataTablePagination } from "@/components/ui/data-table-pagination";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface DataTableProps<TData, TValue> {
 	columns: ColumnDef<TData, TValue>[];
@@ -151,6 +152,62 @@ export function DataTable<TData, TValue>({
 				</div>
 			</div>
 			<DataTablePagination table={table} />
+		</div>
+	);
+}
+
+export function LoadingDataTable<TData, TValue>({
+	columns,
+	rowCount = 5,
+}: {
+	columns: ColumnDef<TData, TValue>[];
+	rowCount?: number;
+}) {
+	const table = useReactTable({
+		data: [],
+		columns,
+		getCoreRowModel: getCoreRowModel(),
+	});
+	return (
+		<div className="space-y-4">
+			<div className="rounded-md border">
+				<div className="overflow-x-auto">
+					<Table>
+						<TableHeader>
+							{table.getHeaderGroups().map((headerGroup) => (
+								<TableRow key={headerGroup.id}>
+									{headerGroup.headers.map((header) => {
+										return (
+											<TableHead key={header.id}>
+												{header.isPlaceholder
+													? null
+													: flexRender(
+															header.column.columnDef.header,
+															header.getContext(),
+														)}
+											</TableHead>
+										);
+									})}
+								</TableRow>
+							))}
+						</TableHeader>
+						<TableBody>
+							{[...Array(rowCount)].map((r, i) => (
+								<TableRow
+									// biome-ignore lint/suspicious/noArrayIndexKey: adding a key to the skeleton rows
+									key={`skeleton-row-${i}`}
+								>
+									{columns.map((col, j) => (
+										<TableCell key={`skeleton-cell-${col.id}`}>
+											<Skeleton className="h-5 w-full bg-primary/20" />
+										</TableCell>
+									))}
+								</TableRow>
+							))}
+						</TableBody>
+					</Table>
+				</div>
+			</div>
 		</div>
 	);
 }

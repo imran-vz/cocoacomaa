@@ -108,7 +108,11 @@ export default function RegisterPage() {
 				</div>
 				<Card className="shadow-md border border-gray-200">
 					<CardContent className="pt-6">
-						<form onSubmit={onSubmit} className="space-y-6">
+						<form
+							onSubmit={onSubmit}
+							className="space-y-6"
+							aria-label="Sign up form"
+						>
 							<div className="space-y-2">
 								<Label htmlFor="name">Name</Label>
 								<Input
@@ -119,6 +123,8 @@ export default function RegisterPage() {
 									required
 									disabled={isLoading}
 									className="h-12 text-base"
+									autoComplete="name"
+									aria-label="Full name"
 								/>
 							</div>
 							<div className="space-y-2">
@@ -131,6 +137,22 @@ export default function RegisterPage() {
 									required
 									disabled={isLoading}
 									className="h-12 text-base"
+									autoComplete="email"
+									aria-label="Email address"
+								/>
+							</div>
+							<div className="space-y-2 hidden">
+								<Label htmlFor="username">Username</Label>
+								<Input
+									id="username"
+									name="username"
+									type="text"
+									placeholder="Your username"
+									disabled={isLoading}
+									hidden
+									className="hidden"
+									autoComplete="username"
+									aria-label="Username"
 								/>
 							</div>
 							<div className="space-y-2">
@@ -182,31 +204,42 @@ export default function RegisterPage() {
 									disabled={isLoading}
 									className="h-12 text-base"
 									pattern="[0-9+\-\s()]{10,}"
+									autoComplete="tel"
+									aria-label="Phone number"
 								/>
 							</div>
-							<div className="relative">
-								<Input
-									id="password"
-									name="password"
-									placeholder="********"
-									type={showPassword ? "text" : "password"}
-									required
-									disabled={isLoading}
-									className="h-12 text-base pr-10"
-								/>
-								<button
-									type="button"
-									className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
-									onClick={() => setShowPassword((v) => !v)}
-									aria-label={showPassword ? "Hide password" : "Show password"}
-								>
-									{showPassword ? <EyeOffIcon /> : <EyeIcon />}
-								</button>
+							<div className="space-y-2">
+								<Label htmlFor="password">Password</Label>
+								<div className="relative">
+									<Input
+										id="password"
+										name="password"
+										placeholder="********"
+										type={showPassword ? "text" : "password"}
+										required
+										disabled={isLoading}
+										className="h-12 text-base pr-10"
+										autoComplete="new-password"
+										aria-label="Password"
+									/>
+									<button
+										type="button"
+										className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
+										onClick={() => setShowPassword((v) => !v)}
+										aria-label={
+											showPassword ? "Hide password" : "Show password"
+										}
+									>
+										{showPassword ? <EyeOffIcon /> : <EyeIcon />}
+									</button>
+								</div>
 							</div>
+
 							<Button
 								className="w-full h-12 text-base"
 								type="submit"
 								disabled={isLoading}
+								aria-label="Sign up"
 							>
 								{isLoading && (
 									<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />

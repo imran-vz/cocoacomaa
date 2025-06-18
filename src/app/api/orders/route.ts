@@ -57,27 +57,17 @@ export async function POST(request: NextRequest) {
 				.where(eq(users.email, email))
 				.limit(1);
 
-			let userId: string;
-
 			if (user.length === 0) {
 				// Create new customer
-				const newUser = await tx
-					.insert(users)
-					.values({
-						name,
-						email,
-						phone,
-					})
-					.returning({ id: users.id });
-				userId = newUser[0].id;
-			} else {
-				userId = user[0].id;
-				// Update customer info if different
-				await tx
-					.update(users)
-					.set({ name, phone, role: "customer", updatedAt: new Date() })
-					.where(eq(users.id, userId));
+				throw new Error("User not found");
 			}
+
+			const userId = user[0].id;
+			// Update customer info if different
+			await tx
+				.update(users)
+				.set({ name, phone, role: "customer", updatedAt: new Date() })
+				.where(eq(users.id, userId));
 
 			// Create order
 			// Combine pickup date and time into a single datetime

@@ -9,8 +9,10 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { z } from "zod";
 
 const loginSchema = z.object({
-	email: z.string().email(),
-	password: z.string(),
+	email: z.string().email({ message: "Invalid email address." }),
+	password: z
+		.string()
+		.min(6, { message: "Password must be at least 6 characters." }),
 });
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
@@ -26,10 +28,19 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
 				password: { label: "Password", type: "password" },
 			},
 			async authorize(credentials) {
+				console.log(" :31 | authorize | credentials:", credentials);
 				const parsedCredentials = loginSchema.safeParse(credentials);
+				console.log(
+					" :30 | authorize | parsedCredentials:",
+					parsedCredentials.error?.flatten(),
+				);
 
 				if (!parsedCredentials.success) {
-					throw new Error("Invalid credentials");
+					console.log(
+						" :39 | authorize | parsedCredentials:",
+						parsedCredentials.error?.flatten(),
+					);
+					return null;
 				}
 
 				const { email, password } = parsedCredentials.data;
@@ -39,19 +50,22 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
 				});
 
 				if (!user || !user.password) {
-					throw new Error("Invalid credentials");
+					console.log(" :50 | authorize | user:", user);
+					return null;
 				}
 
 				const isPasswordValid = await bcrypt.compare(password, user.password);
 
 				if (!isPasswordValid) {
-					throw new Error("Invalid credentials");
+					console.log(" :57 | authorize | isPasswordValid:", isPasswordValid);
+					return null;
 				}
 
 				return {
 					id: user.id,
 					email: user.email,
 					name: user.name,
+					role: user.role,
 				};
 			},
 		}),

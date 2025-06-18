@@ -6,15 +6,24 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export default function LoginPage() {
 	const router = useRouter();
 	const [isLoading, setIsLoading] = useState(false);
 	const [showPassword, setShowPassword] = useState(false);
+	const { data } = useSession();
+	console.log(" :19 | LoginPage | data:", data);
+
+	useEffect(() => {
+		if (data?.user.id) {
+			router.replace("/");
+			return;
+		}
+	}, [data?.user?.id, router]);
 
 	async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();
@@ -63,10 +72,13 @@ export default function LoginPage() {
 								<Label htmlFor="email">Email</Label>
 								<Input
 									id="email"
+									name="email"
 									type="email"
 									placeholder="m@example.com"
 									required
 									className="h-12 text-base"
+									autoComplete="email"
+									aria-label="Email address"
 								/>
 							</div>
 							<div className="grid gap-3">
@@ -89,6 +101,8 @@ export default function LoginPage() {
 											required
 											disabled={isLoading}
 											className="h-12 text-base pr-10"
+											autoComplete="current-password"
+											aria-label="Password"
 										/>
 										<button
 											type="button"
