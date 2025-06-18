@@ -89,7 +89,7 @@ export default function TermsOfUse() {
 				<h2 className="text-2xl font-semibold mb-2">7. Contact Information</h2>
 				<p>
 					For any questions about these Terms of Use, please contact us at{" "}
-					<strong>maria@cocoacomaa.com</strong>.
+					<strong>contact@cocoacomaa.com</strong>.
 				</p>
 			</section>
 		</div>

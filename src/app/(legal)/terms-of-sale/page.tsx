@@ -72,7 +72,7 @@ export default function TermsOfSale() {
 				<h2 className="text-2xl font-semibold mb-2">6. Contact Us</h2>
 				<p>
 					If you have any questions regarding these Terms of Sale, contact us at{" "}
-					<strong>maria@cocoacomaa.com</strong>.
+					<strong>contact@cocoacomaa.com</strong>.
 				</p>
 			</section>
 		</div>

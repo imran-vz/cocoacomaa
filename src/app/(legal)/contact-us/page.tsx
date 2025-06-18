@@ -17,7 +17,7 @@ export default function ContactUs() {
 			<div className="space-y-4">
 				<div>
 					<h2 className="text-xl font-semibold">Email</h2>
-					<p className="text-brown-700">maria@cocoacomaa.com</p>
+					<p className="text-brown-700">contact@cocoacomaa.com</p>
 				</div>
 
 				<div>

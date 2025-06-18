@@ -72,7 +72,7 @@ export default function DataProtectionPolicy() {
 				<h2 className="text-2xl font-semibold mb-2">6. Contact Us</h2>
 				<p>
 					If you have any questions about this policy or your personal data,
-					please contact us at <strong>maria@cocoacomaa.com</strong>.
+					please contact us at <strong>contact@cocoacomaa.com</strong>.
 				</p>
 			</section>
 		</div>
