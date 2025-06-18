@@ -30,7 +30,7 @@ export default async function MyOrdersPage() {
 	});
 
 	return (
-		<div className="container mx-auto py-8 px-4">
+		<div className="container mx-auto py-8 px-4 min-h-[calc(100svh-11rem)]">
 			<h1 className="text-2xl md:text-3xl font-bold mb-6">My Orders</h1>
 			{userOrders.length === 0 ? (
 				<div className="text-center text-muted-foreground py-12">

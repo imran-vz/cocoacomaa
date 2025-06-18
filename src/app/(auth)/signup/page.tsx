@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { EyeIcon, EyeOffIcon, Info } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
 	AlertDialog,
@@ -18,6 +18,7 @@ import {
 	AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import axios from "axios";
+import { useSession } from "next-auth/react";
 
 export default function RegisterPage() {
 	const router = useRouter();
@@ -25,6 +26,14 @@ export default function RegisterPage() {
 	const [showPassword, setShowPassword] = useState(false);
 	const [showPhoneDialog, setShowPhoneDialog] = useState(false);
 	const [phoneDialogAcknowledged, setPhoneDialogAcknowledged] = useState(false);
+	const { data } = useSession();
+
+	useEffect(() => {
+		if (data?.user.id) {
+			router.replace("/");
+			return;
+		}
+	}, [data?.user?.id, router]);
 
 	async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();

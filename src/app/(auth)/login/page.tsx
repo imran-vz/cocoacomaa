@@ -16,7 +16,6 @@ export default function LoginPage() {
 	const [isLoading, setIsLoading] = useState(false);
 	const [showPassword, setShowPassword] = useState(false);
 	const { data } = useSession();
-	console.log(" :19 | LoginPage | data:", data);
 
 	useEffect(() => {
 		if (data?.user.id) {
