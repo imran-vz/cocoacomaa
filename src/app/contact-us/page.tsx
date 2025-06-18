@@ -53,7 +53,7 @@ export default function ContactUs() {
 
 				<div>
 					<h2 className="text-xl font-semibold">Business Hours</h2>
-					<p className="text-brown-700">Monday to Saturday, 10 AM - 6 PM IST</p>
+					<p className="text-brown-700">Wednesday to Sunday, 9 AM - 6 PM IST</p>
 				</div>
 			</div>
 		</div>
