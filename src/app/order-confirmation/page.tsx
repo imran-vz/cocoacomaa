@@ -155,7 +155,8 @@ export default function OrderConfirmationPage() {
 							</div>
 						</div>
 						<p className="text-xs sm:text-sm text-muted-foreground mt-4">
-							Maria and team is available from 9 AM to 6 PM, Tuesday to Sunday.
+							Maria and team is available from 9 AM to 6 PM, Wednesday to
+							Sunday.
 						</p>
 					</CardContent>
 				</Card>
