@@ -2,7 +2,8 @@ import "dotenv/config";
 
 import { faker } from "@faker-js/faker";
 import { db } from ".";
-import { customers, desserts, orderItems, orders } from "./schema";
+import { desserts, orderItems, orders, users } from "./schema";
+import { eq } from "drizzle-orm";
 
 async function seed() {
 	try {
@@ -73,32 +74,35 @@ async function seed() {
 
 		console.log("deleting customers");
 		await db.delete(orders).execute();
-		await db.delete(customers).execute();
+		await db.delete(users).execute();
 
-		const customerData: (typeof customers.$inferInsert)[] = [
+		const customerData: (typeof users.$inferInsert)[] = [
 			{
 				name: faker.person.fullName(),
 				email: faker.internet.email(),
 				phone: faker.phone.number(),
+				role: "customer",
 			},
 			{
 				name: faker.person.fullName(),
 				email: faker.internet.email(),
 				phone: faker.phone.number(),
+				role: "customer",
 			},
 		];
 
-		await db.insert(customers).values(customerData).execute();
+		await db.insert(users).values(customerData).execute();
 		console.log("Seeded customers");
 
-		const customersDa = await db.query.customers.findMany({
+		const customersDa = await db.query.users.findMany({
 			columns: { id: true },
+			where: eq(users.role, "customer"),
 		});
 
 		console.log("Deleting orders...");
 		const orderData: (typeof orders.$inferInsert)[] = [
 			{
-				customerId: customersDa[0].id,
+				userId: customersDa[0].id,
 				total: "1000",
 				status: "pending",
 				paymentStatus: "pending",
@@ -109,7 +113,7 @@ async function seed() {
 				pickupDateTime: faker.date.future(),
 			},
 			{
-				customerId: customersDa[1].id,
+				userId: customersDa[1].id,
 				total: "1000",
 				status: "ready",
 				paymentStatus: "captured",
@@ -120,7 +124,7 @@ async function seed() {
 				pickupDateTime: faker.date.future(),
 			},
 			{
-				customerId: customersDa[0].id,
+				userId: customersDa[0].id,
 				total: "1000",
 				status: "paid",
 				paymentStatus: "captured",
@@ -131,7 +135,7 @@ async function seed() {
 				pickupDateTime: faker.date.future(),
 			},
 			{
-				customerId: customersDa[1].id,
+				userId: customersDa[1].id,
 				total: "1000",
 				status: "confirmed",
 				paymentStatus: "captured",
@@ -142,7 +146,7 @@ async function seed() {
 				pickupDateTime: faker.date.future(),
 			},
 			{
-				customerId: customersDa[0].id,
+				userId: customersDa[0].id,
 				total: "1000",
 				status: "completed",
 				paymentStatus: "captured",

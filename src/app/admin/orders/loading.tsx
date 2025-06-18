@@ -18,7 +18,7 @@ export default function OrdersLoading() {
 					<DataTable
 						columns={columns}
 						data={[]}
-						searchKey="customerName"
+						searchKey="userName"
 						searchPlaceholder="Filter orders..."
 						isLoading={true}
 					/>

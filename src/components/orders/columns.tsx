@@ -18,7 +18,7 @@ export const columns: ColumnDef<{
 		| "preparing"
 		| "ready"
 		| "cancelled";
-	customerName: string;
+	userName: string;
 }>[] = [
 	{
 		accessorKey: "id",
@@ -32,7 +32,7 @@ export const columns: ColumnDef<{
 		enableHiding: false,
 	},
 	{
-		accessorKey: "customerName",
+		accessorKey: "userName",
 		header: ({ column }) => (
 			<DataTableColumnHeader column={column} title="Customer" />
 		),
@@ -40,7 +40,7 @@ export const columns: ColumnDef<{
 			return (
 				<div className="flex space-x-2">
 					<span className="max-w-[500px] truncate font-medium">
-						{row.getValue("customerName")}
+						{row.getValue("userName")}
 					</span>
 				</div>
 			);

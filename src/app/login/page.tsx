@@ -46,8 +46,8 @@ export default function LoginPage() {
 	}
 
 	return (
-		<div className="container relative min-h-[calc(100svh-10rem)] place-items-center grid lg:max-w-none lg:px-0">
-			<div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
+		<div className="min-h-[calc(100svh-10rem)] flex items-center justify-center px-2 py-8 bg-background">
+			<div className="w-full max-w-xs sm:max-w-sm md:max-w-md flex flex-col justify-center space-y-6 mx-auto">
 				<div className="flex flex-col space-y-2 text-center">
 					<h1 className="text-2xl font-semibold tracking-tight">
 						Welcome back
@@ -56,57 +56,57 @@ export default function LoginPage() {
 						Enter your credentials to sign in to your account
 					</p>
 				</div>
-				<Card>
+				<Card className="shadow-md border border-gray-200">
 					<CardContent className="pt-6">
-						<form onSubmit={onSubmit}>
-							<div className="flex flex-col gap-6">
-								<div className="grid gap-3">
-									<Label htmlFor="email">Email</Label>
-									<Input
-										id="email"
-										type="email"
-										placeholder="m@example.com"
-										required
-									/>
+						<form onSubmit={onSubmit} className="space-y-6">
+							<div className="grid gap-3">
+								<Label htmlFor="email">Email</Label>
+								<Input
+									id="email"
+									type="email"
+									placeholder="m@example.com"
+									required
+									className="h-12 text-base"
+								/>
+							</div>
+							<div className="grid gap-3">
+								<div className="flex items-center">
+									<Label htmlFor="password">Password</Label>
+									<a
+										href="/forgot-password"
+										className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+									>
+										Forgot your password?
+									</a>
 								</div>
-								<div className="grid gap-3">
-									<div className="flex items-center">
-										<Label htmlFor="password">Password</Label>
-										<a
-											href="/forgot-password"
-											className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+								<div className="space-y-2">
+									<div className="relative">
+										<Input
+											id="password"
+											name="password"
+											placeholder="********"
+											type={showPassword ? "text" : "password"}
+											required
+											disabled={isLoading}
+											className="h-12 text-base pr-10"
+										/>
+										<button
+											type="button"
+											className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
+											onClick={() => setShowPassword((v) => !v)}
+											aria-label={
+												showPassword ? "Hide password" : "Show password"
+											}
 										>
-											Forgot your password?
-										</a>
-									</div>
-									<div className="space-y-2">
-										<div className="relative">
-											<Input
-												id="password"
-												name="password"
-												placeholder="********"
-												type={showPassword ? "text" : "password"}
-												required
-												disabled={isLoading}
-											/>
-											<button
-												type="button"
-												className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
-												onClick={() => setShowPassword((v) => !v)}
-												aria-label={
-													showPassword ? "Hide password" : "Show password"
-												}
-											>
-												{showPassword ? <EyeOffIcon /> : <EyeIcon />}
-											</button>
-										</div>
+											{showPassword ? <EyeOffIcon /> : <EyeIcon />}
+										</button>
 									</div>
 								</div>
-								<div className="flex flex-col gap-3">
-									<Button type="submit" className="w-full">
-										Login
-									</Button>
-								</div>
+							</div>
+							<div className="flex flex-col gap-3">
+								<Button type="submit" className="w-full h-12 text-base">
+									Login
+								</Button>
 							</div>
 						</form>
 					</CardContent>

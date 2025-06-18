@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/lib/db";
-import { customers, desserts, orders } from "@/lib/db/schema";
+import { desserts, orders, users } from "@/lib/db/schema";
 import { formatCurrency } from "@/lib/utils";
 import { and, eq, gte, sql } from "drizzle-orm";
 import {
@@ -40,7 +40,8 @@ export default async function AdminDashboard() {
 	// Get total customers
 	const totalCustomersPromise = db
 		.select({ count: sql<number>`count(id)` })
-		.from(customers)
+		.from(users)
+		.where(eq(users.role, "customer"))
 		.then((res) => res[0].count);
 
 	// Get recent orders (last 7 days)

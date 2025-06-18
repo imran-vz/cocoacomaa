@@ -35,7 +35,7 @@ export default async function OrdersPage() {
 			createdAt: true,
 		},
 		with: {
-			customer: {
+			user: {
 				columns: {
 					name: true,
 				},
@@ -60,9 +60,9 @@ export default async function OrdersPage() {
 						columns={columns}
 						data={ordersList.map((order) => ({
 							...order,
-							customerName: order.customer.name,
+							userName: order.user.name || "",
 						}))}
-						searchKey="customerName"
+						searchKey="userName"
 						searchPlaceholder="Filter orders..."
 						filterableColumns={[
 							{

@@ -29,7 +29,7 @@ export async function GET(
 				notes: true,
 			},
 			with: {
-				customer: {
+				user: {
 					columns: {
 						name: true,
 						email: true,

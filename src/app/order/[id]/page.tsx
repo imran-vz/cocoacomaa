@@ -92,7 +92,7 @@ export default async function AdminOrderDetailsPage({
 				},
 			},
 
-			customer: {
+			user: {
 				columns: {
 					name: true,
 					email: true,
@@ -252,19 +252,15 @@ export default async function AdminOrderDetailsPage({
 							<CardContent className="space-y-3">
 								<div className="flex items-center gap-2">
 									<User className="h-4 w-4 text-muted-foreground" />
-									<span className="text-sm capitalize">
-										{order.customer.name}
-									</span>
+									<span className="text-sm capitalize">{order.user.name}</span>
 								</div>
 								<div className="flex items-center gap-2">
 									<Mail className="h-4 w-4 text-muted-foreground" />
-									<span className="text-sm break-all">
-										{order.customer.email}
-									</span>
+									<span className="text-sm break-all">{order.user.email}</span>
 								</div>
 								<div className="flex items-center gap-2">
 									<Phone className="h-4 w-4 text-muted-foreground" />
-									<span className="text-sm">{order.customer.phone}</span>
+									<span className="text-sm">{order.user.phone}</span>
 								</div>
 							</CardContent>
 						</Card>

@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { customers, orders, orderItems } from "@/lib/db/schema";
+import { orders, orderItems, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import Razorpay from "razorpay";
 
@@ -51,32 +51,32 @@ export async function POST(request: NextRequest) {
 		// Start transaction
 		const result = await db.transaction(async (tx) => {
 			// Check if customer already exists
-			const customer = await tx
+			const user = await tx
 				.select()
-				.from(customers)
-				.where(eq(customers.email, email))
+				.from(users)
+				.where(eq(users.email, email))
 				.limit(1);
 
-			let customerId: number;
+			let userId: string;
 
-			if (customer.length === 0) {
+			if (user.length === 0) {
 				// Create new customer
-				const newCustomer = await tx
-					.insert(customers)
+				const newUser = await tx
+					.insert(users)
 					.values({
 						name,
 						email,
 						phone,
 					})
-					.returning({ id: customers.id });
-				customerId = newCustomer[0].id;
+					.returning({ id: users.id });
+				userId = newUser[0].id;
 			} else {
-				customerId = customer[0].id;
+				userId = user[0].id;
 				// Update customer info if different
 				await tx
-					.update(customers)
-					.set({ name, phone, updatedAt: new Date() })
-					.where(eq(customers.id, customerId));
+					.update(users)
+					.set({ name, phone, role: "customer", updatedAt: new Date() })
+					.where(eq(users.id, userId));
 			}
 
 			// Create order
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
 			const newOrder = await tx
 				.insert(orders)
 				.values({
-					customerId,
+					userId: userId,
 					total: total.toString(),
 					status: "pending",
 					paymentStatus: "pending",
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
 
 			await tx.insert(orderItems).values(orderItemsData);
 
-			return { orderId, customerId };
+			return { orderId, userId };
 		});
 
 		// Create Razorpay order
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
 			receipt: `order_${result.orderId}`,
 			notes: {
 				orderId: result.orderId.toString(),
-				customerId: result.customerId.toString(),
+				userId: result.userId.toString(),
 				pickupDate,
 				pickupTime,
 			},

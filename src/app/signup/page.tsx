@@ -5,54 +5,99 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { EyeIcon, EyeOffIcon } from "lucide-react";
+import { EyeIcon, EyeOffIcon, Info } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import {
+	AlertDialog,
+	AlertDialogTrigger,
+	AlertDialogContent,
+	AlertDialogTitle,
+	AlertDialogDescription,
+	AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import axios from "axios";
 
 export default function RegisterPage() {
 	const router = useRouter();
 	const [isLoading, setIsLoading] = useState(false);
 	const [showPassword, setShowPassword] = useState(false);
+	const [showPhoneDialog, setShowPhoneDialog] = useState(false);
+	const [phoneDialogAcknowledged, setPhoneDialogAcknowledged] = useState(false);
 
 	async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();
+		if (!phoneDialogAcknowledged) {
+			setShowPhoneDialog(true);
+			return;
+		}
 		setIsLoading(true);
 
 		const formData = new FormData(event.currentTarget);
 		const name = formData.get("name") as string;
 		const email = formData.get("email") as string;
 		const password = formData.get("password") as string;
+		const phone = formData.get("phone") as string;
 
 		try {
-			const res = await fetch("/api/register", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ name, email, password }),
-			});
-
-			if (!res.ok) {
-				const data = await res.json();
-				throw new Error(data.message || "Registration failed");
-			}
+			await axios.post(
+				"/api/register",
+				{
+					name,
+					email,
+					password,
+					phone,
+				},
+				{
+					headers: {
+						"Content-Type": "application/json",
+						Accept: "application/json",
+					},
+				},
+			);
 
 			toast.success("Registration successful! Please log in.");
 			router.push("/login");
 			router.refresh();
 		} catch (error: unknown) {
-			const message =
-				typeof error === "object" && error && "message" in error
-					? (error as { message?: string }).message
-					: undefined;
-			toast.error(message || "Something went wrong");
+			if (axios.isAxiosError(error)) {
+				if (error.response?.data.errors) {
+					console.log(
+						" :67 | onSubmit | error.response?.data.errors:",
+						error.response?.data.errors,
+					);
+
+					const errors = Object.keys(error.response?.data.errors).map((key) =>
+						error.response?.data.errors[key]?.join("\n"),
+					);
+					if (errors.length > 0) {
+						toast.error(
+							<div>
+								<ul className="list-disc list-inside space-y-1">
+									{errors.map((error) => (
+										<li key={error}>{error}</li>
+									))}
+								</ul>
+							</div>,
+						);
+					} else {
+						toast.error(error.response?.data.message || "Something went wrong");
+					}
+				} else {
+					toast.error(error.response?.data.message || "Something went wrong");
+				}
+			} else {
+				toast.error("Something went wrong");
+			}
 		} finally {
 			setIsLoading(false);
 		}
 	}
 
 	return (
-		<div className="container relative min-h-[calc(100svh-10rem)] place-items-center grid lg:max-w-none lg:px-0">
-			<div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
+		<div className="min-h-[calc(100svh-10rem)] flex items-center justify-center px-2 py-8 bg-background">
+			<div className="w-full max-w-sm px-4 sm:px-0 sm:max-w-sm md:max-w-md flex flex-col justify-center space-y-6 mx-auto">
 				<div className="flex flex-col space-y-2 text-center">
 					<h1 className="text-2xl font-semibold tracking-tight">
 						Create an account
@@ -61,9 +106,9 @@ export default function RegisterPage() {
 						Sign up to order desserts and more
 					</p>
 				</div>
-				<Card>
+				<Card className="shadow-md border border-gray-200">
 					<CardContent className="pt-6">
-						<form onSubmit={onSubmit} className="space-y-4">
+						<form onSubmit={onSubmit} className="space-y-6">
 							<div className="space-y-2">
 								<Label htmlFor="name">Name</Label>
 								<Input
@@ -73,6 +118,7 @@ export default function RegisterPage() {
 									placeholder="Your name"
 									required
 									disabled={isLoading}
+									className="h-12 text-base"
 								/>
 							</div>
 							<div className="space-y-2">
@@ -84,6 +130,58 @@ export default function RegisterPage() {
 									placeholder="name@example.com"
 									required
 									disabled={isLoading}
+									className="h-12 text-base"
+								/>
+							</div>
+							<div className="space-y-2">
+								<div className="flex items-center gap-2">
+									<Label htmlFor="phone">Phone Number</Label>
+									<AlertDialog
+										open={showPhoneDialog}
+										onOpenChange={setShowPhoneDialog}
+									>
+										<AlertDialogTrigger asChild>
+											<button
+												type="button"
+												aria-label="Why do we need your phone number?"
+												className="text-blue-500 hover:text-blue-700 focus:outline-none"
+											>
+												<Info className="h-4 w-4" />
+											</button>
+										</AlertDialogTrigger>
+										<AlertDialogContent>
+											<AlertDialogTitle>
+												Why do we need your phone number?
+											</AlertDialogTitle>
+											<AlertDialogDescription>
+												Please enter a valid phone number. We'll use this to get
+												in touch with you for any order updates or
+												delivery-related queries.
+											</AlertDialogDescription>
+											<AlertDialogAction
+												onClick={() => {
+													setShowPhoneDialog(false);
+													setPhoneDialogAcknowledged(true);
+													setTimeout(() => {
+														const form = document.querySelector("form");
+														if (form) (form as HTMLFormElement).requestSubmit();
+													}, 0);
+												}}
+											>
+												Got it
+											</AlertDialogAction>
+										</AlertDialogContent>
+									</AlertDialog>
+								</div>
+								<Input
+									id="phone"
+									name="phone"
+									type="tel"
+									placeholder="Your phone number"
+									required
+									disabled={isLoading}
+									className="h-12 text-base"
+									pattern="[0-9+\-\s()]{10,}"
 								/>
 							</div>
 							<div className="relative">
@@ -94,6 +192,7 @@ export default function RegisterPage() {
 									type={showPassword ? "text" : "password"}
 									required
 									disabled={isLoading}
+									className="h-12 text-base pr-10"
 								/>
 								<button
 									type="button"
@@ -104,7 +203,11 @@ export default function RegisterPage() {
 									{showPassword ? <EyeOffIcon /> : <EyeIcon />}
 								</button>
 							</div>
-							<Button className="w-full" type="submit" disabled={isLoading}>
+							<Button
+								className="w-full h-12 text-base"
+								type="submit"
+								disabled={isLoading}
+							>
 								{isLoading && (
 									<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
 								)}

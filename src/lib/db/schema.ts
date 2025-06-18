@@ -20,32 +20,16 @@ export const desserts = pgTable("desserts", (d) => {
 	};
 });
 
-export const customers = pgTable("customers", (d) => {
-	return {
-		id: d.integer("id").primaryKey().generatedAlwaysAsIdentity(),
-		name: d.varchar("name", { length: 255 }).notNull(),
-		email: d.varchar("email", { length: 255 }).notNull(),
-		phone: d.varchar("phone", { length: 255 }).notNull(),
-		isDeleted: d.boolean("is_deleted").notNull().default(false),
-		createdAt: d.timestamp("created_at").notNull().defaultNow(),
-		updatedAt: d.timestamp("updated_at").notNull().defaultNow(),
-	};
-});
-
-export const customersRelations = relations(customers, ({ many }) => ({
-	orders: many(orders),
-}));
-
 export const orders = pgTable("orders", (d) => {
 	return {
 		id: d
 			.text("id")
 			.primaryKey()
 			.$defaultFn(() => createId()),
-		customerId: d
-			.integer("customer_id")
+		userId: d
+			.text("user_id")
 			.notNull()
-			.references(() => customers.id),
+			.references(() => users.id),
 		createdAt: d.timestamp("created_at").notNull().defaultNow(),
 		updatedAt: d.timestamp("updated_at").notNull().defaultNow(),
 		total: d.numeric("total", { precision: 10, scale: 2 }).notNull(),
@@ -89,9 +73,9 @@ export const orders = pgTable("orders", (d) => {
 
 export const ordersRelations = relations(orders, ({ many, one }) => ({
 	orderItems: many(orderItems),
-	customer: one(customers, {
-		fields: [orders.customerId],
-		references: [customers.id],
+	user: one(users, {
+		fields: [orders.userId],
+		references: [users.id],
 	}),
 }));
 
@@ -138,6 +122,7 @@ export const users = pgTable("users", (d) => {
 			.$defaultFn(() => createId()),
 		name: d.text("name"),
 		email: d.text("email").notNull().unique(),
+		phone: d.text("phone"),
 		password: d.text("password"),
 		createdAt: d.timestamp("created_at").defaultNow().notNull(),
 		updatedAt: d.timestamp("updated_at").defaultNow().notNull(),
