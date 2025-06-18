@@ -12,7 +12,7 @@ export default function Home() {
 					left: 0,
 					right: 0,
 					bottom: 0,
-					backgroundImage: "url(/bg.jpeg)",
+					backgroundImage: "url(/bg.jpg)",
 					backgroundSize: "cover",
 					backgroundPosition: "center",
 				}}
