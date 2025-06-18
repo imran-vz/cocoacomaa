@@ -8,14 +8,14 @@ export function Footer() {
 	if (pathname.startsWith("/admin")) return null;
 
 	return (
-		<footer className="bg-zinc-800 text-gray-400 py-8">
+		<footer className="bg-secondary text-secondary-foreground py-8">
 			<div className="max-w-2xl mx-auto flex flex-col items-center space-y-2">
 				<div className="flex space-x-4">
 					<Link
 						href="/terms-and-conditions"
 						className="underline hover:text-white"
 					>
-						Terms and Conditions
+						Terms & Conditions
 					</Link>
 					<Link href="/contact-us" className="underline hover:text-white">
 						Contact Us

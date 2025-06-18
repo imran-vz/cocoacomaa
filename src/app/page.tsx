@@ -12,8 +12,7 @@ export default function Home() {
 					left: 0,
 					right: 0,
 					bottom: 0,
-					backgroundImage:
-						"url(https://img1.wsimg.com/isteam/stock/NrG2BY8/:/rs=w:1534,m)",
+					backgroundImage: "url(/bg.jpeg)",
 					backgroundSize: "cover",
 					backgroundPosition: "center",
 				}}

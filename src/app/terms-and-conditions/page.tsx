@@ -1,3 +1,5 @@
+import { Info } from "lucide-react";
+
 export default function TermsAndConditions() {
 	return (
 		<div className="max-w-3xl mx-auto px-4 py-10 text-zinc-800">
@@ -10,6 +12,15 @@ export default function TermsAndConditions() {
 				website, you agree to the following terms and conditions. Please read
 				them carefully before proceeding with your order.
 			</p>
+
+			<blockquote className="flex items-start gap-2 border-l-4 border-primary bg-secondary p-4 mb-6 rounded-md">
+				<Info className="text-primary w-5 h-5 mt-1" />
+				<p className="text-sm text-primary">
+					For custom cakes, it is strongly recommended to opt for{" "}
+					<strong>self-pickup</strong> as delivery partners are often unreliable
+					for delicate or time-sensitive items.
+				</p>
+			</blockquote>
 
 			<section className="mb-6">
 				<h2 className="text-2xl font-semibold mb-2">1. Order Placement</h2>
