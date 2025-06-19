@@ -4,7 +4,6 @@ import { faker } from "@faker-js/faker";
 import { eq } from "drizzle-orm";
 import { db } from ".";
 import { desserts, orderItems, orders, users } from "./schema";
-import { createAdminUser } from "../../../scripts/create-admin";
 
 async function seed() {
 	try {
@@ -100,7 +99,6 @@ async function seed() {
 		console.log("deleting customers");
 		await db.delete(orders).execute();
 		await db.delete(users).execute();
-		await createAdminUser();
 		const customerData: (typeof users.$inferInsert)[] = [
 			{
 				name: faker.person.fullName(),
