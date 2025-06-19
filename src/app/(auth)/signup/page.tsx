@@ -1,11 +1,15 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import { EyeIcon, EyeOffIcon, Info } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import type { z } from "zod";
+
 import { Icons } from "@/components/icons";
 import {
 	AlertDialog,
@@ -17,24 +21,37 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+	Form,
+	FormControl,
+	FormField,
+	FormItem,
+	FormLabel,
+	FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { registerSchema } from "@/lib/schema";
+
+type SignupFormValues = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
 	const router = useRouter();
-	const [isLoading, setIsLoading] = useState(false);
-	const [showPassword, setShowPassword] = useState(false);
-	const [showPhoneDialog, setShowPhoneDialog] = useState(false);
-	const [phoneDialogAcknowledged, setPhoneDialogAcknowledged] = useState(false);
 	const { data } = useSession();
 	const searchParams = useSearchParams();
 	const redirect = searchParams.get("redirect");
 
-	const nameId = useId();
-	const emailId = useId();
-	const usernameId = useId();
-	const phoneId = useId();
-	const passwordId = useId();
+	const [showPassword, setShowPassword] = useState(false);
+	const [showPhoneDialog, setShowPhoneDialog] = useState(false);
+
+	const form = useForm<SignupFormValues>({
+		resolver: zodResolver(registerSchema),
+		defaultValues: {
+			name: "",
+			email: "",
+			phone: "",
+			password: "",
+		},
+	});
 
 	useEffect(() => {
 		if (data?.user.id) {
@@ -43,31 +60,14 @@ export default function RegisterPage() {
 		}
 	}, [data?.user?.id, router]);
 
-	async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-		event.preventDefault();
-		if (!phoneDialogAcknowledged) {
-			setShowPhoneDialog(true);
-			return;
-		}
-		setIsLoading(true);
-
-		const formData = new FormData(event.currentTarget);
-		const name = formData.get("name") as string;
-		const email = formData.get("email") as string;
-		const password = formData.get("password") as string;
-		const phone = formData.get("phone") as string;
-
+	async function onSubmit(data: SignupFormValues) {
 		try {
-			await axios.post(
-				"/api/register",
-				{ name, email, password, phone },
-				{
-					headers: {
-						"Content-Type": "application/json",
-						Accept: "application/json",
-					},
+			await axios.post("/api/register", data, {
+				headers: {
+					"Content-Type": "application/json",
+					Accept: "application/json",
 				},
-			);
+			});
 
 			toast.success("Registration successful! Please log in.");
 			router.push(`/login${redirect ? `?redirect=${redirect}` : ""}`);
@@ -101,8 +101,6 @@ export default function RegisterPage() {
 
 			toast.error("Something went wrong");
 			return;
-		} finally {
-			setIsLoading(false);
 		}
 	}
 
@@ -119,147 +117,152 @@ export default function RegisterPage() {
 				</div>
 				<Card className="shadow-md border border-gray-200">
 					<CardContent className="pt-6">
-						<form
-							onSubmit={onSubmit}
-							className="space-y-6"
-							aria-label="Sign up form"
-						>
-							<div className="space-y-2">
-								<Label htmlFor={nameId}>Name</Label>
-								<Input
-									id={nameId}
-									name="name"
-									type="text"
-									placeholder="Your name"
-									required
-									disabled={isLoading}
-									className="h-12 text-base"
-									autoComplete="name"
-									aria-label="Full name"
-								/>
-							</div>
-							<div className="space-y-2">
-								<Label htmlFor={emailId}>Email</Label>
-								<Input
-									id={emailId}
-									name="email"
-									type="email"
-									placeholder="name@example.com"
-									required
-									disabled={isLoading}
-									className="h-12 text-base"
-									autoComplete="email"
-									aria-label="Email address"
-								/>
-							</div>
-							<div className="space-y-2 hidden">
-								<Label htmlFor={usernameId}>Username</Label>
-								<Input
-									id={usernameId}
-									name="username"
-									type="text"
-									placeholder="Your username"
-									disabled={isLoading}
-									hidden
-									className="hidden"
-									autoComplete="username"
-									aria-label="Username"
-								/>
-							</div>
-							<div className="space-y-2">
-								<div className="flex items-center gap-2">
-									<Label htmlFor={phoneId}>Phone Number</Label>
-									<AlertDialog
-										open={showPhoneDialog}
-										onOpenChange={setShowPhoneDialog}
-									>
-										<AlertDialogTrigger asChild>
-											<button
-												type="button"
-												aria-label="Why do we need your phone number?"
-												className="text-blue-500 hover:text-blue-700 focus:outline-none"
-											>
-												<Info className="h-4 w-4" />
-											</button>
-										</AlertDialogTrigger>
-										<AlertDialogContent>
-											<AlertDialogTitle>
-												Why do we need your phone number?
-											</AlertDialogTitle>
-											<AlertDialogDescription>
-												Please enter a valid phone number. We'll use this to get
-												in touch with you for any order updates or
-												delivery-related queries.
-											</AlertDialogDescription>
-											<AlertDialogAction
-												onClick={() => {
-													setShowPhoneDialog(false);
-													setPhoneDialogAcknowledged(true);
-													setTimeout(() => {
-														const form = document.querySelector("form");
-														if (form) (form as HTMLFormElement).requestSubmit();
-													}, 0);
-												}}
-											>
-												Got it
-											</AlertDialogAction>
-										</AlertDialogContent>
-									</AlertDialog>
-								</div>
-								<Input
-									id={phoneId}
-									name="phone"
-									type="tel"
-									placeholder="Your phone number"
-									required
-									disabled={isLoading}
-									className="h-12 text-base"
-									pattern="[0-9+\-\s()]{10,}"
-									autoComplete="tel"
-									aria-label="Phone number"
-								/>
-							</div>
-							<div className="space-y-2">
-								<Label htmlFor={passwordId}>Password</Label>
-								<div className="relative">
-									<Input
-										id={passwordId}
-										name="password"
-										placeholder="********"
-										type={showPassword ? "text" : "password"}
-										required
-										disabled={isLoading}
-										className="h-12 text-base pr-10"
-										autoComplete="new-password"
-										aria-label="Password"
-									/>
-									<button
-										type="button"
-										className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
-										onClick={() => setShowPassword((v) => !v)}
-										aria-label={
-											showPassword ? "Hide password" : "Show password"
-										}
-									>
-										{showPassword ? <EyeOffIcon /> : <EyeIcon />}
-									</button>
-								</div>
-							</div>
-
-							<Button
-								className="w-full h-12 text-base"
-								type="submit"
-								disabled={isLoading}
-								aria-label="Sign up"
+						<Form {...form}>
+							<form
+								onSubmit={form.handleSubmit(onSubmit)}
+								className="space-y-6"
+								aria-label="Sign up form"
 							>
-								{isLoading && (
-									<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-								)}
-								Sign Up
-							</Button>
-						</form>
+								<FormField
+									control={form.control}
+									name="name"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>Name</FormLabel>
+											<FormControl>
+												<Input
+													placeholder="Your name"
+													className="h-12 text-base"
+													autoComplete="name"
+													{...field}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="email"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>Email</FormLabel>
+											<FormControl>
+												<Input
+													type="email"
+													placeholder="name@example.com"
+													className="h-12 text-base"
+													autoComplete="email"
+													{...field}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="phone"
+									render={({ field }) => (
+										<FormItem>
+											<div className="flex items-center gap-2">
+												<FormLabel>Phone Number</FormLabel>
+												<AlertDialog
+													open={showPhoneDialog}
+													onOpenChange={setShowPhoneDialog}
+												>
+													<AlertDialogTrigger asChild>
+														<button
+															type="button"
+															aria-label="Why do we need your phone number?"
+															className="text-blue-500 hover:text-blue-700 focus:outline-none"
+														>
+															<Info className="h-4 w-4" />
+														</button>
+													</AlertDialogTrigger>
+													<AlertDialogContent>
+														<AlertDialogTitle>
+															Why do we need your phone number?
+														</AlertDialogTitle>
+														<AlertDialogDescription>
+															Please enter a valid phone number. We'll use this
+															to get in touch with you for any order updates or
+															delivery-related queries.
+														</AlertDialogDescription>
+														<AlertDialogAction
+															onClick={() => setShowPhoneDialog(false)}
+														>
+															Got it
+														</AlertDialogAction>
+													</AlertDialogContent>
+												</AlertDialog>
+											</div>
+											<FormControl>
+												<Input
+													type="tel"
+													placeholder="Your phone number"
+													className="h-12 text-base"
+													autoComplete="tel"
+													{...field}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="password"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>Password</FormLabel>
+											<FormControl>
+												<div className="relative">
+													<Input
+														type={showPassword ? "text" : "password"}
+														placeholder="Create a password"
+														className="h-12 text-base pr-10"
+														autoComplete="new-password"
+														{...field}
+													/>
+													<button
+														type="button"
+														onClick={() => setShowPassword(!showPassword)}
+														className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+													>
+														{showPassword ? (
+															<EyeOffIcon className="h-4 w-4" />
+														) : (
+															<EyeIcon className="h-4 w-4" />
+														)}
+													</button>
+												</div>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<Button
+									type="submit"
+									className="w-full h-12 text-base"
+									disabled={form.formState.isSubmitting}
+								>
+									{form.formState.isSubmitting && (
+										<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+									)}
+									{form.formState.isSubmitting
+										? "Creating account..."
+										: "Create account"}
+								</Button>
+							</form>
+						</Form>
 					</CardContent>
 				</Card>
+
 				<div className="text-center text-sm text-muted-foreground mt-2">
 					Already have an account?{" "}
 					<a

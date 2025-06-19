@@ -1,24 +1,43 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import type { z } from "zod";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+	Form,
+	FormControl,
+	FormField,
+	FormItem,
+	FormLabel,
+	FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { loginSchema } from "@/lib/schema";
+
+type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
 	const router = useRouter();
 	const { data } = useSession();
-	const [isLoading, setIsLoading] = useState(false);
 	const [showPassword, setShowPassword] = useState(false);
-	const emailId = useId();
-	const passwordId = useId();
 	const searchParams = useSearchParams();
 	const redirect = searchParams.get("redirect");
+
+	const form = useForm<LoginFormValues>({
+		resolver: zodResolver(loginSchema),
+		defaultValues: {
+			email: "",
+			password: "",
+		},
+	});
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: we only want to run this effect once
 	useEffect(() => {
@@ -29,23 +48,18 @@ export default function LoginPage() {
 		}
 	}, []);
 
-	async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-		event.preventDefault();
-		setIsLoading(true);
-
-		const formData = new FormData(event.currentTarget);
-		const email = formData.get("email") as string;
-		const password = formData.get("password") as string;
-
+	async function onSubmit(data: LoginFormValues) {
 		try {
 			const result = await signIn("credentials", {
-				email,
-				password,
+				email: data.email,
+				password: data.password,
 				redirect: false,
 			});
 
 			if (result?.error) {
 				toast.error("Invalid credentials");
+				form.setError("password", { message: "Invalid credentials" });
+				form.setError("email", { message: "Invalid credentials" });
 				return;
 			}
 
@@ -61,8 +75,6 @@ export default function LoginPage() {
 		} catch (error) {
 			console.error(error);
 			toast.error("Something went wrong");
-		} finally {
-			setIsLoading(false);
 		}
 	}
 
@@ -77,64 +89,83 @@ export default function LoginPage() {
 						Enter your credentials to sign in to your account
 					</p>
 				</div>
+
 				<Card className="shadow-md border border-gray-200">
 					<CardContent className="pt-6">
-						<form onSubmit={onSubmit} className="space-y-6">
-							<div className="grid gap-3">
-								<Label htmlFor={emailId}>Email</Label>
-								<Input
-									id={emailId}
+						<Form {...form}>
+							<form
+								onSubmit={form.handleSubmit(onSubmit)}
+								className="space-y-6"
+							>
+								<FormField
+									control={form.control}
 									name="email"
-									type="email"
-									placeholder="m@example.com"
-									required
-									className="h-12 text-base"
-									autoComplete="email"
-									aria-label="Email address"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>Email</FormLabel>
+											<FormControl>
+												<Input
+													type="email"
+													placeholder="m@example.com"
+													className="h-12 text-base"
+													autoComplete="email"
+													{...field}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
 								/>
-							</div>
-							<div className="grid gap-3">
-								<div className="flex items-center">
-									<Label htmlFor={passwordId}>Password</Label>
-									<a
-										href="/forgot-password"
-										className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-									>
-										Forgot your password?
-									</a>
-								</div>
-								<div className="space-y-2">
-									<div className="relative">
-										<Input
-											id={passwordId}
-											name="password"
-											placeholder="********"
-											type={showPassword ? "text" : "password"}
-											required
-											disabled={isLoading}
-											className="h-12 text-base pr-10"
-											autoComplete="current-password"
-											aria-label="Password"
-										/>
-										<button
-											type="button"
-											className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
-											onClick={() => setShowPassword((v) => !v)}
-											aria-label={
-												showPassword ? "Hide password" : "Show password"
-											}
-										>
-											{showPassword ? <EyeOffIcon /> : <EyeIcon />}
-										</button>
-									</div>
-								</div>
-							</div>
-							<div className="flex flex-col gap-3">
-								<Button type="submit" className="w-full h-12 text-base">
-									Login
+
+								<FormField
+									control={form.control}
+									name="password"
+									render={({ field }) => (
+										<FormItem>
+											<div className="flex items-center">
+												<FormLabel>Password</FormLabel>
+												<a
+													href="/forgot-password"
+													className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+												>
+													Forgot your password?
+												</a>
+											</div>
+											<FormControl>
+												<div className="relative">
+													<Input
+														type={showPassword ? "text" : "password"}
+														placeholder="********"
+														className="h-12 text-base pr-10"
+														autoComplete="current-password"
+														{...field}
+													/>
+													<button
+														type="button"
+														className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+														onClick={() => setShowPassword(!showPassword)}
+														aria-label={
+															showPassword ? "Hide password" : "Show password"
+														}
+													>
+														{showPassword ? <EyeOffIcon /> : <EyeIcon />}
+													</button>
+												</div>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<Button
+									type="submit"
+									className="w-full h-12 text-base"
+									disabled={form.formState.isSubmitting}
+								>
+									{form.formState.isSubmitting ? "Signing in..." : "Sign in"}
 								</Button>
-							</div>
-						</form>
+							</form>
+						</Form>
 					</CardContent>
 				</Card>
 				<div className="text-center text-sm text-muted-foreground mt-2">
