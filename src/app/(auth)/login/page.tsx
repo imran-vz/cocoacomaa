@@ -65,13 +65,11 @@ export default function LoginPage() {
 
 			if (redirect) {
 				console.log("redirect", redirect);
-				router.push(redirect);
+				window.location.href = redirect;
 			} else {
 				console.log("no redirect");
-				router.push("/admin");
+				window.location.href = "/";
 			}
-
-			router.refresh();
 		} catch (error) {
 			console.error(error);
 			toast.error("Something went wrong");
