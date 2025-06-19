@@ -29,6 +29,7 @@ export default async function EditDessertPage({
 				name: dessert.name,
 				price: dessert.price,
 				description: dessert.description,
+				imageUrl: dessert.imageUrl || "",
 				status: dessert.status as "available" | "unavailable",
 			}}
 		/>

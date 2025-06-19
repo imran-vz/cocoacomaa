@@ -8,6 +8,7 @@ export const desserts = pgTable("desserts", (d) => {
 		name: d.varchar("name", { length: 255 }).notNull(),
 		description: d.text("description").notNull(),
 		price: d.varchar("price", { length: 10 }).notNull(),
+		imageUrl: d.text("image_url"),
 		status: d.varchar("status", { length: 50 }).notNull().default("available"),
 		createdAt: d
 			.timestamp("created_at")

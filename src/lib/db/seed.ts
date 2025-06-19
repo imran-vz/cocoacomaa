@@ -4,6 +4,7 @@ import { faker } from "@faker-js/faker";
 import { eq } from "drizzle-orm";
 import { db } from ".";
 import { desserts, orderItems, orders, users } from "./schema";
+import { createAdminUser } from "../../../scripts/create-admin";
 
 async function seed() {
 	try {
@@ -64,6 +65,30 @@ async function seed() {
 				name,
 				price: faker.number.int({ min: 800, max: 3500 }).toString(), // $8-$35
 				description: dessertDescriptions[index],
+				imageUrl: `https://images.unsplash.com/photo-${
+					[
+						"1578985545622-28b7a3e4a137", // Chocolate cake
+						"1565958011703-361f7fa0ccf5", // Cheesecake
+						"1464349095431-4b72803b8f97", // Strawberry cake
+						"1571877227200-a0d98ea607e9", // Tiramisu
+						"1563805042-7684c019e1cb", // Red velvet
+						"1578985545622-28b7a3e4a137", // Lemon tart
+						"1578985545622-28b7a3e4a137", // Chocolate truffle
+						"1549312185-22cc2b96ae2b", // Apple pie
+						"1578985545622-28b7a3e4a137", // Crème brûlée
+						"1571506602739-9cb0c7c0b2df", // Macarons
+						"1571066811602-716837d681de", // Brownies
+						"1578985545622-28b7a3e4a137", // Fruit tart
+						"1578985545622-28b7a3e4a137", // Panna cotta
+						"1563805042-7684c019e1cb", // Chocolate mousse
+						"1578985545622-28b7a3e4a137", // Carrot cake
+						"1563805042-7684c019e1cb", // Ice cream
+						"1578985545622-28b7a3e4a137", // Banana bread
+						"1578985545622-28b7a3e4a137", // Key lime pie
+						"1578985545622-28b7a3e4a137", // Pecan pie
+						"1578985545622-28b7a3e4a137", // Éclair
+					][index % 20]
+				}?w=400&h=300&fit=crop`,
 				status: "available",
 			}),
 		);
@@ -75,7 +100,7 @@ async function seed() {
 		console.log("deleting customers");
 		await db.delete(orders).execute();
 		await db.delete(users).execute();
-
+		await createAdminUser();
 		const customerData: (typeof users.$inferInsert)[] = [
 			{
 				name: faker.person.fullName(),

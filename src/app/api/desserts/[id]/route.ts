@@ -35,7 +35,7 @@ export async function PATCH(
 ) {
 	try {
 		const body = await request.json();
-		const { name, description, price } = body;
+		const { name, description, price, imageUrl, status } = body;
 
 		const updatedDessert = await db
 			.update(desserts)
@@ -43,6 +43,8 @@ export async function PATCH(
 				name,
 				description,
 				price,
+				imageUrl,
+				status,
 				updatedAt: new Date(),
 			})
 			.where(eq(desserts.id, Number.parseInt((await params).id, 10)))

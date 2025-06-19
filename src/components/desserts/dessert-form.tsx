@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
@@ -37,6 +37,7 @@ const dessertSchema = z.object({
 	name: z.string().min(1, "Name is required"),
 	price: z.string().min(1, "Price is required"),
 	description: z.string().min(1, "Description is required"),
+	imageUrl: z.string().optional(),
 	status: z.enum(["available", "unavailable"]),
 });
 
@@ -49,12 +50,19 @@ interface DessertFormProps {
 
 export function DessertForm({ mode, initialData }: DessertFormProps) {
 	const router = useRouter();
+	const [selectedFile, setSelectedFile] = useState<File | null>(null);
+	const [imagePreview, setImagePreview] = useState<string>(
+		initialData?.imageUrl || "",
+	);
+	const [uploading, setUploading] = useState(false);
+
 	const form = useForm<DessertFormValues>({
 		resolver: zodResolver(dessertSchema),
 		defaultValues: initialData || {
 			name: "",
 			price: "",
 			description: "",
+			imageUrl: "",
 			status: "available",
 		},
 	});
@@ -66,18 +74,87 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 		}
 	}, [mode, initialData, router]);
 
+	const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+		const file = event.target.files?.[0];
+		if (file) {
+			if (file.size > 5 * 1024 * 1024) {
+				// 5MB limit
+				toast.error("File size must be less than 5MB");
+				return;
+			}
+
+			if (!file.type.startsWith("image/")) {
+				toast.error("Please select an image file");
+				return;
+			}
+
+			setSelectedFile(file);
+
+			// Create preview
+			const reader = new FileReader();
+			reader.onload = (e) => {
+				setImagePreview(e.target?.result as string);
+			};
+			reader.readAsDataURL(file);
+		}
+	};
+
+	const uploadImage = async (): Promise<string | null> => {
+		if (!selectedFile) return null;
+
+		setUploading(true);
+		try {
+			const response = await fetch(
+				`/api/upload?filename=${encodeURIComponent(selectedFile.name)}`,
+				{
+					method: "POST",
+					body: selectedFile,
+				},
+			);
+
+			if (!response.ok) {
+				throw new Error("Failed to upload image");
+			}
+
+			const { url } = await response.json();
+			return url;
+		} catch (error) {
+			console.error("Upload error:", error);
+			toast.error("Failed to upload image");
+			return null;
+		} finally {
+			setUploading(false);
+		}
+	};
+
 	async function onSubmit(data: DessertFormValues) {
 		try {
+			let imageUrl = data.imageUrl;
+
+			// Upload new image if selected
+			if (selectedFile) {
+				const uploadedUrl = await uploadImage();
+				if (uploadedUrl) {
+					imageUrl = uploadedUrl;
+				} else {
+					// If upload failed, don't proceed
+					return;
+				}
+			}
+
 			const response = await fetch(
 				mode === "create"
 					? "/api/desserts"
 					: `/api/desserts/${initialData?.id}`,
 				{
-					method: mode === "create" ? "POST" : "PUT",
+					method: mode === "create" ? "POST" : "PATCH",
 					headers: {
 						"Content-Type": "application/json",
 					},
-					body: JSON.stringify(data),
+					body: JSON.stringify({
+						...data,
+						imageUrl,
+					}),
 				},
 			);
 
@@ -86,7 +163,7 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 			}
 
 			toast.success(mode === "create" ? "Dessert created" : "Dessert updated");
-			router.push("/admin");
+			router.push("/admin/desserts");
 			router.refresh();
 		} catch (error) {
 			console.error(error);
@@ -158,6 +235,33 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 								)}
 							/>
 
+							<div className="space-y-4">
+								<FormLabel>Dessert Image</FormLabel>
+								<div className="flex flex-col space-y-4">
+									{imagePreview && (
+										<div className="relative w-full max-w-sm">
+											{/** biome-ignore lint/performance/noImgElement: this is only for preview */}
+											<img
+												src={imagePreview}
+												alt="Preview"
+												className="w-full h-48 object-cover rounded-lg"
+											/>
+										</div>
+									)}
+									<div className="flex flex-col space-y-2">
+										<Input
+											type="file"
+											accept="image/*"
+											onChange={handleFileSelect}
+											className="cursor-pointer"
+										/>
+										<p className="text-sm text-muted-foreground">
+											Maximum file size: 5MB. Supported formats: JPG, PNG, WebP
+										</p>
+									</div>
+								</div>
+							</div>
+
 							<FormField
 								control={form.control}
 								name="status"
@@ -191,8 +295,12 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 								>
 									Cancel
 								</Button>
-								<Button type="submit">
-									{mode === "create" ? "Create Dessert" : "Update Dessert"}
+								<Button type="submit" disabled={uploading}>
+									{uploading
+										? "Uploading..."
+										: mode === "create"
+											? "Create Dessert"
+											: "Update Dessert"}
 								</Button>
 							</div>
 						</form>

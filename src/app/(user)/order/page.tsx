@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { Minus, Plus, ShoppingCart } from "lucide-react";
 import lazyLoading from "next/dynamic";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
@@ -21,6 +22,7 @@ interface Dessert {
 	name: string;
 	price: number;
 	description: string | null;
+	imageUrl: string | null;
 	enabled: boolean;
 }
 
@@ -230,6 +232,17 @@ export default function OrderPage() {
 										key={dessert.id}
 										className="overflow-hidden flex flex-col justify-between"
 									>
+										{dessert.imageUrl && (
+											<div className="relative aspect-video w-full">
+												<Image
+													src={dessert.imageUrl}
+													alt={dessert.name}
+													fill
+													className="object-cover"
+													sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+												/>
+											</div>
+										)}
 										<CardHeader className="pb-3 sm:pb-4">
 											<div className="flex justify-between items-start gap-2">
 												<CardTitle className="text-lg sm:text-xl leading-tight">
