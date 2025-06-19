@@ -1,5 +1,5 @@
-import WhatsAppIcon from "@/components/icon/whatsapp";
 import InstagramIcon from "@/components/icon/instagram";
+import WhatsAppIcon from "@/components/icon/whatsapp";
 
 export default function ContactUs() {
 	return (

@@ -1,7 +1,8 @@
-import { db } from "@/lib/db";
-import { desserts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
+
+import { db } from "@/lib/db";
+import { desserts } from "@/lib/db/schema";
 
 export async function GET(
 	_: Request,
@@ -20,6 +21,7 @@ export async function GET(
 
 		return NextResponse.json(dessert[0]);
 	} catch (error) {
+		console.error(error);
 		return NextResponse.json(
 			{ error: "Failed to fetch dessert" },
 			{ status: 500 },
@@ -52,6 +54,7 @@ export async function PATCH(
 
 		return NextResponse.json(updatedDessert[0]);
 	} catch (error) {
+		console.error(error);
 		return NextResponse.json(
 			{ error: "Failed to update dessert" },
 			{ status: 500 },
@@ -75,6 +78,7 @@ export async function DELETE(
 
 		return NextResponse.json(deletedDessert[0]);
 	} catch (error) {
+		console.error(error);
 		return NextResponse.json(
 			{ error: "Failed to delete dessert" },
 			{ status: 500 },

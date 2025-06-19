@@ -1,12 +1,12 @@
 "use client";
 
+import { Menu, ShoppingCart, X } from "lucide-react";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart-context";
-import { Menu, ShoppingCart, X } from "lucide-react";
-import { useSession } from "next-auth/react";
-import Link from "next/link";
-import { useState } from "react";
 
 export function Navigation() {
 	const [isMenuOpen, setIsMenuOpen] = useState(false);

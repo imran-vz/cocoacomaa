@@ -1,10 +1,10 @@
 "use client";
 
+import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableRowActions } from "@/components/orders/data-table-row-actions";
 import { Badge } from "@/components/ui/badge";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import type { ColumnDef } from "@tanstack/react-table";
 
 export const columns: ColumnDef<{
 	id: string;

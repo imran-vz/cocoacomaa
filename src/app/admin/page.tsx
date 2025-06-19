@@ -1,7 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { db } from "@/lib/db";
-import { desserts, orders, users } from "@/lib/db/schema";
-import { formatCurrency } from "@/lib/utils";
 import { and, eq, gte, sql } from "drizzle-orm";
 import {
 	CheckCircle2,
@@ -14,6 +10,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { db } from "@/lib/db";
+import { desserts, orders, users } from "@/lib/db/schema";
+import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -166,7 +166,9 @@ export default async function AdminDashboard() {
 
 async function TotalRevenue({
 	totalRevenuePromise,
-}: { totalRevenuePromise: Promise<number> }) {
+}: {
+	totalRevenuePromise: Promise<number>;
+}) {
 	const totalRevenue = await totalRevenuePromise.catch(() => 0);
 
 	return (
@@ -187,7 +189,9 @@ async function TotalRevenue({
 
 async function TotalOrders({
 	totalOrdersPromise,
-}: { totalOrdersPromise: Promise<number> }) {
+}: {
+	totalOrdersPromise: Promise<number>;
+}) {
 	const totalOrders = await totalOrdersPromise.catch(() => 0);
 
 	return (
@@ -206,7 +210,9 @@ async function TotalOrders({
 
 async function TotalDesserts({
 	totalDessertsPromise,
-}: { totalDessertsPromise: Promise<number> }) {
+}: {
+	totalDessertsPromise: Promise<number>;
+}) {
 	const totalDesserts = await totalDessertsPromise.catch(() => 0);
 
 	return (
@@ -225,7 +231,9 @@ async function TotalDesserts({
 
 async function TotalCustomers({
 	totalCustomersPromise,
-}: { totalCustomersPromise: Promise<number> }) {
+}: {
+	totalCustomersPromise: Promise<number>;
+}) {
 	const totalCustomers = await totalCustomersPromise.catch(() => 0);
 
 	return (
@@ -246,7 +254,9 @@ async function TotalCustomers({
 
 async function RecentOrders({
 	recentOrdersPromise,
-}: { recentOrdersPromise: Promise<number> }) {
+}: {
+	recentOrdersPromise: Promise<number>;
+}) {
 	const recentOrders = await recentOrdersPromise.catch(() => 0);
 	return (
 		<Card className="hover:shadow-md transition-shadow">
@@ -264,7 +274,9 @@ async function RecentOrders({
 
 async function PendingOrders({
 	pendingOrdersPromise,
-}: { pendingOrdersPromise: Promise<number> }) {
+}: {
+	pendingOrdersPromise: Promise<number>;
+}) {
 	const pendingOrders = await pendingOrdersPromise.catch(() => 0);
 
 	return (
@@ -285,7 +297,9 @@ async function PendingOrders({
 
 async function CompletedOrders({
 	completedOrdersPromise,
-}: { completedOrdersPromise: Promise<number> }) {
+}: {
+	completedOrdersPromise: Promise<number>;
+}) {
 	const completedOrders = await completedOrdersPromise.catch(() => 0);
 
 	return (

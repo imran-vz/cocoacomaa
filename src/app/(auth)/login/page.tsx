@@ -1,20 +1,22 @@
 "use client";
 
+import { EyeIcon, EyeOffIcon } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { signIn, useSession } from "next-auth/react";
+import { useEffect, useId, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { EyeIcon, EyeOffIcon } from "lucide-react";
-import { signIn, useSession } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
 
 export default function LoginPage() {
 	const router = useRouter();
 	const { data } = useSession();
 	const [isLoading, setIsLoading] = useState(false);
 	const [showPassword, setShowPassword] = useState(false);
+	const emailId = useId();
+	const passwordId = useId();
 	const searchParams = useSearchParams();
 	const redirect = searchParams.get("redirect");
 
@@ -57,6 +59,7 @@ export default function LoginPage() {
 
 			router.refresh();
 		} catch (error) {
+			console.error(error);
 			toast.error("Something went wrong");
 		} finally {
 			setIsLoading(false);
@@ -78,9 +81,9 @@ export default function LoginPage() {
 					<CardContent className="pt-6">
 						<form onSubmit={onSubmit} className="space-y-6">
 							<div className="grid gap-3">
-								<Label htmlFor="email">Email</Label>
+								<Label htmlFor={emailId}>Email</Label>
 								<Input
-									id="email"
+									id={emailId}
 									name="email"
 									type="email"
 									placeholder="m@example.com"
@@ -92,7 +95,7 @@ export default function LoginPage() {
 							</div>
 							<div className="grid gap-3">
 								<div className="flex items-center">
-									<Label htmlFor="password">Password</Label>
+									<Label htmlFor={passwordId}>Password</Label>
 									<a
 										href="/forgot-password"
 										className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
@@ -103,7 +106,7 @@ export default function LoginPage() {
 								<div className="space-y-2">
 									<div className="relative">
 										<Input
-											id="password"
+											id={passwordId}
 											name="password"
 											placeholder="********"
 											type={showPassword ? "text" : "password"}

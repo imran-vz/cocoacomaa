@@ -1,9 +1,9 @@
-import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
 import bcrypt from "bcrypt";
 import { eq, or } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { db } from "@/lib/db";
+import { users } from "@/lib/db/schema";
 
 const registerSchema = z.object({
 	name: z.string().min(1, { message: "Name is required." }),

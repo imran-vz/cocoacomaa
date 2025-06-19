@@ -1,8 +1,8 @@
+import { eq } from "drizzle-orm";
+import { notFound } from "next/navigation";
 import { DessertForm } from "@/components/desserts/dessert-form";
 import { db } from "@/lib/db";
 import { desserts } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
-import { notFound } from "next/navigation";
 
 interface EditDessertPageProps {
 	params: Promise<{

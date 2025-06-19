@@ -1,9 +1,9 @@
+import { Plus } from "lucide-react";
+import Link from "next/link";
 import { columns } from "@/components/desserts/columns";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { db } from "@/lib/db";
-import { Plus } from "lucide-react";
-import Link from "next/link";
 
 export default async function DessertsPage() {
 	const dessertsList = await db.query.desserts.findMany({

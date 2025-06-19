@@ -1,17 +1,15 @@
 "use client";
 
 import type { Row } from "@tanstack/react-table";
-import { MoreHorizontal, Pencil, Trash, Eye } from "lucide-react";
+import { Eye, MoreHorizontal } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
-	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 
 interface DataTableRowActionsProps<TData> {
 	row: Row<TData>;

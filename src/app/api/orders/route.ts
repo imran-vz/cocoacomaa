@@ -1,9 +1,9 @@
+import { eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { orders, orderItems, users } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
 import Razorpay from "razorpay";
+import { db } from "@/lib/db";
+import { orderItems, orders, users } from "@/lib/db/schema";
 
 const razorpay = new Razorpay({
 	key_id: process.env.RAZORPAY_KEY_ID || "",

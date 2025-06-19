@@ -1,24 +1,24 @@
 "use client";
 
+import axios from "axios";
+import { EyeIcon, EyeOffIcon, Info } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { useEffect, useId, useState } from "react";
+import { toast } from "sonner";
 import { Icons } from "@/components/icons";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { EyeIcon, EyeOffIcon, Info } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import {
-	AlertDialog,
-	AlertDialogTrigger,
-	AlertDialogContent,
-	AlertDialogTitle,
-	AlertDialogDescription,
-	AlertDialogAction,
-} from "@/components/ui/alert-dialog";
-import axios from "axios";
-import { useSession } from "next-auth/react";
 
 export default function RegisterPage() {
 	const router = useRouter();
@@ -29,6 +29,12 @@ export default function RegisterPage() {
 	const { data } = useSession();
 	const searchParams = useSearchParams();
 	const redirect = searchParams.get("redirect");
+
+	const nameId = useId();
+	const emailId = useId();
+	const usernameId = useId();
+	const phoneId = useId();
+	const passwordId = useId();
 
 	useEffect(() => {
 		if (data?.user.id) {
@@ -119,9 +125,9 @@ export default function RegisterPage() {
 							aria-label="Sign up form"
 						>
 							<div className="space-y-2">
-								<Label htmlFor="name">Name</Label>
+								<Label htmlFor={nameId}>Name</Label>
 								<Input
-									id="name"
+									id={nameId}
 									name="name"
 									type="text"
 									placeholder="Your name"
@@ -133,9 +139,9 @@ export default function RegisterPage() {
 								/>
 							</div>
 							<div className="space-y-2">
-								<Label htmlFor="email">Email</Label>
+								<Label htmlFor={emailId}>Email</Label>
 								<Input
-									id="email"
+									id={emailId}
 									name="email"
 									type="email"
 									placeholder="name@example.com"
@@ -147,9 +153,9 @@ export default function RegisterPage() {
 								/>
 							</div>
 							<div className="space-y-2 hidden">
-								<Label htmlFor="username">Username</Label>
+								<Label htmlFor={usernameId}>Username</Label>
 								<Input
-									id="username"
+									id={usernameId}
 									name="username"
 									type="text"
 									placeholder="Your username"
@@ -162,7 +168,7 @@ export default function RegisterPage() {
 							</div>
 							<div className="space-y-2">
 								<div className="flex items-center gap-2">
-									<Label htmlFor="phone">Phone Number</Label>
+									<Label htmlFor={phoneId}>Phone Number</Label>
 									<AlertDialog
 										open={showPhoneDialog}
 										onOpenChange={setShowPhoneDialog}
@@ -201,7 +207,7 @@ export default function RegisterPage() {
 									</AlertDialog>
 								</div>
 								<Input
-									id="phone"
+									id={phoneId}
 									name="phone"
 									type="tel"
 									placeholder="Your phone number"
@@ -214,10 +220,10 @@ export default function RegisterPage() {
 								/>
 							</div>
 							<div className="space-y-2">
-								<Label htmlFor="password">Password</Label>
+								<Label htmlFor={passwordId}>Password</Label>
 								<div className="relative">
 									<Input
-										id="password"
+										id={passwordId}
 										name="password"
 										placeholder="********"
 										type={showPassword ? "text" : "password"}

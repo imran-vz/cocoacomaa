@@ -3,8 +3,6 @@
 import {
 	type ColumnDef,
 	type ColumnFiltersState,
-	type SortingState,
-	type VisibilityState,
 	flexRender,
 	getCoreRowModel,
 	getFacetedRowModel,
@@ -12,9 +10,15 @@ import {
 	getFilteredRowModel,
 	getPaginationRowModel,
 	getSortedRowModel,
+	type SortingState,
 	useReactTable,
+	type VisibilityState,
 } from "@tanstack/react-table";
+import { useState } from "react";
 
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
+import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
 	Table,
 	TableBody,
@@ -23,11 +27,6 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-
-import { DataTablePagination } from "@/components/ui/data-table-pagination";
-import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useState } from "react";
 import { Icons } from "../icons";
 
 interface DataTableProps<TData, TValue> {
@@ -192,12 +191,12 @@ export function LoadingDataTable<TData, TValue>({
 							))}
 						</TableHeader>
 						<TableBody>
-							{[...Array(rowCount)].map((r, i) => (
+							{[...Array(rowCount)].map((_, i) => (
 								<TableRow
 									// biome-ignore lint/suspicious/noArrayIndexKey: adding a key to the skeleton rows
 									key={`skeleton-row-${i}`}
 								>
-									{columns.map((col, j) => (
+									{columns.map((col) => (
 										<TableCell key={`skeleton-cell-${col.id}`}>
 											<Skeleton className="h-5 w-full bg-primary/20" />
 										</TableCell>

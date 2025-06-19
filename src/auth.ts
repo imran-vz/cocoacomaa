@@ -1,12 +1,12 @@
-import { authOptions } from "@/auth.config";
-import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { z } from "zod";
+import { authOptions } from "@/auth.config";
+import { db } from "@/lib/db";
+import { users } from "@/lib/db/schema";
 
 const loginSchema = z.object({
 	email: z.string().email({ message: "Invalid email address." }),

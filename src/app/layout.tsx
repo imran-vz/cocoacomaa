@@ -1,11 +1,11 @@
-import { Navigation } from "@/components/Navigation";
-import { CartProvider } from "@/lib/cart-context";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Toaster } from "sonner";
-import { Providers } from "./providers";
+
 import { Footer } from "@/components/Footer";
-import Link from "next/link";
+import { Navigation } from "@/components/Navigation";
+import { CartProvider } from "@/lib/cart-context";
+import { Providers } from "./providers";
 
 import "./globals.css";
 

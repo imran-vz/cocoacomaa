@@ -1,8 +1,8 @@
+import { desc } from "drizzle-orm";
 import { columns } from "@/components/orders/columns";
 import { DataTable } from "@/components/ui/data-table";
 import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
-import { desc } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 

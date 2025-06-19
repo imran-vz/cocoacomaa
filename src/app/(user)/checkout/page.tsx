@@ -1,11 +1,11 @@
-import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import CheckoutPage from "./_components/checkout";
+
 import { auth } from "@/auth";
+import { db } from "@/lib/db";
+import { users } from "@/lib/db/schema";
+import CheckoutPage from "./_components/checkout";
 
 export default async function Page() {
 	const session = await auth();

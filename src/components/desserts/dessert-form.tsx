@@ -1,5 +1,12 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import * as z from "zod";
+
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -25,12 +32,6 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import * as z from "zod";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 
 const dessertSchema = z.object({
 	name: z.string().min(1, "Name is required"),
@@ -88,6 +89,7 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 			router.push("/admin");
 			router.refresh();
 		} catch (error) {
+			console.error(error);
 			toast.error("Something went wrong");
 		}
 	}

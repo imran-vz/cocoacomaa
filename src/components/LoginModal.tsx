@@ -1,17 +1,20 @@
-import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import {
 	Dialog,
 	DialogContent,
-	DialogTitle,
 	DialogDescription,
 	DialogFooter,
+	DialogTitle,
 } from "@/components/ui/dialog";
 
 export default function LoginModal({
 	open,
 	onClose,
-}: { open: boolean; onClose: () => void }) {
+}: {
+	open: boolean;
+	onClose: () => void;
+}) {
 	const router = useRouter();
 	return (
 		<Dialog open={open} onOpenChange={(v) => !v && onClose()}>

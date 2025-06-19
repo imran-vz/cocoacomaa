@@ -1,18 +1,18 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
+import { Minus, Plus, ShoppingCart } from "lucide-react";
+import lazyLoading from "next/dynamic";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCart } from "@/lib/cart-context";
 import { formatCurrency } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
-import { Minus, Plus, ShoppingCart } from "lucide-react";
-import { useSession } from "next-auth/react";
-import lazyLoading from "next/dynamic";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { toast } from "sonner";
 
 export const dynamic = "force-dynamic";
 
@@ -127,6 +127,7 @@ export default function OrderPage() {
 			<h1 className="text-2xl sm:text-3xl sm:hidden font-bold mb-4 sm:mb-6 lg:mb-8">
 				Our Desserts
 			</h1>
+
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
 				<div className="order-1 lg:order-2 lg:col-span-1">
 					<div className="h-0 lg:h-[66px]" />

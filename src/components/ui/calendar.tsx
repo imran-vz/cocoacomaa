@@ -1,19 +1,18 @@
 "use client";
 
-import * as React from "react";
 import {
 	ChevronDownIcon,
 	ChevronLeftIcon,
 	ChevronRightIcon,
 } from "lucide-react";
+import * as React from "react";
 import {
 	type DayButton,
 	DayPicker,
 	getDefaultClassNames,
 } from "react-day-picker";
-
-import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 function Calendar({
 	className,
@@ -126,6 +125,7 @@ function Calendar({
 				...classNames,
 			}}
 			components={{
+				// biome-ignore lint/nursery/noNestedComponentDefinitions: Library component
 				Root: ({ className, rootRef, ...props }) => {
 					return (
 						<div
@@ -136,6 +136,7 @@ function Calendar({
 						/>
 					);
 				},
+				// biome-ignore lint/nursery/noNestedComponentDefinitions: Library component
 				Chevron: ({ className, orientation, ...props }) => {
 					if (orientation === "left") {
 						return (
@@ -157,6 +158,7 @@ function Calendar({
 					);
 				},
 				DayButton: CalendarDayButton,
+				// biome-ignore lint/nursery/noNestedComponentDefinitions: Library component
 				WeekNumber: ({ children, ...props }) => {
 					return (
 						<td {...props}>

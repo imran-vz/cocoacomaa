@@ -1,12 +1,12 @@
+import { desc, eq } from "drizzle-orm";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { auth } from "@/auth";
 import { Icons } from "@/components/icons";
 import { DataTable } from "@/components/ui/data-table";
 import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
-import { desc, eq } from "drizzle-orm";
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import { Suspense } from "react";
 import { columns } from "./columns";
 
 export const dynamic = "force-dynamic";
