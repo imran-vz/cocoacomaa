@@ -43,6 +43,8 @@ interface RazorpayOptions {
 	name: string;
 	description: string;
 	order_id: string;
+	image?: string;
+	remember_customer?: boolean;
 	handler: (response: RazorpayResponse) => void;
 	modal?: {
 		ondismiss?: () => void;
@@ -78,6 +80,7 @@ declare global {
 			options: RazorpayOptions,
 		) => {
 			open: () => void;
+			on: (event: string, callback: (error: Error) => void) => void;
 		};
 	}
 }
@@ -196,6 +199,8 @@ export default function CheckoutPage({
 			name: "Cocoa Comaa",
 			description: "Dessert Order Payment",
 			order_id: razorpayOrderData.razorpayOrderId,
+			image: "/logo.png",
+			remember_customer: true,
 			handler: async (response: RazorpayResponse) => {
 				try {
 					setProcessingStep("Verifying payment...");
@@ -245,12 +250,16 @@ export default function CheckoutPage({
 				email: orderData.email,
 				contact: orderData.phone,
 			},
-			theme: {
-				color: "#000000",
-			},
+			theme: { color: "#551303" },
 		};
 
 		const razorpay = new window.Razorpay(options);
+		razorpay.on("payment.failed", (error) => {
+			console.error("Payment failed:", error);
+			toast.error("Payment failed. Please try again.");
+			setIsProcessing(false);
+			setProcessingStep("");
+		});
 		razorpay.open();
 	};
 
