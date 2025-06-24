@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { orderItems, orders, users } from "@/lib/db/schema";
 
 const razorpay = new Razorpay({
-	key_id: process.env.RAZORPAY_KEY_ID || "",
+	key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
 	key_secret: process.env.RAZORPAY_KEY_SECRET || "",
 });
 
@@ -136,7 +136,6 @@ export async function POST(request: NextRequest) {
 			razorpayOrderId: razorpayOrder.id,
 			amount: razorpayOrder.amount,
 			currency: razorpayOrder.currency,
-			key: process.env.RAZORPAY_KEY_ID,
 		});
 	} catch (error) {
 		console.error("Error creating order:", error);

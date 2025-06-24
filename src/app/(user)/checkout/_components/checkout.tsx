@@ -3,11 +3,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { CalendarIcon, Clock } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
+
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -159,9 +160,11 @@ export default function CheckoutPage({
 	user: { email: string; phone: string; name: string };
 }) {
 	const router = useRouter();
+	const searchParams = useSearchParams();
 	const { items, total, clearCart } = useCart();
 	const [isProcessing, setIsProcessing] = useState(false);
 	const [processingStep, setProcessingStep] = useState("");
+	const [existingOrderId, setExistingOrderId] = useState<string | null>(null);
 
 	const form = useForm<CheckoutFormValues>({
 		resolver: zodResolver(checkoutFormSchema),
@@ -185,6 +188,14 @@ export default function CheckoutPage({
 		};
 	}, []);
 
+	// Check for existing order ID in URL params
+	useEffect(() => {
+		const orderId = searchParams.get("orderId");
+		if (orderId) {
+			setExistingOrderId(orderId);
+		}
+	}, [searchParams]);
+
 	const handlePayment = async (
 		orderData: CheckoutFormValues,
 		orderId: string,
@@ -193,7 +204,7 @@ export default function CheckoutPage({
 		setProcessingStep("Opening payment gateway...");
 
 		const options: RazorpayOptions = {
-			key: razorpayOrderData.key,
+			key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
 			amount: razorpayOrderData.amount,
 			currency: razorpayOrderData.currency,
 			name: "Cocoa Comaa",
@@ -221,6 +232,12 @@ export default function CheckoutPage({
 
 					if (verifyResponse.ok) {
 						setProcessingStep("Finalizing order...");
+
+						// Clear order ID from URL params
+						const url = new URL(window.location.href);
+						url.searchParams.delete("orderId");
+						window.history.replaceState({}, "", url.toString());
+
 						// Redirect to confirmation page with order ID
 						router.push(`/order-confirmation?orderId=${orderId}`);
 
@@ -266,47 +283,93 @@ export default function CheckoutPage({
 	const onSubmit = async (data: CheckoutFormValues) => {
 		try {
 			setIsProcessing(true);
-			setProcessingStep("Creating your order...");
 
-			// Create order in database and get Razorpay order
-			const orderResponse = await fetch("/api/orders", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					name: data.name,
-					email: data.email,
-					phone: data.phone,
-					pickupDate: data.pickupDate.toISOString(),
-					pickupTime: data.pickupTime,
-					items: items.map((item) => ({
-						id: item.id,
-						name: item.name,
-						price: item.price,
-						quantity: item.quantity,
-					})),
-					total,
-				}),
-			});
+			let orderData: RazorpayOrderData;
+			let orderId: string;
 
-			if (!orderResponse.ok) {
-				throw new Error("Failed to create order");
+			// Check if we have an existing order ID
+			if (existingOrderId) {
+				setProcessingStep("Retrieving existing order...");
+
+				// Try to get existing order data
+				const existingOrderResponse = await fetch(
+					`/api/orders/${existingOrderId}`,
+					{
+						method: "GET",
+						headers: {
+							"Content-Type": "application/json",
+						},
+					},
+				);
+
+				if (existingOrderResponse.ok) {
+					const existingOrderData = await existingOrderResponse.json();
+					if (
+						existingOrderData.success &&
+						existingOrderData.order.status !== "paid"
+					) {
+						// Reuse existing order
+						orderData = existingOrderData.order;
+						orderId = existingOrderId;
+						setProcessingStep("Preparing payment...");
+					} else {
+						throw new Error("Existing order is no longer valid");
+					}
+				} else {
+					throw new Error("Could not retrieve existing order");
+				}
+			} else {
+				setProcessingStep("Creating your order...");
+
+				// Create new order in database and get Razorpay order
+				const orderResponse = await fetch("/api/orders", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						name: data.name,
+						email: data.email,
+						phone: data.phone,
+						pickupDate: data.pickupDate.toISOString(),
+						pickupTime: data.pickupTime,
+						items: items.map((item) => ({
+							id: item.id,
+							name: item.name,
+							price: item.price,
+							quantity: item.quantity,
+						})),
+						total,
+					}),
+				});
+
+				if (!orderResponse.ok) {
+					throw new Error("Failed to create order");
+				}
+
+				const newOrderData = await orderResponse.json();
+
+				if (!newOrderData.success) {
+					throw new Error("Failed to create order");
+				}
+
+				orderData = newOrderData;
+				orderId = newOrderData.orderId;
+
+				// Add order ID to URL params
+				const url = new URL(window.location.href);
+				url.searchParams.set("orderId", orderId);
+				router.replace(`${url.pathname}?${url.searchParams.toString()}`);
+				setExistingOrderId(orderId);
+
+				setProcessingStep("Preparing payment...");
 			}
-
-			const orderData = await orderResponse.json();
-
-			if (!orderData.success) {
-				throw new Error("Failed to create order");
-			}
-
-			setProcessingStep("Preparing payment...");
 
 			// Initiate payment
-			await handlePayment(data, orderData.orderId, orderData);
+			await handlePayment(data, orderId, orderData);
 		} catch (error) {
-			console.error("Error creating order:", error);
-			toast.error("Failed to create order. Please try again.");
+			console.error("Error processing order:", error);
+			toast.error("Failed to process order. Please try again.");
 			setIsProcessing(false);
 			setProcessingStep("");
 		}
