@@ -32,6 +32,16 @@ export async function POST(request: NextRequest) {
 		const body: CreateOrderRequest = await request.json();
 		const { name, email, phone, pickupDate, pickupTime, items, total } = body;
 
+		// Combine pickup date and time into a single datetime
+		const pickupDateObj = new Date(pickupDate);
+		const [hours, minutes] = pickupTime.split(":");
+		pickupDateObj.setHours(
+			Number.parseInt(hours),
+			Number.parseInt(minutes),
+			0,
+			0,
+		);
+
 		// Validate required fields
 		if (
 			!name ||
@@ -70,15 +80,6 @@ export async function POST(request: NextRequest) {
 				.where(eq(users.id, userId));
 
 			// Create order
-			// Combine pickup date and time into a single datetime
-			const pickupDateObj = new Date(pickupDate);
-			const [hours, minutes] = pickupTime.split(":");
-			pickupDateObj.setHours(
-				Number.parseInt(hours),
-				Number.parseInt(minutes),
-				0,
-				0,
-			);
 
 			const newOrder = await tx
 				.insert(orders)
@@ -114,8 +115,7 @@ export async function POST(request: NextRequest) {
 			notes: {
 				orderId: result.orderId.toString(),
 				userId: result.userId.toString(),
-				pickupDate,
-				pickupTime,
+				pickupDatetime: pickupDateObj.toISOString(),
 			},
 		});
 

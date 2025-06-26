@@ -24,6 +24,7 @@ import CopyAddressButton from "./copy-address-button";
 import CopyPhoneButton from "./copy-phone-button";
 import NavButton from "./nav-button";
 import { formatStatus, getPaymentStatusColor, getStatusColor } from "./utils";
+import RetryPaymentCard from "./retry-payment-card";
 
 export default async function AdminOrderDetailsPage({
 	params,
@@ -34,6 +35,17 @@ export default async function AdminOrderDetailsPage({
 
 	const order = await db.query.orders.findFirst({
 		where: eq(orders.id, id),
+		columns: {
+			id: true,
+			status: true,
+			paymentStatus: true,
+			createdAt: true,
+			razorpayPaymentId: true,
+			razorpayOrderId: true,
+			total: true,
+			notes: true,
+			pickupDateTime: true,
+		},
 		with: {
 			orderItems: {
 				columns: {
@@ -137,6 +149,11 @@ export default async function AdminOrderDetailsPage({
 								</div>
 							</CardContent>
 						</Card>
+
+						{/* Payment Retry Section */}
+						{order.status === "payment_pending" && (
+							<RetryPaymentCard order={order} />
+						)}
 
 						{/* Order Items */}
 						<Card>

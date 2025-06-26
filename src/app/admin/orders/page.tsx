@@ -1,4 +1,4 @@
-import { desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { columns } from "@/components/orders/columns";
 import { DataTable } from "@/components/ui/data-table";
 import { db } from "@/lib/db";
@@ -28,6 +28,7 @@ const statuses = [
 export default async function OrdersPage() {
 	const ordersList = await db.query.orders.findMany({
 		orderBy: desc(orders.createdAt),
+		where: eq(orders.status, "paid"),
 		columns: {
 			id: true,
 			total: true,
