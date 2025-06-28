@@ -2,26 +2,34 @@ import { desc, eq } from "drizzle-orm";
 import { columns } from "@/components/orders/columns";
 import { DataTable } from "@/components/ui/data-table";
 import { db } from "@/lib/db";
-import { orders } from "@/lib/db/schema";
+import { type Order, orders } from "@/lib/db/schema";
 
 export const dynamic = "force-dynamic";
 
-const statuses = [
+const statuses: { label: string; value: Order["status"] }[] = [
 	{
-		label: "Pending",
-		value: "pending",
+		label: "Payment Pending",
+		value: "payment_pending",
 	},
 	{
-		label: "Processing",
-		value: "processing",
+		label: "Preparing",
+		value: "preparing",
 	},
 	{
 		label: "Completed",
 		value: "completed",
 	},
 	{
+		label: "Paid",
+		value: "paid",
+	},
+	{
 		label: "Cancelled",
 		value: "cancelled",
+	},
+	{
+		label: "Ready",
+		value: "ready",
 	},
 ];
 

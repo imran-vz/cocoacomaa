@@ -21,7 +21,7 @@ export default function Home() {
 			/>
 			<div className="absolute inset-0 -z-10 bg-black/40" />
 
-			<main className="">
+			<main>
 				<div className="min-h-[calc(100svh-5rem)] flex justify-center flex-col items-center">
 					<h2 className="text-4xl text-center leading-12 font-normal tracking-widest text-white mb-4 font-serif">
 						Fudgy. Messy. Unforgettable.
@@ -30,14 +30,22 @@ export default function Home() {
 						Started in a tiny home kitchen—now here to melt hearts (and maybe
 						ruin store-bought dessert forever).
 					</p>
-					<div className="mt-6">
+					<div className="mt-6 flex gap-4 flex-col sm:flex-row">
 						<Button
 							asChild
-							size="3xl"
+							size="lg"
 							variant="outline"
-							className="text-primary"
+							className="bg-transparent text-white"
 						>
-							<Link href="/order">Order Now</Link>
+							<Link href="/order">Cake Menu</Link>
+						</Button>
+						<Button
+							asChild
+							size="lg"
+							variant="outline"
+							className="bg-transparent text-white"
+						>
+							<Link href="/order">Postal Brownies</Link>
 						</Button>
 					</div>
 				</div>

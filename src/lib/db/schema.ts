@@ -72,6 +72,8 @@ export const orders = pgTable("orders", (d) => {
 	};
 });
 
+export type Order = typeof orders.$inferSelect;
+
 export const ordersRelations = relations(orders, ({ many, one }) => ({
 	orderItems: many(orderItems),
 	user: one(users, {

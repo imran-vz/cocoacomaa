@@ -56,7 +56,7 @@ export const columns: ColumnDef<{
 		),
 		cell: ({ row }) => {
 			return (
-				<div className="flex w-[100px] items-center">
+				<div className="flex w-[100px] truncate items-center">
 					<span>{row.getValue("notes")}</span>
 				</div>
 			);
