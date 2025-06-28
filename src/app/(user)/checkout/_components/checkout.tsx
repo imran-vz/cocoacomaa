@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
 	Form,
 	FormControl,
+	FormDescription,
 	FormField,
 	FormItem,
 	FormLabel,
@@ -116,6 +117,12 @@ const checkoutFormSchema = z.object({
 	pickupTime: z.string().min(1, {
 		message: "Please select a pickup time.",
 	}),
+	notes: z
+		.string()
+		.max(25, {
+			message: "Notes must be less than 25 characters.",
+		})
+		.optional(),
 });
 
 type CheckoutFormValues = z.infer<typeof checkoutFormSchema>;
@@ -139,6 +146,7 @@ export default function CheckoutPage({
 			email: email ?? "",
 			phone: phone ?? "",
 			pickupTime: "",
+			notes: "",
 		},
 	});
 
@@ -299,6 +307,7 @@ export default function CheckoutPage({
 						phone: data.phone,
 						pickupDate: data.pickupDate.toISOString(),
 						pickupTime: data.pickupTime,
+						notes: data.notes,
 						items: items.map((item) => ({
 							id: item.id,
 							name: item.name,
@@ -465,6 +474,30 @@ export default function CheckoutPage({
 													tabIndex={-1}
 												/>
 											</FormControl>
+											<FormMessage className="text-xs sm:text-sm" />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="notes"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel className="text-sm sm:text-base">
+												Message on Cake
+											</FormLabel>
+											<FormControl>
+												<Input
+													placeholder="Keep it short and sweet"
+													{...field}
+													className="text-sm sm:text-base"
+													maxLength={25}
+												/>
+											</FormControl>
+											<FormDescription className="text-xs sm:text-sm text-muted-foreground">
+												Maximum 30 characters
+											</FormDescription>
 											<FormMessage className="text-xs sm:text-sm" />
 										</FormItem>
 									)}

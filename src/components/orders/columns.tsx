@@ -19,18 +19,8 @@ export const columns: ColumnDef<{
 		| "ready"
 		| "cancelled";
 	userName: string;
+	notes: string | null;
 }>[] = [
-	{
-		accessorKey: "id",
-		header: ({ column }) => (
-			<DataTableColumnHeader column={column} title="Order ID" />
-		),
-		cell: ({ row }) => (
-			<div className="w-[80px] truncate">{row.getValue("id")}</div>
-		),
-		enableSorting: false,
-		enableHiding: false,
-	},
 	{
 		accessorKey: "userName",
 		header: ({ column }) => (
@@ -55,6 +45,19 @@ export const columns: ColumnDef<{
 			return (
 				<div className="flex w-[100px] items-center">
 					<span>{formatCurrency(Number(row.getValue("total")) || 0)}</span>
+				</div>
+			);
+		},
+	},
+	{
+		accessorKey: "notes",
+		header: ({ column }) => (
+			<DataTableColumnHeader column={column} title="Notes" />
+		),
+		cell: ({ row }) => {
+			return (
+				<div className="flex w-[100px] items-center">
+					<span>{row.getValue("notes")}</span>
 				</div>
 			);
 		},

@@ -34,6 +34,7 @@ export default async function OrdersPage() {
 			total: true,
 			status: true,
 			createdAt: true,
+			notes: true,
 		},
 		with: {
 			user: {
