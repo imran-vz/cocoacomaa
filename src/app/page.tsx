@@ -45,7 +45,7 @@ export default function Home() {
 							variant="outline"
 							className="bg-transparent text-white"
 						>
-							<Link href="/order">Postal Brownies</Link>
+							<Link href="/postal-brownies">Postal Brownies</Link>
 						</Button>
 					</div>
 				</div>

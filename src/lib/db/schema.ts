@@ -10,6 +10,11 @@ export const desserts = pgTable("desserts", (d) => {
 		price: d.varchar("price", { length: 10 }).notNull(),
 		imageUrl: d.text("image_url"),
 		status: d.varchar("status", { length: 50 }).notNull().default("available"),
+		category: d
+			.varchar("category", { length: 50 })
+			.notNull()
+			.default("regular"), // 'regular', 'brownie_combo'
+		comboType: d.varchar("combo_type", { length: 100 }), // For brownie combos: 'classic', 'premium', 'deluxe'
 		createdAt: d
 			.timestamp("created_at")
 			.default(sql`CURRENT_TIMESTAMP`)
@@ -20,6 +25,10 @@ export const desserts = pgTable("desserts", (d) => {
 			.notNull(),
 	};
 });
+
+export const dessertsRelations = relations(desserts, ({ many }) => ({
+	orderItems: many(orderItems),
+}));
 
 export const orders = pgTable("orders", (d) => {
 	return {
@@ -69,10 +78,19 @@ export const orders = pgTable("orders", (d) => {
 			.notNull()
 			.default("pending"),
 		notes: d.text("notes"),
+		orderType: d
+			.varchar("order_type", {
+				enum: ["cake-orders", "postal-brownies"],
+			})
+			.notNull()
+			.default("cake-orders"),
+		// Address fields for postal brownie orders
+		addressId: d.integer("address_id").references(() => addresses.id),
 	};
 });
 
 export type Order = typeof orders.$inferSelect;
+export type OrderItem = typeof orderItems.$inferSelect;
 
 export const ordersRelations = relations(orders, ({ many, one }) => ({
 	orderItems: many(orderItems),
@@ -80,31 +98,32 @@ export const ordersRelations = relations(orders, ({ many, one }) => ({
 		fields: [orders.userId],
 		references: [users.id],
 	}),
+	address: one(addresses, {
+		fields: [orders.addressId],
+		references: [addresses.id],
+	}),
 }));
 
-export const orderItems = pgTable(
-	"order_items",
-	(d) => {
-		return {
-			orderId: d
-				.text("order_id")
-				.notNull()
-				.references(() => orders.id),
-			dessertId: d
-				.integer("dessert_id")
-				.notNull()
-				.references(() => desserts.id),
-			quantity: d.integer("quantity").notNull(),
-			price: d.numeric("price", { precision: 10, scale: 2 }).notNull(),
-		};
-	},
-	(t) => [
-		primaryKey({
-			name: "order_items_pk",
-			columns: [t.orderId, t.dessertId],
-		}),
-	],
-);
+export const orderItems = pgTable("order_items", (d) => {
+	return {
+		id: d.integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		orderId: d
+			.text("order_id")
+			.notNull()
+			.references(() => orders.id),
+		itemType: d
+			.varchar("item_type", { enum: ["dessert", "postal-combo"] })
+			.notNull(),
+		dessertId: d.integer("dessert_id").references(() => desserts.id),
+		postalComboId: d
+			.integer("postal_combo_id")
+			.references(() => postalCombos.id),
+		quantity: d.integer("quantity").notNull(),
+		price: d.numeric("price", { precision: 10, scale: 2 }).notNull(),
+		// Store item name for historical purposes (in case item is deleted/modified)
+		itemName: d.varchar("item_name", { length: 255 }).notNull(),
+	};
+});
 
 export const orderItemsRelations = relations(orderItems, ({ one }) => ({
 	order: one(orders, {
@@ -115,6 +134,35 @@ export const orderItemsRelations = relations(orderItems, ({ one }) => ({
 		fields: [orderItems.dessertId],
 		references: [desserts.id],
 	}),
+	postalCombo: one(postalCombos, {
+		fields: [orderItems.postalComboId],
+		references: [postalCombos.id],
+	}),
+}));
+
+export const postalCombos = pgTable("postal_combos", (d) => {
+	return {
+		id: d.integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		name: d.varchar("name", { length: 255 }).notNull(),
+		description: d.text("description").notNull(),
+		price: d.numeric("price", { precision: 10, scale: 2 }).notNull(), // Price in rupees
+		imageUrl: d.text("image_url"),
+		comboType: d.varchar("combo_type", { length: 100 }).notNull(), // 'classic', 'premium', 'deluxe'
+		items: d.jsonb("items").notNull(), // Array of included items
+		status: d.varchar("status", { length: 50 }).notNull().default("available"),
+		createdAt: d
+			.timestamp("created_at")
+			.default(sql`CURRENT_TIMESTAMP`)
+			.notNull(),
+		updatedAt: d
+			.timestamp("updated_at")
+			.default(sql`CURRENT_TIMESTAMP`)
+			.notNull(),
+	};
+});
+
+export const postalCombosRelations = relations(postalCombos, ({ many }) => ({
+	orderItems: many(orderItems),
 }));
 
 export const users = pgTable("users", (d) => {
@@ -135,3 +183,39 @@ export const users = pgTable("users", (d) => {
 			.default("customer"),
 	};
 });
+
+export const addresses = pgTable("addresses", (d) => {
+	return {
+		id: d.integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		userId: d
+			.text("user_id")
+			.notNull()
+			.references(() => users.id),
+		addressLine1: d.varchar("address_line_1", { length: 255 }).notNull(),
+		addressLine2: d.varchar("address_line_2", { length: 255 }),
+		city: d.varchar("city", { length: 100 }).notNull(),
+		state: d.varchar("state", { length: 100 }).notNull(),
+		zip: d.varchar("zip", { length: 20 }).notNull(),
+		isDeleted: d.boolean("is_deleted").notNull().default(false),
+		createdAt: d
+			.timestamp("created_at")
+			.default(sql`CURRENT_TIMESTAMP`)
+			.notNull(),
+		updatedAt: d
+			.timestamp("updated_at")
+			.default(sql`CURRENT_TIMESTAMP`)
+			.notNull(),
+	};
+});
+
+export const usersRelations = relations(users, ({ many }) => ({
+	address: many(addresses),
+	orders: many(orders),
+}));
+
+export const addressesRelations = relations(addresses, ({ one }) => ({
+	user: one(users, {
+		fields: [addresses.userId],
+		references: [users.id],
+	}),
+}));

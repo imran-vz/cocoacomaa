@@ -2,56 +2,19 @@ import { eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import Razorpay from "razorpay";
+
 import { db } from "@/lib/db";
 import { orderItems, orders, users } from "@/lib/db/schema";
-import { z } from "zod";
+import { checkoutFormSchemaDB } from "@/lib/schema";
 
 const razorpay = new Razorpay({
 	key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
 	key_secret: process.env.RAZORPAY_KEY_SECRET || "",
 });
 
-const checkoutFormSchema = z.object({
-	name: z.string().min(2, {
-		message: "Name must be at least 2 characters.",
-	}),
-	email: z.string().email({
-		message: "Please enter a valid email address.",
-	}),
-	phone: z
-		.string()
-		.min(10, {
-			message: "Phone number must be at least 10 digits.",
-		})
-		.regex(/^[0-9+\-\s()]+$/, {
-			message: "Please enter a valid phone number.",
-		}),
-	pickupDate: z.coerce.date({
-		required_error: "Please select a pickup date.",
-	}),
-	pickupTime: z.string().min(1, {
-		message: "Please select a pickup time.",
-	}),
-	notes: z
-		.string()
-		.max(25, {
-			message: "Notes must be less than 25 characters.",
-		})
-		.optional(),
-	items: z.array(
-		z.object({
-			id: z.number(),
-			name: z.string(),
-			price: z.number(),
-			quantity: z.number(),
-		}),
-	),
-	total: z.number(),
-});
-
 export async function POST(request: NextRequest) {
 	try {
-		const { success, data, error } = checkoutFormSchema.safeParse(
+		const { success, data, error } = checkoutFormSchemaDB.safeParse(
 			await request.json(),
 		);
 
@@ -59,18 +22,31 @@ export async function POST(request: NextRequest) {
 			return NextResponse.json({ error: error.message }, { status: 400 });
 		}
 
-		const { name, email, phone, pickupDate, pickupTime, items, total, notes } =
-			data;
+		const {
+			name,
+			email,
+			phone,
+			pickupDate,
+			pickupTime,
+			items,
+			total,
+			notes,
+			orderType,
+			selectedAddressId,
+		} = data;
 
-		// Combine pickup date and time into a single datetime
-		const pickupDateObj = new Date(pickupDate);
-		const [hours, minutes] = pickupTime.split(":");
-		pickupDateObj.setHours(
-			Number.parseInt(hours),
-			Number.parseInt(minutes),
-			0,
-			0,
-		);
+		// Combine pickup date and time into a single datetime (only for non-postal orders)
+		let pickupDateObj: Date | null = null;
+		if (pickupDate && pickupTime) {
+			pickupDateObj = new Date(pickupDate);
+			const [hours, minutes] = pickupTime.split(":");
+			pickupDateObj.setHours(
+				Number.parseInt(hours),
+				Number.parseInt(minutes),
+				0,
+				0,
+			);
+		}
 
 		// Start transaction
 		const result = await db.transaction(async (tx) => {
@@ -94,7 +70,6 @@ export async function POST(request: NextRequest) {
 				.where(eq(users.id, userId));
 
 			// Create order
-
 			const newOrder = await tx
 				.insert(orders)
 				.values({
@@ -103,19 +78,32 @@ export async function POST(request: NextRequest) {
 					notes: notes,
 					status: "pending",
 					paymentStatus: "pending",
-					pickupDateTime: pickupDateObj,
+					pickupDateTime: pickupDateObj || null,
+					orderType: orderType,
+					// Address fields for postal brownies
+					addressId: selectedAddressId,
 				})
 				.returning({ id: orders.id });
 
 			const orderId = newOrder[0].id;
 
-			// Create order items
-			const orderItemsData = items.map((item) => ({
-				orderId,
-				dessertId: item.id,
-				quantity: item.quantity,
-				price: item.price.toString(),
-			}));
+			// Create order items - handle both desserts and postal combos
+			const orderItemsData = items.map((item) => {
+				// Determine item type based on order type and item structure
+				const isPostalCombo = orderType === "postal-brownies";
+
+				return {
+					orderId,
+					itemType: isPostalCombo
+						? ("postal-combo" as const)
+						: ("dessert" as const),
+					dessertId: isPostalCombo ? undefined : item.id,
+					postalComboId: isPostalCombo ? item.id : undefined,
+					quantity: item.quantity,
+					price: item.price.toString(),
+					itemName: item.name,
+				};
+			});
 
 			await tx.insert(orderItems).values(orderItemsData);
 
@@ -130,7 +118,8 @@ export async function POST(request: NextRequest) {
 			notes: {
 				orderId: result.orderId.toString(),
 				userId: result.userId.toString(),
-				pickupDatetime: pickupDateObj.toISOString(),
+				pickupDatetime: pickupDateObj ? pickupDateObj.toISOString() : "",
+				orderType: orderType,
 			},
 		});
 

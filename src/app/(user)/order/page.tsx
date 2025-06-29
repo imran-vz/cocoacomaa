@@ -58,7 +58,7 @@ export default function OrderPage() {
 			name: dessert.name,
 			price: Number(dessert.price),
 			quantity: 1,
-			customization: "",
+			type: "cake-orders",
 		});
 	};
 

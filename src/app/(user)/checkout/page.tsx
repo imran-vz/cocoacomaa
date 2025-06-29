@@ -18,7 +18,7 @@ export default async function Page() {
 	});
 
 	return (
-		<Suspense>
+		<Suspense fallback={<div>Loading...</div>}>
 			<CheckoutPage
 				user={{
 					email: user?.email ?? "",

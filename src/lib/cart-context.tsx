@@ -8,7 +8,7 @@ interface CartItem {
 	name: string;
 	price: number;
 	quantity: number;
-	customization: string;
+	type: "postal-brownies" | "cake-orders";
 }
 
 interface CartState {
