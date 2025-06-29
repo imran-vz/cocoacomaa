@@ -4,9 +4,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { Package, Truck } from "lucide-react";
-import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -52,8 +52,10 @@ interface PostalCombo {
 
 const fetchPostalCombos = async (): Promise<PostalCombo[]> => {
 	try {
-		const { data } = await axios.get<PostalCombo[]>("/api/postal-combos");
-		return data;
+		const { data } = await axios.get<{ postalCombos: PostalCombo[] }>(
+			"/api/postal-combos",
+		);
+		return data.postalCombos;
 	} catch (error) {
 		console.error("Error fetching postal combos:", error);
 		toast.error("Failed to load postal combos");

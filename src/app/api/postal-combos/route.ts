@@ -1,17 +1,39 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { z } from "zod";
+
+import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { postalCombos } from "@/lib/db/schema";
 
+const createPostalComboSchema = z.object({
+	name: z.string().min(2, { message: "Name is required" }),
+	description: z.string().min(10, { message: "Description is required" }),
+	price: z.number().min(0, { message: "Price must be positive" }),
+	imageUrl: z.string().url().optional(),
+	comboType: z.enum(["classic", "premium", "deluxe"]),
+	items: z
+		.array(z.string())
+		.min(1, { message: "At least one item is required" }),
+	status: z.enum(["available", "unavailable"]).default("available"),
+});
+
+// GET - Fetch all postal combos
 export async function GET() {
 	try {
-		const availableCombos = await db
-			.select()
-			.from(postalCombos)
-			.where(eq(postalCombos.status, "available"))
-			.orderBy(postalCombos.price);
+		const allPostalCombos = await db.query.postalCombos.findMany({
+			orderBy: (postalCombos, { desc }) => [desc(postalCombos.createdAt)],
+			where: and(
+				eq(postalCombos.isDeleted, false),
+				eq(postalCombos.status, "available"),
+			),
+		});
 
-		return NextResponse.json(availableCombos);
+		return NextResponse.json({
+			success: true,
+			postalCombos: allPostalCombos,
+		});
 	} catch (error) {
 		console.error("Error fetching postal combos:", error);
 		return NextResponse.json(
@@ -21,35 +43,45 @@ export async function GET() {
 	}
 }
 
-export async function POST(request: Request) {
+// POST - Create new postal combo
+export async function POST(request: NextRequest) {
 	try {
-		const body = await request.json();
-		const { name, description, price, imageUrl, comboType, items, status } =
-			body;
+		const session = await auth();
+		if (!session?.user || session.user.role !== "admin") {
+			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		}
 
-		if (!name || !description || !price || !comboType || !items) {
+		const { success, data, error } = createPostalComboSchema.safeParse(
+			await request.json(),
+		);
+
+		if (!success) {
 			return NextResponse.json(
-				{
-					error: "Name, description, price, comboType, and items are required",
-				},
+				{ error: error.errors[0].message },
 				{ status: 400 },
 			);
 		}
 
-		const newCombo = await db
+		const { name, description, price, imageUrl, comboType, items, status } =
+			data;
+
+		const [newPostalCombo] = await db
 			.insert(postalCombos)
 			.values({
 				name,
 				description,
-				price,
-				imageUrl,
+				price: price.toString(),
+				imageUrl: imageUrl || null,
 				comboType,
 				items,
-				status: status || "available",
+				status,
 			})
 			.returning();
 
-		return NextResponse.json(newCombo[0]);
+		return NextResponse.json({
+			success: true,
+			postalCombo: newPostalCombo,
+		});
 	} catch (error) {
 		console.error("Error creating postal combo:", error);
 		return NextResponse.json(

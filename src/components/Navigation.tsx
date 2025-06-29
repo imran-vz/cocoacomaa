@@ -1,9 +1,10 @@
 "use client";
 
-import { Menu, ShoppingCart, X } from "lucide-react";
+import { LogOut, Menu, ShoppingCart, X } from "lucide-react";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { useState } from "react";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart-context";
@@ -17,6 +18,11 @@ export function Navigation() {
 
 	const itemCount = items.reduce((total, item) => total + item.quantity, 0);
 	const isAdmin = session.data?.user?.role === "admin";
+
+	const handleLogout = async () => {
+		await signOut({ callbackUrl: "/" });
+		setIsMenuOpen(false);
+	};
 
 	return (
 		<nav className="bg-white shadow-md border-b sticky top-0 z-50">
@@ -41,6 +47,17 @@ export function Navigation() {
 								</Button>
 								<Button variant="ghost" asChild>
 									<Link href="/admin/desserts">Desserts</Link>
+								</Button>
+								<Button variant="ghost" asChild>
+									<Link href="/admin/postal-brownies">Postal Brownies</Link>
+								</Button>
+								<Button
+									variant="ghost"
+									onClick={handleLogout}
+									className="text-red-600 hover:text-red-700"
+								>
+									<LogOut className="h-4 w-4 mr-2" />
+									Logout
 								</Button>
 							</>
 						) : (
@@ -67,9 +84,19 @@ export function Navigation() {
 										<Link href="/login">Login</Link>
 									</Button>
 								) : (
-									<Button variant="ghost" asChild>
-										<Link href="/my-orders">My Orders</Link>
-									</Button>
+									<>
+										<Button variant="ghost" asChild>
+											<Link href="/my-orders">My Orders</Link>
+										</Button>
+										<Button
+											variant="ghost"
+											onClick={handleLogout}
+											className="text-red-600 hover:text-red-700"
+										>
+											<LogOut className="h-4 w-4 mr-2" />
+											Logout
+										</Button>
+									</>
 								)}
 							</>
 						)}
@@ -135,6 +162,22 @@ export function Navigation() {
 								>
 									<Link href="/admin/desserts">Desserts</Link>
 								</Button>
+								<Button
+									variant="ghost"
+									asChild
+									className="w-full justify-start"
+									onClick={() => setIsMenuOpen(false)}
+								>
+									<Link href="/admin/postal-brownies">Postal Brownies</Link>
+								</Button>
+								<Button
+									variant="ghost"
+									onClick={handleLogout}
+									className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+								>
+									<LogOut className="h-4 w-4 mr-2" />
+									Logout
+								</Button>
 							</div>
 						) : (
 							<div className="px-2 pt-2 pb-3 space-y-1">
@@ -147,14 +190,24 @@ export function Navigation() {
 									<Link href="/">Home</Link>
 								</Button>
 								{session.data?.user?.id ? (
-									<Button
-										variant="ghost"
-										asChild
-										className="w-full justify-start"
-										onClick={() => setIsMenuOpen(false)}
-									>
-										<Link href="/my-orders">My Orders</Link>
-									</Button>
+									<>
+										<Button
+											variant="ghost"
+											asChild
+											className="w-full justify-start"
+											onClick={() => setIsMenuOpen(false)}
+										>
+											<Link href="/my-orders">My Orders</Link>
+										</Button>
+										<Button
+											variant="ghost"
+											onClick={handleLogout}
+											className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+										>
+											<LogOut className="h-4 w-4 mr-2" />
+											Logout
+										</Button>
+									</>
 								) : null}
 							</div>
 						)}

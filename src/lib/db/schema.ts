@@ -148,8 +148,14 @@ export const postalCombos = pgTable("postal_combos", (d) => {
 		price: d.numeric("price", { precision: 10, scale: 2 }).notNull(), // Price in rupees
 		imageUrl: d.text("image_url"),
 		comboType: d.varchar("combo_type", { length: 100 }).notNull(), // 'classic', 'premium', 'deluxe'
-		items: d.jsonb("items").notNull(), // Array of included items
-		status: d.varchar("status", { length: 50 }).notNull().default("available"),
+		items: d.jsonb("items").notNull().$type<string[]>(), // Array of included items
+		status: d
+			.varchar("status", {
+				enum: ["available", "unavailable"],
+			})
+			.notNull()
+			.default("available"),
+		isDeleted: d.boolean("is_deleted").notNull().default(false),
 		createdAt: d
 			.timestamp("created_at")
 			.default(sql`CURRENT_TIMESTAMP`)

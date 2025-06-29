@@ -2,6 +2,7 @@
 
 import type { Table } from "@tanstack/react-table";
 import { X } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { DataTableFacetedFilter } from "@/components/ui/data-table-faceted-filter";
 import { DataTableViewOptions } from "@/components/ui/data-table-view-options";
@@ -32,7 +33,7 @@ export function DataTableToolbar<TData>({
 
 	return (
 		<div className="flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
-			<div className="flex flex-1 flex-col sm:flex-row items-center gap-2">
+			<div className="flex flex-1 flex-col sm:flex-row sm:items-center gap-2">
 				{searchKey && (
 					<Input
 						placeholder={searchPlaceholder}
