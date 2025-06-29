@@ -23,8 +23,8 @@ import BackButton from "./back-button";
 import CopyAddressButton from "./copy-address-button";
 import CopyPhoneButton from "./copy-phone-button";
 import NavButton from "./nav-button";
-import { formatStatus, getPaymentStatusColor, getStatusColor } from "./utils";
 import RetryPaymentCard from "./retry-payment-card";
+import { formatStatus, getPaymentStatusColor, getStatusColor } from "./utils";
 
 export default async function AdminOrderDetailsPage({
 	params,
@@ -176,7 +176,7 @@ export default async function AdminOrderDetailsPage({
 							</CardHeader>
 							<CardContent>
 								<div className="space-y-4">
-									{order.orderItems.map((item, index) => {
+									{order.orderItems.map((item) => {
 										// Get item details based on type
 										const itemDetails =
 											item.itemType === "dessert"
