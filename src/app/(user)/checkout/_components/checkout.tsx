@@ -12,6 +12,7 @@ import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import OrderRestrictionBanner from "@/components/ui/order-restriction-banner";
 import {
 	Form,
 	FormControl,
@@ -41,6 +42,7 @@ import {
 	useCreateAddress,
 	useDeleteAddress,
 } from "@/hooks/use-addresses";
+import { useOrderSettings } from "@/hooks/use-order-settings";
 import { useCart } from "@/lib/cart-context";
 import { formatCurrency } from "@/lib/utils";
 import type {
@@ -192,6 +194,7 @@ export default function CheckoutPage({
 	const [isCreatingAddress, setIsCreatingAddress] = useState(false);
 	const existingId = useId();
 	const newId = useId();
+	const { areOrdersAllowed: ordersAllowed } = useOrderSettings();
 
 	// React Query hooks for address management
 	const { data: addresses = [], isLoading: addressesLoading } = useAddresses();
@@ -421,6 +424,11 @@ export default function CheckoutPage({
 	};
 
 	const onSubmit = async (data: CheckoutFormValues) => {
+		if (!ordersAllowed) {
+			toast.error("Orders are only accepted on Mondays and Tuesdays");
+			return;
+		}
+
 		try {
 			setIsProcessing(true);
 
@@ -564,6 +572,9 @@ export default function CheckoutPage({
 			<h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 lg:mb-8">
 				Checkout
 			</h1>
+
+			{/* Show order restriction banner when orders are not allowed */}
+			{!ordersAllowed && <OrderRestrictionBanner />}
 
 			<div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
 				{/* Customer Information */}
@@ -1112,31 +1123,39 @@ export default function CheckoutPage({
 									type="submit"
 									className="w-full text-sm sm:text-base cursor-pointer"
 									disabled={
+										!ordersAllowed ||
 										form.formState.isSubmitting ||
 										isProcessing ||
 										(isPostalBrownies && addressMode === "new") ||
 										(isPostalBrownies && !selectedAddressId)
 									}
 									size="lg"
+									variant={!ordersAllowed ? "secondary" : "default"}
 								>
-									{form.formState.isSubmitting || isProcessing
-										? "Processing..."
-										: isPostalBrownies && addressMode === "new"
-											? "Create Address First"
-											: isPostalBrownies && !selectedAddressId
-												? "Select Address to Continue"
-												: "Place Order & Pay"}
+									{!ordersAllowed
+										? "Orders Unavailable"
+										: form.formState.isSubmitting || isProcessing
+											? "Processing..."
+											: isPostalBrownies && addressMode === "new"
+												? "Create Address First"
+												: isPostalBrownies && !selectedAddressId
+													? "Select Address to Continue"
+													: "Place Order & Pay"}
 								</Button>
 
-								{/* Helper text for postal brownies */}
-								{isPostalBrownies && (
+								{/* Helper text for postal brownies and order restrictions */}
+								{(isPostalBrownies || !ordersAllowed) && (
 									<div className="text-center mt-2">
-										{addressMode === "new" ? (
+										{!ordersAllowed ? (
+											<p className="text-xs text-muted-foreground">
+												Orders are only accepted on Mondays and Tuesdays
+											</p>
+										) : isPostalBrownies && addressMode === "new" ? (
 											<p className="text-xs text-muted-foreground">
 												Please create and save your address before placing the
 												order
 											</p>
-										) : !selectedAddressId ? (
+										) : isPostalBrownies && !selectedAddressId ? (
 											<p className="text-xs text-muted-foreground">
 												Please select a delivery address to continue
 											</p>

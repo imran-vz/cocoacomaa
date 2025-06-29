@@ -12,6 +12,8 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import OrderRestrictionBanner from "@/components/ui/order-restriction-banner";
+import { useOrderSettings } from "@/hooks/use-order-settings";
 import { useCart } from "@/lib/cart-context";
 import { formatCurrency } from "@/lib/utils";
 
@@ -46,6 +48,7 @@ export default function OrderPage() {
 	const { items, addItem, removeItem, updateQuantity, total } = useCart();
 	const { data: session } = useSession();
 	const [showLogin, setShowLogin] = useState(false);
+	const { areOrdersAllowed: ordersAllowed } = useOrderSettings();
 
 	const { data: desserts, isLoading } = useQuery({
 		queryKey: ["desserts"],
@@ -76,6 +79,11 @@ export default function OrderPage() {
 	};
 
 	const handleCheckout = () => {
+		if (!ordersAllowed) {
+			toast.error("Orders are only accepted on Mondays and Tuesdays");
+			return;
+		}
+
 		if (!session) {
 			setShowLogin(true);
 			return;
@@ -129,6 +137,13 @@ export default function OrderPage() {
 			<h1 className="text-2xl sm:text-3xl sm:hidden font-bold mb-4 sm:mb-6 lg:mb-8">
 				Our Desserts
 			</h1>
+
+			{/* Show order restriction banner for mobile view */}
+			{!ordersAllowed && (
+				<div className="sm:hidden">
+					<OrderRestrictionBanner />
+				</div>
+			)}
 
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
 				<div className="order-1 lg:order-2 lg:col-span-1">
@@ -199,8 +214,12 @@ export default function OrderPage() {
 											className="w-full"
 											size="lg"
 											onClick={handleCheckout}
+											disabled={!ordersAllowed}
+											variant={!ordersAllowed ? "secondary" : "default"}
 										>
-											Proceed to Checkout
+											{!ordersAllowed
+												? "Orders Unavailable"
+												: "Proceed to Checkout"}
 										</Button>
 									</div>
 								</div>
@@ -214,6 +233,13 @@ export default function OrderPage() {
 					<h1 className="text-2xl hidden sm:block sm:text-3xl font-bold mb-4 sm:mb-6 lg:mb-8">
 						Our Desserts
 					</h1>
+
+					{/* Show order restriction banner for desktop view */}
+					{!ordersAllowed && (
+						<div className="hidden sm:block">
+							<OrderRestrictionBanner />
+						</div>
+					)}
 
 					{desserts?.length === 0 ? (
 						<Card>

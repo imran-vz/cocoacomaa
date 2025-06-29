@@ -51,6 +51,9 @@ export function Navigation() {
 								<Button variant="ghost" asChild>
 									<Link href="/admin/postal-brownies">Postal Brownies</Link>
 								</Button>
+								<Button variant="ghost" asChild>
+									<Link href="/admin/settings/order-days">Order Settings</Link>
+								</Button>
 								<Button
 									variant="ghost"
 									onClick={handleLogout}
@@ -169,6 +172,14 @@ export function Navigation() {
 									onClick={() => setIsMenuOpen(false)}
 								>
 									<Link href="/admin/postal-brownies">Postal Brownies</Link>
+								</Button>
+								<Button
+									variant="ghost"
+									asChild
+									className="w-full justify-start"
+									onClick={() => setIsMenuOpen(false)}
+								>
+									<Link href="/admin/settings/order-days">Order Settings</Link>
 								</Button>
 								<Button
 									variant="ghost"

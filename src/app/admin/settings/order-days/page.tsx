@@ -1,0 +1,293 @@
+"use client";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Calendar, Clock, Save, Settings } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+
+const DAYS = [
+	{ value: 0, label: "Sunday", short: "Sun" },
+	{ value: 1, label: "Monday", short: "Mon" },
+	{ value: 2, label: "Tuesday", short: "Tue" },
+	{ value: 3, label: "Wednesday", short: "Wed" },
+	{ value: 4, label: "Thursday", short: "Thu" },
+	{ value: 5, label: "Friday", short: "Fri" },
+	{ value: 6, label: "Saturday", short: "Sat" },
+];
+
+interface OrderSettings {
+	id: number;
+	allowedDays: number[];
+	isActive: boolean;
+	createdAt: Date;
+	updatedAt: Date;
+}
+
+export default function OrderDaysSettingsPage() {
+	const queryClient = useQueryClient();
+	const [selectedDays, setSelectedDays] = useState<number[]>([]);
+	const [isActive, setIsActive] = useState(true);
+
+	// Fetch current settings
+	const { data: settingsData, isLoading } = useQuery({
+		queryKey: ["order-settings"],
+		queryFn: async () => {
+			const response = await fetch("/api/order-settings");
+			if (!response.ok) {
+				throw new Error("Failed to fetch order settings");
+			}
+			const data = await response.json();
+			return data.settings as OrderSettings;
+		},
+	});
+
+	// Update local state when data is loaded
+	useEffect(() => {
+		if (settingsData) {
+			setSelectedDays(settingsData.allowedDays);
+			setIsActive(settingsData.isActive);
+		}
+	}, [settingsData]);
+
+	// Update settings mutation
+	const updateSettingsMutation = useMutation({
+		mutationFn: async ({
+			allowedDays,
+			isActive,
+		}: {
+			allowedDays: number[];
+			isActive: boolean;
+		}) => {
+			const response = await fetch("/api/order-settings", {
+				method: "PUT",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ allowedDays, isActive }),
+			});
+
+			if (!response.ok) {
+				const errorData = await response.json();
+				throw new Error(errorData.error || "Failed to update settings");
+			}
+
+			return response.json();
+		},
+		onSuccess: () => {
+			toast.success("Order settings updated successfully!");
+			queryClient.invalidateQueries({ queryKey: ["order-settings"] });
+		},
+		onError: (error: Error) => {
+			toast.error(error.message);
+		},
+	});
+
+	const handleDayToggle = (dayValue: number) => {
+		setSelectedDays((prev) => {
+			if (prev.includes(dayValue)) {
+				return prev.filter((day) => day !== dayValue);
+			} else {
+				return [...prev, dayValue].sort();
+			}
+		});
+	};
+
+	const handleSave = () => {
+		if (selectedDays.length === 0) {
+			toast.error("Please select at least one day");
+			return;
+		}
+
+		updateSettingsMutation.mutate({
+			allowedDays: selectedDays,
+			isActive,
+		});
+	};
+
+	const getCurrentDayStatus = () => {
+		const today = new Date().getDay();
+		const isToday = selectedDays.includes(today);
+		const todayName = DAYS[today].label;
+
+		return { isToday, todayName };
+	};
+
+	const { isToday, todayName } = getCurrentDayStatus();
+
+	if (isLoading) {
+		return (
+			<div className="container mx-auto py-6 px-4">
+				<div className="max-w-4xl mx-auto">
+					<div className="h-8 w-64 bg-gray-200 rounded animate-pulse mb-6" />
+					<Card>
+						<CardHeader>
+							<div className="h-6 w-48 bg-gray-200 rounded animate-pulse" />
+						</CardHeader>
+						<CardContent>
+							<div className="space-y-4">
+								{DAYS.map((day) => (
+									<div
+										key={day.value}
+										className="h-12 bg-gray-200 rounded animate-pulse"
+									/>
+								))}
+							</div>
+						</CardContent>
+					</Card>
+				</div>
+			</div>
+		);
+	}
+
+	return (
+		<div className="container mx-auto py-6 px-4">
+			<div className="max-w-4xl mx-auto">
+				{/* Header */}
+				<div className="flex items-center gap-3 mb-6">
+					<Settings className="h-6 w-6" />
+					<h1 className="text-2xl sm:text-3xl font-bold">
+						Order Days Settings
+					</h1>
+				</div>
+
+				{/* Current Status Banner */}
+				<Card
+					className={`mb-6 ${isToday ? "border-green-200 bg-green-50" : "border-orange-200 bg-orange-50"}`}
+				>
+					<CardContent className="py-4">
+						<div className="flex items-center gap-3">
+							<Calendar
+								className={`h-5 w-5 ${isToday ? "text-green-600" : "text-orange-600"}`}
+							/>
+							<div>
+								<p
+									className={`font-medium ${isToday ? "text-green-900" : "text-orange-900"}`}
+								>
+									Today is {todayName}
+								</p>
+								<p
+									className={`text-sm ${isToday ? "text-green-700" : "text-orange-700"}`}
+								>
+									{isActive
+										? isToday
+											? "Orders are currently being accepted"
+											: "Orders are currently not being accepted"
+										: "Order system is currently disabled"}
+								</p>
+							</div>
+						</div>
+					</CardContent>
+				</Card>
+
+				{/* Settings Card */}
+				<Card>
+					<CardHeader>
+						<CardTitle className="flex items-center gap-2">
+							<Clock className="h-5 w-5" />
+							Configure Order Days
+						</CardTitle>
+						<p className="text-sm text-muted-foreground">
+							Select the days of the week when customers can place orders.
+						</p>
+					</CardHeader>
+					<CardContent className="space-y-6">
+						{/* Enable/Disable Toggle */}
+						<div className="flex items-center justify-between p-4 border rounded-lg">
+							<div>
+								<Label className="text-base font-medium">
+									Enable Order System
+								</Label>
+								<p className="text-sm text-muted-foreground">
+									Toggle to enable or disable the entire order system
+								</p>
+							</div>
+							<Checkbox
+								checked={isActive}
+								onCheckedChange={(checked) => setIsActive(checked === true)}
+							/>
+						</div>
+
+						{/* Days Selection */}
+						<div className="space-y-4">
+							<Label className="text-base font-medium">
+								Allowed Days for Orders
+							</Label>
+							<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+								{DAYS.map((day) => (
+									<div
+										key={day.value}
+										className={`flex items-center space-x-3 p-4 border rounded-lg transition-colors ${
+											selectedDays.includes(day.value)
+												? "border-primary bg-primary/5"
+												: "border-border"
+										}`}
+									>
+										<Checkbox
+											id={`day-${day.value}`}
+											checked={selectedDays.includes(day.value)}
+											onCheckedChange={() => handleDayToggle(day.value)}
+										/>
+										<Label
+											htmlFor={`day-${day.value}`}
+											className="flex-1 cursor-pointer font-medium"
+										>
+											{day.label}
+										</Label>
+										<span className="text-xs text-muted-foreground font-mono">
+											{day.short}
+										</span>
+									</div>
+								))}
+							</div>
+
+							{selectedDays.length === 0 && (
+								<p className="text-sm text-red-600">
+									Please select at least one day for orders.
+								</p>
+							)}
+						</div>
+
+						{/* Summary */}
+						{selectedDays.length > 0 && (
+							<div className="p-4 bg-muted/50 rounded-lg">
+								<p className="text-sm font-medium mb-2">Summary:</p>
+								<p className="text-sm text-muted-foreground">
+									Orders will be {isActive ? "accepted" : "disabled"} on:{" "}
+									<span className="font-medium text-foreground">
+										{selectedDays.map((day) => DAYS[day].label).join(", ")}
+									</span>
+								</p>
+							</div>
+						)}
+
+						{/* Save Button */}
+						<div className="flex justify-end pt-4">
+							<Button
+								onClick={handleSave}
+								disabled={
+									selectedDays.length === 0 || updateSettingsMutation.isPending
+								}
+								size="lg"
+							>
+								{updateSettingsMutation.isPending ? (
+									<>
+										<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+										Saving...
+									</>
+								) : (
+									<>
+										<Save className="h-4 w-4 mr-2" />
+										Save Settings
+									</>
+								)}
+							</Button>
+						</div>
+					</CardContent>
+				</Card>
+			</div>
+		</div>
+	);
+}

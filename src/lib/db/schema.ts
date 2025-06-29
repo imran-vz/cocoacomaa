@@ -225,3 +225,21 @@ export const addressesRelations = relations(addresses, ({ one }) => ({
 		references: [users.id],
 	}),
 }));
+
+export const orderSettings = pgTable("order_settings", (d) => {
+	return {
+		id: d.integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		allowedDays: d.jsonb("allowed_days").notNull().$type<number[]>(), // Array of day numbers (0-6, where 0=Sunday)
+		isActive: d.boolean("is_active").notNull().default(true),
+		createdAt: d
+			.timestamp("created_at")
+			.default(sql`CURRENT_TIMESTAMP`)
+			.notNull(),
+		updatedAt: d
+			.timestamp("updated_at")
+			.default(sql`CURRENT_TIMESTAMP`)
+			.notNull(),
+	};
+});
+
+export type OrderSettings = typeof orderSettings.$inferSelect;
