@@ -9,7 +9,7 @@ import { addresses } from "@/lib/db/schema";
 // DELETE - Delete an address
 export async function DELETE(
 	_: NextRequest,
-	{ params }: { params: { id: string } },
+	{ params }: { params: Promise<{ id: string }> },
 ) {
 	try {
 		const session = await auth();
@@ -17,7 +17,8 @@ export async function DELETE(
 			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 		}
 
-		const addressId = Number.parseInt(params.id);
+		const { id } = await params;
+		const addressId = Number.parseInt(id);
 		if (Number.isNaN(addressId)) {
 			return NextResponse.json(
 				{ error: "Invalid address ID" },

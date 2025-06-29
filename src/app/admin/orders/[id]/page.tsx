@@ -151,14 +151,14 @@ export default async function AdminOrderDetailsPage({
 								<div className="space-y-4">
 									{order.orderItems.map((item, index) => (
 										<div
-											key={`${item.dessert.name}-${index}`}
+											key={`${item.dessert?.name}-${index}`}
 											className="flex justify-between items-start gap-4"
 										>
 											<div className="flex-1 min-w-0">
-												<h4 className="font-medium">{item.dessert.name}</h4>
-												{item.dessert.description && (
+												<h4 className="font-medium">{item.dessert?.name}</h4>
+												{item.dessert?.description && (
 													<p className="text-sm text-muted-foreground mt-1">
-														{item.dessert.description}
+														{item.dessert?.description}
 													</p>
 												)}
 												<p className="text-sm text-muted-foreground">
