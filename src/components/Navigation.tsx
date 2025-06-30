@@ -181,7 +181,11 @@ export function Navigation() {
 											Logout
 										</Button>
 									</>
-								) : null}
+								) : (
+									<Button variant="ghost" asChild>
+										<Link href="/login">Login</Link>
+									</Button>
+								)}
 							</div>
 						)}
 					</div>
