@@ -12,7 +12,6 @@ const createPostalComboSchema = z.object({
 	description: z.string().min(10, { message: "Description is required" }),
 	price: z.number().min(0, { message: "Price must be positive" }),
 	imageUrl: z.string().url().optional(),
-	comboType: z.enum(["classic", "premium", "deluxe"]),
 	items: z
 		.array(z.string())
 		.min(1, { message: "At least one item is required" }),
@@ -62,8 +61,7 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		const { name, description, price, imageUrl, comboType, items, status } =
-			data;
+		const { name, description, price, imageUrl, items, status } = data;
 
 		const [newPostalCombo] = await db
 			.insert(postalCombos)
@@ -72,7 +70,6 @@ export async function POST(request: NextRequest) {
 				description,
 				price: price.toString(),
 				imageUrl: imageUrl || null,
-				comboType,
 				items,
 				status,
 			})

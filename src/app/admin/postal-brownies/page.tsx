@@ -19,7 +19,6 @@ export default async function AdminPostalBrowniesPage() {
 			createdAt: true,
 			items: true,
 			status: true,
-			comboType: true,
 		},
 	});
 
@@ -103,32 +102,8 @@ export default async function AdminPostalBrowniesPage() {
 										id: "status",
 										title: "Status",
 										options: [
-											{
-												label: "Available",
-												value: "available",
-											},
-											{
-												label: "Unavailable",
-												value: "unavailable",
-											},
-										],
-									},
-									{
-										id: "comboType",
-										title: "Type",
-										options: [
-											{
-												label: "Classic",
-												value: "classic",
-											},
-											{
-												label: "Premium",
-												value: "premium",
-											},
-											{
-												label: "Deluxe",
-												value: "deluxe",
-											},
+											{ label: "Available", value: "available" },
+											{ label: "Unavailable", value: "unavailable" },
 										],
 									},
 								]}

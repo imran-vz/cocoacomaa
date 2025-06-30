@@ -21,7 +21,6 @@ export type PostalCombo = {
 	createdAt: Date;
 	items: string[];
 	status: "available" | "unavailable";
-	comboType: string;
 };
 
 export const postalComboColumns: ColumnDef<PostalCombo>[] = [
@@ -67,23 +66,6 @@ export const postalComboColumns: ColumnDef<PostalCombo>[] = [
 					</div>
 				</div>
 			);
-		},
-	},
-	{
-		accessorKey: "comboType",
-		header: ({ column }) => (
-			<DataTableColumnHeader column={column} title="Type" />
-		),
-		cell: ({ row }) => {
-			const comboType = row.getValue("comboType") as string;
-			return (
-				<Badge variant="outline" className="capitalize">
-					{comboType}
-				</Badge>
-			);
-		},
-		filterFn: (row, id, value) => {
-			return value.includes(row.getValue(id));
 		},
 	},
 	{

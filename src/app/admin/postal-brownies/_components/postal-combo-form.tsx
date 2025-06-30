@@ -34,7 +34,6 @@ const postalComboSchema = z.object({
 	description: z.string().min(10, { message: "Description is required" }),
 	price: z.number().min(0, { message: "Price must be positive" }),
 	imageUrl: z.string().url().optional().or(z.literal("")),
-	comboType: z.string(),
 	items: z
 		.array(z.string().min(1, "Item cannot be empty"))
 		.min(1, { message: "At least one item is required" }),
@@ -50,7 +49,6 @@ interface PostalComboFormProps {
 		description: string;
 		price: string;
 		imageUrl: string | null;
-		comboType: string;
 		items: string[];
 		status: "available" | "unavailable";
 	};
@@ -76,7 +74,6 @@ export default function PostalComboForm({
 			description: initialData?.description || "",
 			price: initialData ? Number(initialData.price) : 0,
 			imageUrl: initialData?.imageUrl || "",
-			comboType: initialData?.comboType || "classic",
 			items: initialData?.items || [],
 			status: initialData?.status || "available",
 		},
@@ -171,7 +168,6 @@ export default function PostalComboForm({
 				description: data.description,
 				price: data.price,
 				imageUrl: data.imageUrl || undefined,
-				comboType: data.comboType,
 				items: itemsArray,
 				status: data.status,
 			};
@@ -274,32 +270,6 @@ export default function PostalComboForm({
 										}
 									/>
 								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-
-					<FormField
-						control={form.control}
-						name="comboType"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>Combo Type</FormLabel>
-								<Select
-									onValueChange={field.onChange}
-									defaultValue={field.value}
-								>
-									<FormControl>
-										<SelectTrigger>
-											<SelectValue placeholder="Select type" />
-										</SelectTrigger>
-									</FormControl>
-									<SelectContent>
-										<SelectItem value="classic">Classic</SelectItem>
-										<SelectItem value="premium">Premium</SelectItem>
-										<SelectItem value="deluxe">Deluxe</SelectItem>
-									</SelectContent>
-								</Select>
 								<FormMessage />
 							</FormItem>
 						)}

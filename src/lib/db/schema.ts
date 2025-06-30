@@ -13,8 +13,7 @@ export const desserts = pgTable("desserts", (d) => {
 		category: d
 			.varchar("category", { length: 50 })
 			.notNull()
-			.default("regular"), // 'regular', 'brownie_combo'
-		comboType: d.varchar("combo_type", { length: 100 }), // For brownie combos: 'classic', 'premium', 'deluxe'
+			.default("regular"),
 		createdAt: d
 			.timestamp("created_at")
 			.default(sql`CURRENT_TIMESTAMP`)
@@ -147,7 +146,6 @@ export const postalCombos = pgTable("postal_combos", (d) => {
 		description: d.text("description").notNull(),
 		price: d.numeric("price", { precision: 10, scale: 2 }).notNull(), // Price in rupees
 		imageUrl: d.text("image_url"),
-		comboType: d.varchar("combo_type", { length: 100 }).notNull(), // 'classic', 'premium', 'deluxe'
 		items: d.jsonb("items").notNull().$type<string[]>(), // Array of included items
 		status: d
 			.varchar("status", {

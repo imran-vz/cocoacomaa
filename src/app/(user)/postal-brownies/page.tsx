@@ -3,14 +3,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { Package, Truck } from "lucide-react";
+import { Package } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import * as z from "zod";
+import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,7 +43,6 @@ interface PostalCombo {
 	description: string;
 	price: string;
 	imageUrl: string | null;
-	comboType: string;
 	items: string[];
 	status: string;
 	createdAt: Date;
@@ -132,18 +131,14 @@ export default function PostalBrowniesPage() {
 							</h1>
 						</div>
 						<p className="text-sm sm:text-base lg:text-lg text-muted-foreground max-w-2xl mx-auto px-2">
-							Indulge in our premium brownies delivered straight to your
+							Indulge in our secure brownies delivered straight to your
 							doorstep. Each combo is carefully crafted and beautifully packaged
 							for the perfect gift or treat.
 						</p>
 						<div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mt-3 sm:mt-4 text-xs sm:text-sm text-muted-foreground">
 							<div className="flex items-center gap-1">
-								<Truck className="h-3 w-3 sm:h-4 sm:w-4" />
-								<span>Free Delivery</span>
-							</div>
-							<div className="flex items-center gap-1">
 								<Package className="h-3 w-3 sm:h-4 sm:w-4" />
-								<span>Premium Packaging</span>
+								<span>Secure Packaging</span>
 							</div>
 						</div>
 					</div>

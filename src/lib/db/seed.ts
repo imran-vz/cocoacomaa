@@ -109,7 +109,6 @@ async function seed() {
 				price: "650.00",
 				imageUrl:
 					"https://images.unsplash.com/photo-1571066811602-716837d681de?w=400&h=300&fit=crop",
-				comboType: "classic",
 				items: [
 					"6 Classic Fudgy Brownies",
 					"Premium Belgian Chocolate",
@@ -125,7 +124,6 @@ async function seed() {
 				price: "750.00",
 				imageUrl:
 					"https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=400&h=300&fit=crop",
-				comboType: "premium",
 				items: [
 					"8 Premium Brownies with Nuts",
 					"Caramel & Sea Salt Variants",
@@ -142,7 +140,6 @@ async function seed() {
 				price: "850.00",
 				imageUrl:
 					"https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=400&h=300&fit=crop",
-				comboType: "deluxe",
 				items: [
 					"12 Assorted Gourmet Brownies",
 					"Triple Chocolate, Walnut & Caramel",
