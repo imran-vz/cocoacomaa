@@ -1,22 +1,18 @@
 "use client";
 
-import { LogOut, Menu, ShoppingCart, X } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
 import { useState } from "react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useCart } from "@/lib/cart-context";
 
 export function Navigation() {
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
 	const session = useSession();
-	const { items } = useCart();
 
 	const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
-	const itemCount = items.reduce((total, item) => total + item.quantity, 0);
 	const isAdmin = session.data?.user?.role === "admin";
 
 	const handleLogout = async () => {
@@ -68,20 +64,7 @@ export function Navigation() {
 								<Button variant="ghost" asChild>
 									<Link href="/">Home</Link>
 								</Button>
-								<Button variant="outline" asChild className="relative">
-									<Link href="/order" className="flex items-center">
-										<ShoppingCart className="h-4 w-4 mr-2" />
-										Cart
-										{itemCount > 0 && (
-											<Badge
-												variant="destructive"
-												className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs"
-											>
-												{itemCount}
-											</Badge>
-										)}
-									</Link>
-								</Button>
+
 								{!session.data?.user?.id ? (
 									<Button variant="ghost" asChild>
 										<Link href="/login">Login</Link>
@@ -107,27 +90,6 @@ export function Navigation() {
 
 					{/* Mobile Menu Button */}
 					<div className="md:hidden flex items-center space-x-2">
-						{isAdmin ? null : (
-							<Button
-								variant="outline"
-								asChild
-								size="icon"
-								className="relative"
-							>
-								<Link href="/order">
-									<ShoppingCart className="h-4 w-4" />
-									{itemCount > 0 && (
-										<Badge
-											variant="destructive"
-											className="absolute -top-2 -right-2 h-4 w-4 p-0 flex items-center justify-center text-[10px]"
-										>
-											{itemCount}
-										</Badge>
-									)}
-								</Link>
-							</Button>
-						)}
-
 						{/* Hamburger Menu Button */}
 						<Button
 							variant="ghost"

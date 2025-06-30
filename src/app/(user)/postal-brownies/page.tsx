@@ -138,6 +138,10 @@ export default function PostalBrowniesPage() {
 						<div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mt-3 sm:mt-4 text-xs sm:text-sm text-muted-foreground">
 							<div className="flex items-center gap-1">
 								<Package className="h-3 w-3 sm:h-4 sm:w-4" />
+								<span>Only one brownie combo per order</span>
+							</div>
+							<div className="flex items-center gap-1">
+								<Package className="h-3 w-3 sm:h-4 sm:w-4" />
 								<span>Secure Packaging</span>
 							</div>
 						</div>
@@ -164,14 +168,24 @@ export default function PostalBrowniesPage() {
 												className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
 											>
 												{isLoading ? (
-													<div className="col-span-full text-center py-6 sm:py-8">
-														<div className="animate-pulse">
-															<div className="h-4 bg-gray-200 rounded w-1/3 mx-auto"></div>
-														</div>
-														<p className="text-sm sm:text-base text-muted-foreground mt-2">
-															Loading postal combos...
-														</p>
-													</div>
+													Array.from(
+														{ length: 6 },
+														(_, i) => `skeleton-${Date.now()}-${i}`,
+													).map((skeletonId) => (
+														<Card key={skeletonId} className="h-full">
+															<div className="aspect-video bg-gray-200 animate-pulse rounded-t-lg" />
+															<CardHeader className="pb-2">
+																<div className="h-4 bg-gray-200 rounded animate-pulse mb-2" />
+																<div className="h-3 bg-gray-200 rounded animate-pulse w-2/3" />
+															</CardHeader>
+															<CardContent className="pt-0">
+																<div className="space-y-2">
+																	<div className="h-3 bg-gray-200 rounded animate-pulse" />
+																	<div className="h-3 bg-gray-200 rounded animate-pulse w-3/4" />
+																</div>
+															</CardContent>
+														</Card>
+													))
 												) : postalCombos.length === 0 ? (
 													<div className="col-span-full text-center py-6 sm:py-8">
 														<Package className="h-8 w-8 sm:h-12 sm:w-12 mx-auto text-muted-foreground mb-2" />
@@ -303,12 +317,33 @@ export default function PostalBrowniesPage() {
 								</Button>
 							</div>
 
-							{/* Note about single combo per order */}
-							<div className="text-center px-4">
-								<p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-									Note: Only one brownie combo per order. Adding a new combo
-									will replace your current cart.
-								</p>
+							{/* Important notice banner */}
+							<div className="bg-amber-50 border border-amber-200 rounded-lg p-4 sm:p-6">
+								<div className="flex items-start gap-3">
+									<div className="flex-shrink-0">
+										<svg
+											className="h-5 w-5 text-amber-600"
+											viewBox="0 0 20 20"
+											fill="currentColor"
+											aria-hidden="true"
+										>
+											<path
+												fillRule="evenodd"
+												d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
+												clipRule="evenodd"
+											/>
+										</svg>
+									</div>
+									<div className="flex-1">
+										<h3 className="text-sm sm:text-base font-medium text-amber-800">
+											Important Notice
+										</h3>
+										<p className="text-xs sm:text-sm text-amber-700 mt-1 leading-relaxed">
+											Only one brownie combo per order. Adding a new combo will
+											replace your current cart.
+										</p>
+									</div>
+								</div>
 							</div>
 						</form>
 					</Form>
