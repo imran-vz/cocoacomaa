@@ -31,12 +31,12 @@ export async function GET() {
 
 		return NextResponse.json({
 			success: true,
-			postalCombos: allPostalCombos,
+			data: allPostalCombos,
 		});
 	} catch (error) {
 		console.error("Error fetching postal combos:", error);
 		return NextResponse.json(
-			{ error: "Failed to fetch postal combos" },
+			{ error: "Failed to fetch postal combos", success: false },
 			{ status: 500 },
 		);
 	}
@@ -63,22 +63,16 @@ export async function POST(request: NextRequest) {
 
 		const { name, description, price, imageUrl, items, status } = data;
 
-		const [newPostalCombo] = await db
-			.insert(postalCombos)
-			.values({
-				name,
-				description,
-				price: price.toString(),
-				imageUrl: imageUrl || null,
-				items,
-				status,
-			})
-			.returning();
-
-		return NextResponse.json({
-			success: true,
-			postalCombo: newPostalCombo,
+		await db.insert(postalCombos).values({
+			name,
+			description,
+			price: price.toString(),
+			imageUrl: imageUrl || null,
+			items,
+			status,
 		});
+
+		return NextResponse.json({ success: true });
 	} catch (error) {
 		console.error("Error creating postal combo:", error);
 		return NextResponse.json(

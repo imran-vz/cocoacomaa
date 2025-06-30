@@ -56,7 +56,11 @@ export default async function EditPostalComboPage({
 						<CardTitle>Postal Combo Details</CardTitle>
 					</CardHeader>
 					<CardContent>
-						<PostalComboForm initialData={postalCombo} isEdit={true} />
+						<PostalComboForm
+							initialData={postalCombo}
+							key={postalCombo.id}
+							isEdit={true}
+						/>
 					</CardContent>
 				</Card>
 			</div>

@@ -49,18 +49,18 @@ interface PostalCombo {
 	updatedAt: Date;
 }
 
-const fetchPostalCombos = async (): Promise<PostalCombo[]> => {
+async function fetchPostalCombos() {
 	try {
-		const { data } = await axios.get<{ postalCombos: PostalCombo[] }>(
+		const { data } = await axios.get<{ data: PostalCombo[] }>(
 			"/api/postal-combos",
 		);
-		return data.postalCombos;
+		return data.data;
 	} catch (error) {
 		console.error("Error fetching postal combos:", error);
 		toast.error("Failed to load postal combos");
 		return [];
 	}
-};
+}
 
 export default function PostalBrowniesPage() {
 	const router = useRouter();

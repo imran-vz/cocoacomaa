@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
 import { Minus, Plus, Upload, X } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -55,12 +56,42 @@ interface PostalComboFormProps {
 	isEdit?: boolean;
 }
 
+// API functions
+async function createPostalCombo(data: PostalComboFormData) {
+	const response = await fetch("/api/postal-combos", {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify(data),
+	});
+
+	if (!response.ok) {
+		const errorData = await response.json();
+		throw new Error(errorData.error || "Failed to create postal combo");
+	}
+
+	return response.json();
+}
+
+async function updatePostalCombo(id: number, data: PostalComboFormData) {
+	const response = await fetch(`/api/postal-combos/${id}`, {
+		method: "PUT",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify(data),
+	});
+
+	if (!response.ok) {
+		const errorData = await response.json();
+		throw new Error(errorData.error || "Failed to update postal combo");
+	}
+
+	return response.json();
+}
+
 export default function PostalComboForm({
 	initialData,
 	isEdit = false,
 }: PostalComboFormProps) {
 	const router = useRouter();
-	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isUploading, setIsUploading] = useState(false);
 	const [imagePreview, setImagePreview] = useState<string | null>(
 		initialData?.imageUrl || null,
@@ -74,7 +105,7 @@ export default function PostalComboForm({
 			description: initialData?.description || "",
 			price: initialData ? Number(initialData.price) : 0,
 			imageUrl: initialData?.imageUrl || "",
-			items: initialData?.items || [],
+			items: initialData?.items ?? [],
 			status: initialData?.status || "available",
 		},
 	});
@@ -82,8 +113,41 @@ export default function PostalComboForm({
 	const { fields, append, remove } = useFieldArray({
 		control: form.control,
 		// @ts-ignore
-		name: "items",
+		name: "items" as const,
 	});
+
+	// Create mutation
+	const createMutation = useMutation({
+		mutationFn: createPostalCombo,
+		onSuccess: () => {
+			toast.success("Postal combo created successfully!");
+			router.push("/admin/postal-brownies");
+			router.refresh();
+		},
+		onError: (error: Error) => {
+			toast.error(error.message);
+		},
+	});
+
+	// Update mutation
+	const updateMutation = useMutation({
+		mutationFn: async (data: PostalComboFormData) => {
+			if (!initialData?.id) {
+				throw new Error("No ID found for update");
+			}
+			return updatePostalCombo(initialData.id, data);
+		},
+		onSuccess: () => {
+			toast.success("Postal combo updated successfully!");
+			router.push("/admin/postal-brownies");
+			router.refresh();
+		},
+		onError: (error: Error) => {
+			toast.error(error.message);
+		},
+	});
+
+	const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
 	// Handle file upload
 	const handleFileUpload = async (file: File) => {
@@ -157,59 +221,19 @@ export default function PostalComboForm({
 	};
 
 	const onSubmit = async (data: PostalComboFormData) => {
-		try {
-			setIsSubmitting(true);
+		// Convert items array to simple string array
+		const itemsArray = data.items.filter(Boolean);
 
-			// Convert items array to simple string array
-			const itemsArray = data.items.filter(Boolean);
+		const payload = {
+			...data,
+			imageUrl: data.imageUrl || undefined,
+			items: itemsArray,
+		};
 
-			const payload = {
-				name: data.name,
-				description: data.description,
-				price: data.price,
-				imageUrl: data.imageUrl || undefined,
-				items: itemsArray,
-				status: data.status,
-			};
-
-			const url = isEdit
-				? `/api/postal-combos/${initialData?.id}`
-				: "/api/postal-combos";
-			const method = isEdit ? "PUT" : "POST";
-
-			const response = await fetch(url, {
-				method,
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify(payload),
-			});
-
-			if (!response.ok) {
-				throw new Error("Failed to save postal combo");
-			}
-
-			const result = await response.json();
-
-			if (!result.success) {
-				throw new Error(result.error || "Failed to save postal combo");
-			}
-
-			toast.success(
-				isEdit
-					? "Postal combo updated successfully!"
-					: "Postal combo created successfully!",
-			);
-
-			router.push("/admin/postal-brownies");
-			router.refresh();
-		} catch (error) {
-			console.error("Error saving postal combo:", error);
-			toast.error(
-				error instanceof Error ? error.message : "Failed to save postal combo",
-			);
-		} finally {
-			setIsSubmitting(false);
+		if (isEdit) {
+			updateMutation.mutate(payload);
+		} else {
+			createMutation.mutate(payload);
 		}
 	};
 
