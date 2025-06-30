@@ -131,14 +131,14 @@ export default function PostalBrowniesPage() {
 							</h1>
 						</div>
 						<p className="text-sm sm:text-base lg:text-lg text-muted-foreground max-w-2xl mx-auto px-2">
-							Indulge in our secure brownies delivered straight to your
-							doorstep. Each combo is carefully crafted and beautifully packaged
-							for the perfect gift or treat.
+							Indulge in our fudgy brownies delivered straight to your doorstep.
+							Each combo is carefully crafted and securely packaged for the
+							perfect gift or treat.
 						</p>
 						<div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mt-3 sm:mt-4 text-xs sm:text-sm text-muted-foreground">
 							<div className="flex items-center gap-1">
 								<Package className="h-3 w-3 sm:h-4 sm:w-4" />
-								<span>Only one brownie combo per order</span>
+								<span>Only 1 brownie combo per order</span>
 							</div>
 							<div className="flex items-center gap-1">
 								<Package className="h-3 w-3 sm:h-4 sm:w-4" />
