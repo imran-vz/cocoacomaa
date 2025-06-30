@@ -188,6 +188,17 @@ export const users = pgTable("users", (d) => {
 	};
 });
 
+export const passwordResetTokens = pgTable("password_reset_tokens", (d) => {
+	return {
+		id: d.integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		email: d.text("email").notNull(),
+		token: d.text("token").notNull().unique(),
+		expiresAt: d.timestamp("expires_at").notNull(),
+		createdAt: d.timestamp("created_at").defaultNow().notNull(),
+		used: d.boolean("used").notNull().default(false),
+	};
+});
+
 export const addresses = pgTable("addresses", (d) => {
 	return {
 		id: d.integer("id").primaryKey().generatedAlwaysAsIdentity(),
@@ -215,7 +226,18 @@ export const addresses = pgTable("addresses", (d) => {
 export const usersRelations = relations(users, ({ many }) => ({
 	address: many(addresses),
 	orders: many(orders),
+	passwordResetTokens: many(passwordResetTokens),
 }));
+
+export const passwordResetTokensRelations = relations(
+	passwordResetTokens,
+	({ one }) => ({
+		user: one(users, {
+			fields: [passwordResetTokens.email],
+			references: [users.email],
+		}),
+	}),
+);
 
 export const addressesRelations = relations(addresses, ({ one }) => ({
 	user: one(users, {
