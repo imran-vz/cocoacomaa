@@ -1,8 +1,9 @@
 "use client";
 
 import { AlertTriangle, Clock } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "./alert";
+
 import { useOrderSettings } from "@/hooks/use-order-settings";
+import { Alert, AlertDescription, AlertTitle } from "./alert";
 
 export default function OrderRestrictionBanner() {
 	const { settings, getNextOrderDay, isLoading } = useOrderSettings();

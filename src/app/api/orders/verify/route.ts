@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import Razorpay from "razorpay";
 import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
+import { sendOrderConfirmationEmail } from "@/lib/email";
 
 const razorpay = new Razorpay({
 	key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
@@ -71,6 +72,64 @@ export async function POST(request: NextRequest) {
 
 		if (updatedOrder.length === 0) {
 			return NextResponse.json({ error: "Order not found" }, { status: 404 });
+		}
+
+		// Send confirmation email if payment is successfully captured
+		if (payment.status === "captured") {
+			try {
+				// Fetch complete order details for email
+				const fullOrderDetails = await db.query.orders.findFirst({
+					where: eq(orders.id, orderId),
+					columns: {
+						id: true,
+						total: true,
+						createdAt: true,
+						notes: true,
+						pickupDateTime: true,
+						orderType: true,
+					},
+					with: {
+						orderItems: {
+							columns: {
+								quantity: true,
+								price: true,
+								itemName: true,
+							},
+						},
+						user: {
+							columns: {
+								name: true,
+								email: true,
+							},
+						},
+						address: {
+							columns: {
+								addressLine1: true,
+								addressLine2: true,
+								city: true,
+								state: true,
+								zip: true,
+							},
+						},
+					},
+				});
+
+				if (fullOrderDetails) {
+					// Send email in background (don't wait for it)
+					sendOrderConfirmationEmail(fullOrderDetails).catch((emailError) => {
+						console.error(
+							`Failed to send order confirmation email for order ${orderId}:`,
+							emailError,
+						);
+					});
+				}
+			} catch (emailError) {
+				// Log error but don't fail the request
+				console.error(
+					`Error preparing email for order ${orderId}:`,
+					emailError,
+				);
+			}
 		}
 
 		return NextResponse.json({
