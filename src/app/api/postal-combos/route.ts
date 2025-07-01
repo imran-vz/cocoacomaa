@@ -22,7 +22,7 @@ const createPostalComboSchema = z.object({
 export async function GET() {
 	try {
 		const allPostalCombos = await db.query.postalCombos.findMany({
-			orderBy: (postalCombos, { desc }) => [desc(postalCombos.createdAt)],
+			orderBy: (postalCombos, { asc }) => [asc(postalCombos.createdAt)],
 			where: and(
 				eq(postalCombos.isDeleted, false),
 				eq(postalCombos.status, "available"),
