@@ -70,6 +70,36 @@ export function usePostalOrderSettings(month: string) {
 		);
 	};
 
+	// Get the earliest available slot date for the current month
+	const getEarliestAvailableSlot = () => {
+		if (!data || !Array.isArray(data)) return null;
+
+		const today = new Date().toISOString().split("T")[0];
+
+		// Find future slots (order start date is after today)
+		const futureSlots = data
+			.filter((setting) => setting.isActive && setting.orderStartDate > today)
+			.sort((a, b) => a.orderStartDate.localeCompare(b.orderStartDate));
+
+		return futureSlots.length > 0 ? futureSlots[0] : null;
+	};
+
+	// Get the current active slot (if orders are currently allowed)
+	const getCurrentActiveSlot = () => {
+		if (!data || !Array.isArray(data)) return null;
+
+		const today = new Date().toISOString().split("T")[0];
+
+		return (
+			data.find(
+				(setting) =>
+					setting.isActive &&
+					today >= setting.orderStartDate &&
+					today <= setting.orderEndDate,
+			) || null
+		);
+	};
+
 	// Create settings mutation
 	const createMutation = useMutation({
 		mutationFn: async (
@@ -142,6 +172,8 @@ export function usePostalOrderSettings(month: string) {
 		error,
 		arePostalOrdersAllowed: arePostalOrdersAllowed(),
 		isDispatchingActive: isDispatchingActive(),
+		getEarliestAvailableSlot,
+		getCurrentActiveSlot,
 		createSettings: createMutation.mutate,
 		updateSettings: updateMutation.mutate,
 		deleteSettings: deleteMutation.mutate,

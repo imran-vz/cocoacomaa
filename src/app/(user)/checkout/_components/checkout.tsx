@@ -43,6 +43,7 @@ import {
 	useDeleteAddress,
 } from "@/hooks/use-addresses";
 import { useCakeOrderSettings } from "@/hooks/use-order-settings";
+import { usePostalOrderSettings } from "@/hooks/use-postal-order-settings";
 import { useCart } from "@/lib/cart-context";
 import { config } from "@/lib/config";
 import { formatCurrency } from "@/lib/utils";
@@ -196,6 +197,10 @@ export default function CheckoutPage({
 	const existingId = useId();
 	const newId = useId();
 	const { areOrdersAllowed: ordersAllowed } = useCakeOrderSettings();
+
+	// Get current month for postal order settings
+	const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
+	const { getCurrentActiveSlot } = usePostalOrderSettings(currentMonth);
 
 	// React Query hooks for address management
 	const { data: addresses = [], isLoading: addressesLoading } = useAddresses();
@@ -1253,30 +1258,68 @@ export default function CheckoutPage({
 									<div className="flex items-center gap-2 mb-2">
 										<Package className="h-4 w-4 text-muted-foreground" />
 										<span className="text-sm sm:text-base font-medium">
-											Delivery Address
+											Delivery Information
 										</span>
 									</div>
 									{(() => {
 										const selectedAddress = addresses.find(
 											(addr) => addr.id === form.watch("selectedAddressId"),
 										);
-										if (selectedAddress) {
-											return (
-												<div className="text-xs sm:text-sm text-muted-foreground space-y-1">
-													<p className="font-medium text-foreground">
-														{selectedAddress.addressLine1}
-													</p>
-													{selectedAddress.addressLine2 && (
-														<p>{selectedAddress.addressLine2}</p>
-													)}
-													<p>
-														{selectedAddress.city}, {selectedAddress.state}{" "}
-														{selectedAddress.zip}
-													</p>
-												</div>
-											);
-										}
-										return null;
+										const currentSlot = getCurrentActiveSlot();
+
+										return (
+											<div className="space-y-3">
+												{selectedAddress && (
+													<div>
+														<p className="text-xs font-medium text-muted-foreground mb-1">
+															Address:
+														</p>
+														<div className="text-xs sm:text-sm text-muted-foreground space-y-1">
+															<p className="font-medium text-foreground">
+																{selectedAddress.addressLine1}
+															</p>
+															{selectedAddress.addressLine2 && (
+																<p>{selectedAddress.addressLine2}</p>
+															)}
+															<p>
+																{selectedAddress.city}, {selectedAddress.state}{" "}
+																{selectedAddress.zip}
+															</p>
+														</div>
+													</div>
+												)}
+
+												{currentSlot && (
+													<div>
+														<p className="text-xs font-medium text-muted-foreground mb-1">
+															Dispatch Period:
+														</p>
+														<div className="text-xs sm:text-sm text-muted-foreground">
+															<p className="font-medium text-foreground">
+																{new Date(
+																	currentSlot.dispatchStartDate,
+																).toLocaleDateString("en-US", {
+																	weekday: "short",
+																	month: "short",
+																	day: "numeric",
+																})}{" "}
+																-{" "}
+																{new Date(
+																	currentSlot.dispatchEndDate,
+																).toLocaleDateString("en-US", {
+																	weekday: "short",
+																	month: "short",
+																	day: "numeric",
+																})}
+															</p>
+															<p className="text-xs text-muted-foreground mt-1">
+																Your order will be dispatched during this period
+															</p>
+														</div>
+													</div>
+												)}
+											</div>
+										);
 									})()}
 								</div>
 							)}

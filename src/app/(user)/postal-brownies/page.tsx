@@ -71,7 +71,8 @@ export default function PostalBrowniesPage() {
 
 	// Get current month for postal order settings
 	const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
-	const { arePostalOrdersAllowed } = usePostalOrderSettings(currentMonth);
+	const { arePostalOrdersAllowed, getEarliestAvailableSlot } =
+		usePostalOrderSettings(currentMonth);
 
 	const { data: postalCombos = [], isLoading } = useQuery({
 		queryKey: ["postal-combos"],
@@ -86,6 +87,9 @@ export default function PostalBrowniesPage() {
 	const selectedCombo = postalCombos.find(
 		(combo) => combo.id.toString() === selectedComboId,
 	);
+
+	// Get the earliest available slot for displaying availability message
+	const earliestSlot = getEarliestAvailableSlot();
 
 	const handleAddToCart = async (data: BrownieComboFormValues) => {
 		if (!session) {
@@ -183,9 +187,25 @@ export default function PostalBrowniesPage() {
 											Postal Brownie Orders Currently Unavailable
 										</h3>
 										<p className="text-xs sm:text-sm text-orange-700 mt-1 leading-relaxed">
-											We are not accepting postal brownie orders for this month.
-											Please check back later or contact us for more information
-											about upcoming order periods.
+											{earliestSlot ? (
+												<>
+													We will be available to take orders starting{" "}
+													<span className="font-semibold">
+														{new Date(
+															earliestSlot.orderStartDate,
+														).toLocaleDateString("en-US", {
+															weekday: "long",
+															year: "numeric",
+															month: "long",
+															day: "numeric",
+														})}
+													</span>
+													. Please check back on that date to place your postal
+													brownie order.
+												</>
+											) : (
+												"We are not accepting postal brownie orders for this month. Please check back later or contact us for more information about upcoming order periods."
+											)}
 										</p>
 									</div>
 								</div>
