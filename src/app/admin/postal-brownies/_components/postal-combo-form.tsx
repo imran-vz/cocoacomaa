@@ -5,7 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { Minus, Plus, Upload, X } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
@@ -29,6 +29,11 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+	calculateGrossAmount,
+	calculateNetAmount,
+} from "@/lib/calculateGrossAmount";
+import { config } from "@/lib/config";
 
 const postalComboSchema = z.object({
 	name: z.string().min(2, { message: "Name is required" }),
@@ -96,14 +101,26 @@ export default function PostalComboForm({
 	const [imagePreview, setImagePreview] = useState<string | null>(
 		initialData?.imageUrl || null,
 	);
+	const [grossAmount, setGrossAmount] = useState<number>(0);
 	const fileInputRef = useRef<HTMLInputElement>(null);
+
+	// Convert gross price to net price for editing
+	const getInitialPrice = () => {
+		if (!initialData) return 0;
+
+		const storedPrice = Number(initialData.price);
+		// If editing, convert stored gross price back to net price
+		return isEdit && storedPrice > 0
+			? calculateNetAmount(storedPrice, config.paymentProcessingFee)
+			: storedPrice;
+	};
 
 	const form = useForm<PostalComboFormData>({
 		resolver: zodResolver(postalComboSchema),
 		defaultValues: {
 			name: initialData?.name || "",
 			description: initialData?.description || "",
-			price: initialData ? Number(initialData.price) : 0,
+			price: getInitialPrice(),
 			imageUrl: initialData?.imageUrl || "",
 			items: initialData?.items ?? [],
 			status: initialData?.status || "available",
@@ -115,6 +132,20 @@ export default function PostalComboForm({
 		// @ts-ignore
 		name: "items" as const,
 	});
+
+	// Calculate gross amount when price changes
+	const watchPrice = form.watch("price");
+	useEffect(() => {
+		if (typeof watchPrice === "number" && watchPrice > 0) {
+			const gross = calculateGrossAmount(
+				watchPrice,
+				config.paymentProcessingFee,
+			);
+			setGrossAmount(gross);
+		} else {
+			setGrossAmount(0);
+		}
+	}, [watchPrice]);
 
 	// Create mutation
 	const createMutation = useMutation({
@@ -226,6 +257,7 @@ export default function PostalComboForm({
 
 		const payload = {
 			...data,
+			price: grossAmount, // Send gross amount instead of net
 			imageUrl: data.imageUrl || undefined,
 			items: itemsArray,
 		};
@@ -281,19 +313,25 @@ export default function PostalComboForm({
 						name="price"
 						render={({ field }) => (
 							<FormItem>
-								<FormLabel>Price (₹)</FormLabel>
+								<FormLabel>Net Price (₹)</FormLabel>
 								<FormControl>
 									<Input
-										type="text"
+										type="number"
 										min="0"
 										step="0.01"
 										placeholder="0.00"
 										{...field}
 										onChange={(e) =>
-											field.onChange(Number(e.target.value) || "0")
+											field.onChange(Number(e.target.value) || 0)
 										}
 									/>
 								</FormControl>
+								{grossAmount > 0 && (
+									<p className="text-sm text-muted-foreground">
+										Gross Price (with {config.paymentProcessingFee}% fee): ₹
+										{grossAmount}
+									</p>
+								)}
 								<FormMessage />
 							</FormItem>
 						)}

@@ -22,18 +22,9 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
 				password: { label: "Password", type: "password" },
 			},
 			async authorize(credentials) {
-				console.log(" :31 | authorize | credentials:", credentials);
 				const parsedCredentials = loginSchema.safeParse(credentials);
-				console.log(
-					" :30 | authorize | parsedCredentials:",
-					parsedCredentials.error?.flatten(),
-				);
 
 				if (!parsedCredentials.success) {
-					console.log(
-						" :39 | authorize | parsedCredentials:",
-						parsedCredentials.error?.flatten(),
-					);
 					return null;
 				}
 

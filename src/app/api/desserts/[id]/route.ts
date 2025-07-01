@@ -37,12 +37,14 @@ export async function PATCH(
 		const body = await request.json();
 		const { name, description, price, imageUrl, status } = body;
 
+		// Note: price received here is already the gross amount (including payment processing fees)
+		// calculated by the admin form using calculateGrossAmount()
 		const updatedDessert = await db
 			.update(desserts)
 			.set({
 				name,
 				description,
-				price,
+				price, // Gross amount
 				imageUrl,
 				status,
 				updatedAt: new Date(),

@@ -32,6 +32,11 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+	calculateGrossAmount,
+	calculateNetAmount,
+} from "@/lib/calculateGrossAmount";
+import { config } from "@/lib/config";
 
 const dessertSchema = z.object({
 	name: z.string().min(1, "Name is required"),
@@ -55,17 +60,52 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 		initialData?.imageUrl || "",
 	);
 	const [uploading, setUploading] = useState(false);
+	const [grossAmount, setGrossAmount] = useState<number>(0);
+
+	// Convert gross price to net price for editing
+	const getInitialData = () => {
+		if (!initialData) {
+			return {
+				name: "",
+				price: "",
+				description: "",
+				imageUrl: "",
+				status: "available" as const,
+			};
+		}
+
+		// If editing, convert stored gross price back to net price
+		const storedPrice = parseFloat(initialData.price);
+		const netPrice =
+			mode === "edit" && !Number.isNaN(storedPrice) && storedPrice > 0
+				? calculateNetAmount(
+						storedPrice,
+						config.paymentProcessingFee,
+					).toString()
+				: initialData.price;
+
+		return {
+			...initialData,
+			price: netPrice,
+		};
+	};
 
 	const form = useForm<DessertFormValues>({
 		resolver: zodResolver(dessertSchema),
-		defaultValues: initialData || {
-			name: "",
-			price: "",
-			description: "",
-			imageUrl: "",
-			status: "available",
-		},
+		defaultValues: getInitialData(),
 	});
+
+	// Calculate gross amount when price changes
+	const watchPrice = form.watch("price");
+	useEffect(() => {
+		const netPrice = parseFloat(watchPrice);
+		if (!Number.isNaN(netPrice) && netPrice > 0) {
+			const gross = calculateGrossAmount(netPrice, config.paymentProcessingFee);
+			setGrossAmount(gross);
+		} else {
+			setGrossAmount(0);
+		}
+	}, [watchPrice]);
 
 	useEffect(() => {
 		if (mode === "edit" && !initialData) {
@@ -153,6 +193,7 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 					},
 					body: JSON.stringify({
 						...data,
+						price: grossAmount.toString(), // Send gross amount instead of net
 						imageUrl,
 					}),
 				},
@@ -207,10 +248,21 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 									name="price"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>Price</FormLabel>
+											<FormLabel>Net Price (₹)</FormLabel>
 											<FormControl>
-												<Input placeholder="Enter price" {...field} />
+												<Input
+													type="number"
+													step="0.01"
+													placeholder="Enter net price"
+													{...field}
+												/>
 											</FormControl>
+											{grossAmount > 0 && (
+												<p className="text-sm text-muted-foreground">
+													Gross Price (with {config.paymentProcessingFee}% fee):
+													₹{grossAmount}
+												</p>
+											)}
 											<FormMessage />
 										</FormItem>
 									)}

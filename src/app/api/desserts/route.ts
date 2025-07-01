@@ -32,12 +32,14 @@ export async function POST(request: Request) {
 			);
 		}
 
+		// Note: price received here is already the gross amount (including payment processing fees)
+		// calculated by the admin form using calculateGrossAmount()
 		const newDessert = await db
 			.insert(desserts)
 			.values({
 				name,
 				description,
-				price,
+				price, // Gross amount
 				imageUrl,
 				status: status || "available",
 			})
