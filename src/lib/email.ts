@@ -14,6 +14,7 @@ interface OrderItem {
 interface OrderDetails {
 	id: string;
 	total: string;
+	deliveryCost?: string | null;
 	createdAt: Date;
 	notes?: string | null;
 	pickupDateTime?: Date | null;

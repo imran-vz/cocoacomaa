@@ -18,6 +18,7 @@ export const columns: ColumnDef<{
 		| "preparing"
 		| "ready"
 		| "cancelled";
+	orderType: "cake-orders" | "postal-brownies";
 	userName: string;
 	notes: string | null;
 }>[] = [
@@ -31,6 +32,24 @@ export const columns: ColumnDef<{
 				<div className="flex space-x-2">
 					<span className="max-w-[500px] truncate font-medium">
 						{row.getValue("userName")}
+					</span>
+				</div>
+			);
+		},
+	},
+	{
+		accessorKey: "orderType",
+		header: ({ column }) => (
+			<DataTableColumnHeader column={column} title="Order Type" />
+		),
+		cell: ({ row }) => {
+			const orderType = row.getValue("orderType") as string;
+			return (
+				<div className="flex w-[120px] items-center">
+					<span className="capitalize">
+						{orderType === "postal-brownies"
+							? "Postal Brownies"
+							: "Cake Orders"}
 					</span>
 				</div>
 			);

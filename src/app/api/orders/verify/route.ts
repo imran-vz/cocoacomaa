@@ -83,6 +83,7 @@ export async function POST(request: NextRequest) {
 					columns: {
 						id: true,
 						total: true,
+						deliveryCost: true,
 						createdAt: true,
 						notes: true,
 						pickupDateTime: true,

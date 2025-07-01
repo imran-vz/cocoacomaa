@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { desc } from "drizzle-orm";
 import { columns } from "@/components/orders/columns";
 import { DataTable } from "@/components/ui/data-table";
 import { db } from "@/lib/db";
@@ -8,39 +8,58 @@ export const dynamic = "force-dynamic";
 
 const statuses: { label: string; value: Order["status"] }[] = [
 	{
+		label: "Pending",
+		value: "pending",
+	},
+	{
 		label: "Payment Pending",
 		value: "payment_pending",
-	},
-	{
-		label: "Preparing",
-		value: "preparing",
-	},
-	{
-		label: "Completed",
-		value: "completed",
 	},
 	{
 		label: "Paid",
 		value: "paid",
 	},
 	{
-		label: "Cancelled",
-		value: "cancelled",
+		label: "Confirmed",
+		value: "confirmed",
+	},
+	{
+		label: "Preparing",
+		value: "preparing",
 	},
 	{
 		label: "Ready",
 		value: "ready",
+	},
+	{
+		label: "Completed",
+		value: "completed",
+	},
+	{
+		label: "Cancelled",
+		value: "cancelled",
+	},
+];
+
+const orderTypes: { label: string; value: Order["orderType"] }[] = [
+	{
+		label: "Cake Orders",
+		value: "cake-orders",
+	},
+	{
+		label: "Postal Brownies",
+		value: "postal-brownies",
 	},
 ];
 
 export default async function OrdersPage() {
 	const ordersList = await db.query.orders.findMany({
 		orderBy: desc(orders.createdAt),
-		where: eq(orders.status, "paid"),
 		columns: {
 			id: true,
 			total: true,
 			status: true,
+			orderType: true,
 			createdAt: true,
 			notes: true,
 		},
@@ -79,6 +98,11 @@ export default async function OrdersPage() {
 								id: "status",
 								title: "Status",
 								options: statuses,
+							},
+							{
+								id: "orderType",
+								title: "Order Type",
+								options: orderTypes,
 							},
 						]}
 					/>

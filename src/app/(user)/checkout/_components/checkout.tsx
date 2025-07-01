@@ -44,6 +44,7 @@ import {
 } from "@/hooks/use-addresses";
 import { useOrderSettings } from "@/hooks/use-order-settings";
 import { useCart } from "@/lib/cart-context";
+import { config } from "@/lib/config";
 import { formatCurrency } from "@/lib/utils";
 import type {
 	RazorpayOptions,
@@ -206,6 +207,10 @@ export default function CheckoutPage({
 		(item) => item.type === "postal-brownies",
 	);
 	const checkoutFormSchema = createCheckoutFormSchema(isPostalBrownies);
+
+	// Calculate final total including delivery cost for postal brownies
+	const deliveryCost = isPostalBrownies ? config.postalDeliveryCost : 0;
+	const finalTotal = Number(total) + deliveryCost;
 
 	type CheckoutFormValues = z.infer<typeof checkoutFormSchema>;
 
@@ -489,7 +494,8 @@ export default function CheckoutPage({
 							quantity: item.quantity,
 						})),
 						orderType: isPostalBrownies ? "postal-brownies" : "cake-orders",
-						total,
+						total: finalTotal, // Include delivery cost for postal brownies
+						deliveryCost: deliveryCost, // Send delivery cost separately for transparency
 						// Include selected address ID for postal brownies
 						selectedAddressId: isPostalBrownies
 							? data.selectedAddressId
@@ -1193,10 +1199,22 @@ export default function CheckoutPage({
 								</div>
 							))}
 
-							<div className="border-t pt-3 sm:pt-4">
-								<div className="flex justify-between items-center font-medium text-base sm:text-lg">
-									<span>Total:</span>
+							<div className="border-t pt-3 sm:pt-4 space-y-2">
+								<div className="flex justify-between items-center text-sm sm:text-base">
+									<span>Subtotal:</span>
 									<span>{formatCurrency(Number(total))}</span>
+								</div>
+
+								{isPostalBrownies && (
+									<div className="flex justify-between items-center text-sm sm:text-base">
+										<span>Delivery:</span>
+										<span>{formatCurrency(deliveryCost)}</span>
+									</div>
+								)}
+
+								<div className="flex justify-between items-center font-medium text-base sm:text-lg border-t pt-2">
+									<span>Total:</span>
+									<span>{formatCurrency(finalTotal)}</span>
 								</div>
 							</div>
 

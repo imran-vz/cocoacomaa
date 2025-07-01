@@ -16,6 +16,18 @@ export default async function AdminOrderDetailsPage({
 
 	const order = await db.query.orders.findFirst({
 		where: eq(orders.id, id),
+		columns: {
+			id: true,
+			createdAt: true,
+			total: true,
+			deliveryCost: true,
+			orderType: true,
+			status: true,
+			paymentStatus: true,
+			razorpayPaymentId: true,
+			pickupDateTime: true,
+			notes: true,
+		},
 		with: {
 			orderItems: {
 				columns: {

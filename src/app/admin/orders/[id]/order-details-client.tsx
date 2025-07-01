@@ -33,6 +33,8 @@ type OrderData = {
 	id: string;
 	createdAt: Date;
 	total: string;
+	deliveryCost?: string | null;
+	orderType: string;
 	status: string;
 	paymentStatus: string;
 	razorpayPaymentId: string | null;
@@ -159,10 +161,36 @@ export default function OrderDetailsClient({
 
 									<Separator />
 
-									<div className="flex justify-between items-center font-semibold text-lg">
-										<span>Total:</span>
-										<span>{formatCurrency(Number(order.total))}</span>
-									</div>
+									{/* Show breakdown for postal brownies with delivery cost */}
+									{order.orderType === "postal-brownies" &&
+									order.deliveryCost &&
+									Number(order.deliveryCost) > 0 ? (
+										<div className="space-y-2">
+											<div className="flex justify-between items-center">
+												<span>Subtotal:</span>
+												<span>
+													{formatCurrency(
+														Number(order.total) - Number(order.deliveryCost),
+													)}
+												</span>
+											</div>
+											<div className="flex justify-between items-center">
+												<span>Delivery:</span>
+												<span>
+													{formatCurrency(Number(order.deliveryCost))}
+												</span>
+											</div>
+											<div className="flex justify-between items-center font-semibold text-lg border-t pt-2">
+												<span>Total:</span>
+												<span>{formatCurrency(Number(order.total))}</span>
+											</div>
+										</div>
+									) : (
+										<div className="flex justify-between items-center font-semibold text-lg">
+											<span>Total:</span>
+											<span>{formatCurrency(Number(order.total))}</span>
+										</div>
+									)}
 								</div>
 							</CardContent>
 						</Card>

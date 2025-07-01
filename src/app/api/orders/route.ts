@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
 			pickupTime,
 			items,
 			total,
+			deliveryCost,
 			notes,
 			orderType,
 			selectedAddressId,
@@ -75,6 +76,7 @@ export async function POST(request: NextRequest) {
 				.values({
 					userId: userId,
 					total: total.toString(),
+					deliveryCost: (deliveryCost || 0).toString(),
 					notes: notes,
 					status: "pending",
 					paymentStatus: "pending",

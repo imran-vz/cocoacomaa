@@ -26,6 +26,7 @@ interface OrderConfirmationEmailProps {
 	orderDetails: {
 		id: string;
 		total: string;
+		deliveryCost?: string | null;
 		createdAt: Date;
 		notes?: string | null;
 		pickupDateTime?: Date | null;
@@ -81,6 +82,8 @@ export default function OrderConfirmationEmail({
 		: null;
 
 	const totalAmount = Number(orderDetails.total);
+	const deliveryCostAmount = Number(orderDetails.deliveryCost || 0);
+	const subtotalAmount = totalAmount - deliveryCostAmount;
 
 	return (
 		<Html>
@@ -232,9 +235,40 @@ export default function OrderConfirmationEmail({
 										</Row>
 									</div>
 								))}
-								{/* Total Row */}
+								{/* Total Rows */}
 								<div className="bg-gray-50">
-									<Row className="p-4">
+									{/* Subtotal Row */}
+									<Row className="p-3">
+										<Column className="text-right" colSpan={3}>
+											<Text className="text-base font-medium text-gray-700 mb-0">
+												Subtotal:
+											</Text>
+										</Column>
+										<Column className="text-right w-24">
+											<Text className="text-base font-medium text-gray-800 mb-0">
+												{formatCurrency(subtotalAmount)}
+											</Text>
+										</Column>
+									</Row>
+
+									{/* Delivery Cost Row (only for postal brownies) */}
+									{isPostalOrder && deliveryCostAmount > 0 && (
+										<Row className="p-3 border-t border-gray-200">
+											<Column className="text-right" colSpan={3}>
+												<Text className="text-base font-medium text-gray-700 mb-0">
+													Delivery:
+												</Text>
+											</Column>
+											<Column className="text-right w-24">
+												<Text className="text-base font-medium text-gray-800 mb-0">
+													{formatCurrency(deliveryCostAmount)}
+												</Text>
+											</Column>
+										</Row>
+									)}
+
+									{/* Grand Total Row */}
+									<Row className="p-4 border-t-2 border-amber-800">
 										<Column className="text-right" colSpan={3}>
 											<Text className="text-lg font-semibold text-gray-800 mb-0">
 												Grand Total:

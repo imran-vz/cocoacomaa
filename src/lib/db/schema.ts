@@ -42,6 +42,9 @@ export const orders = pgTable("orders", (d) => {
 		createdAt: d.timestamp("created_at").notNull().defaultNow(),
 		updatedAt: d.timestamp("updated_at").notNull().defaultNow(),
 		total: d.numeric("total", { precision: 10, scale: 2 }).notNull(),
+		deliveryCost: d
+			.numeric("delivery_cost", { precision: 10, scale: 2 })
+			.default("0"),
 		status: d
 			.varchar("status", {
 				enum: [

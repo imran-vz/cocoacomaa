@@ -70,6 +70,7 @@ export const checkoutFormSchemaDB = z
 		),
 		orderType: z.enum(["cake-orders", "postal-brownies"]),
 		total: z.number(),
+		deliveryCost: z.number().optional(), // Delivery cost for postal brownies
 		// Address selection for postal brownies
 		selectedAddressId: z.number().optional(),
 	})
