@@ -48,7 +48,14 @@ export function Navigation() {
 									<Link href="/admin/postal-brownies">Postal Brownies</Link>
 								</Button>
 								<Button variant="ghost" asChild>
-									<Link href="/admin/settings/order-days">Order Settings</Link>
+									<Link href="/admin/settings/order-days">
+										Cake Order Settings
+									</Link>
+								</Button>
+								<Button variant="ghost" asChild>
+									<Link href="/admin/settings/postal-orders">
+										Postal Order Settings
+									</Link>
 								</Button>
 								<Button
 									variant="ghost"
@@ -141,7 +148,19 @@ export function Navigation() {
 									className="w-full justify-start"
 									onClick={() => setIsMenuOpen(false)}
 								>
-									<Link href="/admin/settings/order-days">Order Settings</Link>
+									<Link href="/admin/settings/order-days">
+										Cake Order Settings
+									</Link>
+								</Button>
+								<Button
+									variant="ghost"
+									asChild
+									className="w-full justify-start"
+									onClick={() => setIsMenuOpen(false)}
+								>
+									<Link href="/admin/settings/postal-orders">
+										Postal Order Settings
+									</Link>
 								</Button>
 								<Button
 									variant="ghost"

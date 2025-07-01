@@ -249,7 +249,7 @@ export const addressesRelations = relations(addresses, ({ one }) => ({
 	}),
 }));
 
-export const orderSettings = pgTable("order_settings", (d) => {
+export const cakeOrderSettings = pgTable("cake_order_settings", (d) => {
 	return {
 		id: d.integer("id").primaryKey().generatedAlwaysAsIdentity(),
 		allowedDays: d.jsonb("allowed_days").notNull().$type<number[]>(), // Array of day numbers (0-6, where 0=Sunday)
@@ -265,4 +265,27 @@ export const orderSettings = pgTable("order_settings", (d) => {
 	};
 });
 
-export type OrderSettings = typeof orderSettings.$inferSelect;
+export type CakeOrderSettings = typeof cakeOrderSettings.$inferSelect;
+
+export const postalOrderSettings = pgTable("postal_order_settings", (d) => {
+	return {
+		id: d.integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		name: d.varchar("name", { length: 100 }).notNull(), // Name for the slot (e.g., "Early Month", "Mid Month")
+		month: d.varchar("month", { length: 7 }).notNull(), // Format: "YYYY-MM"
+		orderStartDate: d.date("order_start_date").notNull(),
+		orderEndDate: d.date("order_end_date").notNull(),
+		dispatchStartDate: d.date("dispatch_start_date").notNull(),
+		dispatchEndDate: d.date("dispatch_end_date").notNull(),
+		isActive: d.boolean("is_active").notNull().default(true),
+		createdAt: d
+			.timestamp("created_at")
+			.default(sql`CURRENT_TIMESTAMP`)
+			.notNull(),
+		updatedAt: d
+			.timestamp("updated_at")
+			.default(sql`CURRENT_TIMESTAMP`)
+			.notNull(),
+	};
+});
+
+export type PostalOrderSettings = typeof postalOrderSettings.$inferSelect;

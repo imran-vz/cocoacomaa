@@ -20,7 +20,7 @@ const DAYS = [
 	{ value: 6, label: "Saturday", short: "Sat" },
 ];
 
-interface OrderSettings {
+interface CakeOrderSettings {
 	id: number;
 	allowedDays: number[];
 	isActive: boolean;
@@ -28,21 +28,21 @@ interface OrderSettings {
 	updatedAt: Date;
 }
 
-export default function OrderDaysSettingsPage() {
+export default function CakeOrderDaysSettingsPage() {
 	const queryClient = useQueryClient();
 	const [selectedDays, setSelectedDays] = useState<number[]>([]);
 	const [isActive, setIsActive] = useState(true);
 
 	// Fetch current settings
 	const { data: settingsData, isLoading } = useQuery({
-		queryKey: ["order-settings"],
+		queryKey: ["cake-order-settings"],
 		queryFn: async () => {
-			const response = await fetch("/api/order-settings");
+			const response = await fetch("/api/cake-order-settings");
 			if (!response.ok) {
-				throw new Error("Failed to fetch order settings");
+				throw new Error("Failed to fetch cake order settings");
 			}
 			const data = await response.json();
-			return data.settings as OrderSettings;
+			return data.settings as CakeOrderSettings;
 		},
 	});
 
@@ -63,7 +63,7 @@ export default function OrderDaysSettingsPage() {
 			allowedDays: number[];
 			isActive: boolean;
 		}) => {
-			const response = await fetch("/api/order-settings", {
+			const response = await fetch("/api/cake-order-settings", {
 				method: "PUT",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ allowedDays, isActive }),
@@ -77,8 +77,8 @@ export default function OrderDaysSettingsPage() {
 			return response.json();
 		},
 		onSuccess: () => {
-			toast.success("Order settings updated successfully!");
-			queryClient.invalidateQueries({ queryKey: ["order-settings"] });
+			toast.success("Cake order settings updated successfully!");
+			queryClient.invalidateQueries({ queryKey: ["cake-order-settings"] });
 		},
 		onError: (error: Error) => {
 			toast.error(error.message);
@@ -149,7 +149,7 @@ export default function OrderDaysSettingsPage() {
 				<div className="flex items-center gap-3 mb-6">
 					<Settings className="h-6 w-6" />
 					<h1 className="text-2xl sm:text-3xl font-bold">
-						Order Days Settings
+						Cake Order Days Settings
 					</h1>
 				</div>
 
@@ -173,9 +173,9 @@ export default function OrderDaysSettingsPage() {
 								>
 									{isActive
 										? isToday
-											? "Orders are currently being accepted"
-											: "Orders are currently not being accepted"
-										: "Order system is currently disabled"}
+											? "Cake orders are currently being accepted"
+											: "Cake orders are currently not being accepted"
+										: "Cake order system is currently disabled"}
 								</p>
 							</div>
 						</div>
@@ -198,10 +198,10 @@ export default function OrderDaysSettingsPage() {
 						<div className="flex items-center justify-between p-4 border rounded-lg">
 							<div>
 								<Label className="text-base font-medium">
-									Enable Order System
+									Enable Cake Order System
 								</Label>
 								<p className="text-sm text-muted-foreground">
-									Toggle to enable or disable the entire order system
+									Toggle to enable or disable the entire cake order system
 								</p>
 							</div>
 							<Checkbox
@@ -213,7 +213,7 @@ export default function OrderDaysSettingsPage() {
 						{/* Days Selection */}
 						<div className="space-y-4">
 							<Label className="text-base font-medium">
-								Allowed Days for Orders
+								Allowed Days for Cake Orders
 							</Label>
 							<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 								{DAYS.map((day) => (
@@ -245,7 +245,7 @@ export default function OrderDaysSettingsPage() {
 
 							{selectedDays.length === 0 && (
 								<p className="text-sm text-red-600">
-									Please select at least one day for orders.
+									Please select at least one day for cake orders.
 								</p>
 							)}
 						</div>
@@ -255,7 +255,7 @@ export default function OrderDaysSettingsPage() {
 							<div className="p-4 bg-muted/50 rounded-lg">
 								<p className="text-sm font-medium mb-2">Summary:</p>
 								<p className="text-sm text-muted-foreground">
-									Orders will be {isActive ? "accepted" : "disabled"} on:{" "}
+									Cake orders will be {isActive ? "accepted" : "disabled"} on:{" "}
 									<span className="font-medium text-foreground">
 										{selectedDays.map((day) => DAYS[day].label).join(", ")}
 									</span>

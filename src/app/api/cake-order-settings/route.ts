@@ -4,20 +4,22 @@ import { z } from "zod";
 
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { orderSettings, users } from "@/lib/db/schema";
+import { cakeOrderSettings, users } from "@/lib/db/schema";
 
-const updateOrderSettingsSchema = z.object({
+const updateCakeOrderSettingsSchema = z.object({
 	allowedDays: z.array(z.number().min(0).max(6)).min(1),
 	isActive: z.boolean(),
 });
 
-// GET - Fetch current order settings
+// GET - Fetch current cake order settings
 export async function GET() {
 	try {
-		// Get the most recent active order settings
-		const currentSettings = await db.query.orderSettings.findFirst({
-			where: eq(orderSettings.isActive, true),
-			orderBy: (orderSettings, { desc }) => [desc(orderSettings.createdAt)],
+		// Get the most recent active cake order settings
+		const currentSettings = await db.query.cakeOrderSettings.findFirst({
+			where: eq(cakeOrderSettings.isActive, true),
+			orderBy: (cakeOrderSettings, { desc }) => [
+				desc(cakeOrderSettings.createdAt),
+			],
 		});
 
 		// If no settings exist, return default (Monday and Tuesday)
@@ -34,15 +36,15 @@ export async function GET() {
 			settings: currentSettings || defaultSettings,
 		});
 	} catch (error) {
-		console.error("Error fetching order settings:", error);
+		console.error("Error fetching cake order settings:", error);
 		return NextResponse.json(
-			{ success: false, error: "Failed to fetch order settings" },
+			{ success: false, error: "Failed to fetch cake order settings" },
 			{ status: 500 },
 		);
 	}
 }
 
-// PUT - Update order settings
+// PUT - Update cake order settings
 export async function PUT(request: NextRequest) {
 	try {
 		const session = await auth();
@@ -66,7 +68,7 @@ export async function PUT(request: NextRequest) {
 		}
 
 		const body = await request.json();
-		const validation = updateOrderSettingsSchema.safeParse(body);
+		const validation = updateCakeOrderSettingsSchema.safeParse(body);
 
 		if (!validation.success) {
 			return NextResponse.json(
@@ -83,12 +85,12 @@ export async function PUT(request: NextRequest) {
 
 		// Deactivate all previous settings
 		await db
-			.update(orderSettings)
+			.update(cakeOrderSettings)
 			.set({ isActive: false, updatedAt: new Date() });
 
 		// Create new settings
 		const newSettings = await db
-			.insert(orderSettings)
+			.insert(cakeOrderSettings)
 			.values({
 				allowedDays,
 				isActive,
@@ -100,9 +102,9 @@ export async function PUT(request: NextRequest) {
 			settings: newSettings[0],
 		});
 	} catch (error) {
-		console.error("Error updating order settings:", error);
+		console.error("Error updating cake order settings:", error);
 		return NextResponse.json(
-			{ success: false, error: "Failed to update order settings" },
+			{ success: false, error: "Failed to update cake order settings" },
 			{ status: 500 },
 		);
 	}

@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import OrderRestrictionBanner from "@/components/ui/order-restriction-banner";
-import { useOrderSettings } from "@/hooks/use-order-settings";
+import { useCakeOrderSettings } from "@/hooks/use-order-settings";
 import { useCart } from "@/lib/cart-context";
 import { formatCurrency } from "@/lib/utils";
 
@@ -48,7 +48,7 @@ export default function OrderPage() {
 	const { items, addItem, removeItem, updateQuantity, total } = useCart();
 	const { data: session } = useSession();
 	const [showLogin, setShowLogin] = useState(false);
-	const { areOrdersAllowed: ordersAllowed } = useOrderSettings();
+	const { areOrdersAllowed: ordersAllowed } = useCakeOrderSettings();
 
 	const { data: desserts, isLoading } = useQuery({
 		queryKey: ["desserts"],
@@ -80,7 +80,7 @@ export default function OrderPage() {
 
 	const handleCheckout = () => {
 		if (!ordersAllowed) {
-			toast.error("Orders are only accepted on Mondays and Tuesdays");
+			toast.error("Cake orders are only accepted on Mondays and Tuesdays");
 			return;
 		}
 
@@ -218,7 +218,7 @@ export default function OrderPage() {
 											variant={!ordersAllowed ? "secondary" : "default"}
 										>
 											{!ordersAllowed
-												? "Orders Unavailable"
+												? "Cake Orders Unavailable"
 												: "Proceed to Checkout"}
 										</Button>
 									</div>

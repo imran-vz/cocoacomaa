@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 
-interface OrderSettings {
+interface CakeOrderSettings {
 	id: number;
 	allowedDays: number[];
 	isActive: boolean;
@@ -8,16 +8,16 @@ interface OrderSettings {
 	updatedAt: Date;
 }
 
-export function useOrderSettings() {
+export function useCakeOrderSettings() {
 	const { data, isLoading, error } = useQuery({
-		queryKey: ["order-settings"],
+		queryKey: ["cake-order-settings"],
 		queryFn: async () => {
-			const response = await fetch("/api/order-settings");
+			const response = await fetch("/api/cake-order-settings");
 			if (!response.ok) {
-				throw new Error("Failed to fetch order settings");
+				throw new Error("Failed to fetch cake order settings");
 			}
 			const data = await response.json();
-			return data.settings as OrderSettings;
+			return data.settings as CakeOrderSettings;
 		},
 		staleTime: 5 * 60 * 1000, // 5 minutes
 		refetchInterval: 10 * 60 * 1000, // Refetch every 10 minutes
@@ -26,7 +26,7 @@ export function useOrderSettings() {
 	// Check if orders are allowed today
 	const areOrdersAllowed = () => {
 		if (!data) {
-			// Fallback to default Monday/Tuesday
+			// Fallback to default Monday/Tuesday for cake orders
 			const now = new Date();
 			const dayOfWeek = now.getDay();
 			return dayOfWeek === 1 || dayOfWeek === 2;

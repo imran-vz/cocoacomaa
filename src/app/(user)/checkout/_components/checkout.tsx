@@ -42,7 +42,7 @@ import {
 	useCreateAddress,
 	useDeleteAddress,
 } from "@/hooks/use-addresses";
-import { useOrderSettings } from "@/hooks/use-order-settings";
+import { useCakeOrderSettings } from "@/hooks/use-order-settings";
 import { useCart } from "@/lib/cart-context";
 import { config } from "@/lib/config";
 import { formatCurrency } from "@/lib/utils";
@@ -195,7 +195,7 @@ export default function CheckoutPage({
 	const [isCreatingAddress, setIsCreatingAddress] = useState(false);
 	const existingId = useId();
 	const newId = useId();
-	const { areOrdersAllowed: ordersAllowed } = useOrderSettings();
+	const { areOrdersAllowed: ordersAllowed } = useCakeOrderSettings();
 
 	// React Query hooks for address management
 	const { data: addresses = [], isLoading: addressesLoading } = useAddresses();
@@ -206,6 +206,7 @@ export default function CheckoutPage({
 	const isPostalBrownies = items.some(
 		(item) => item.type === "postal-brownies",
 	);
+	const isOrderingAllowed = isPostalBrownies || ordersAllowed;
 	const checkoutFormSchema = createCheckoutFormSchema(isPostalBrownies);
 
 	// Calculate final total including delivery cost for postal brownies
@@ -429,7 +430,7 @@ export default function CheckoutPage({
 	};
 
 	const onSubmit = async (data: CheckoutFormValues) => {
-		if (!ordersAllowed) {
+		if (!isOrderingAllowed) {
 			toast.error("Orders are only accepted on Mondays and Tuesdays");
 			return;
 		}
@@ -580,7 +581,7 @@ export default function CheckoutPage({
 			</h1>
 
 			{/* Show order restriction banner when orders are not allowed */}
-			{!ordersAllowed && <OrderRestrictionBanner />}
+			{!isOrderingAllowed && <OrderRestrictionBanner />}
 
 			<div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
 				{/* Customer Information */}
@@ -688,7 +689,7 @@ export default function CheckoutPage({
 										<FormItem>
 											<FormLabel className="text-sm sm:text-base">
 												{isPostalBrownies
-													? "Delivery Instructions"
+													? "Message (Optional)"
 													: "Message on Cake"}
 											</FormLabel>
 											<FormControl>
@@ -1129,16 +1130,16 @@ export default function CheckoutPage({
 									type="submit"
 									className="w-full text-sm sm:text-base cursor-pointer"
 									disabled={
-										!ordersAllowed ||
+										!isOrderingAllowed ||
 										form.formState.isSubmitting ||
 										isProcessing ||
 										(isPostalBrownies && addressMode === "new") ||
 										(isPostalBrownies && !selectedAddressId)
 									}
 									size="lg"
-									variant={!ordersAllowed ? "secondary" : "default"}
+									variant={!isOrderingAllowed ? "secondary" : "default"}
 								>
-									{!ordersAllowed
+									{!isOrderingAllowed
 										? "Orders Unavailable"
 										: form.formState.isSubmitting || isProcessing
 											? "Processing..."
@@ -1150,9 +1151,9 @@ export default function CheckoutPage({
 								</Button>
 
 								{/* Helper text for postal brownies and order restrictions */}
-								{(isPostalBrownies || !ordersAllowed) && (
+								{(isPostalBrownies || !isOrderingAllowed) && (
 									<div className="text-center mt-2">
-										{!ordersAllowed ? (
+										{!isOrderingAllowed ? (
 											<p className="text-xs text-muted-foreground">
 												Orders are only accepted on Mondays and Tuesdays
 											</p>
