@@ -37,7 +37,7 @@ export default function Home() {
 							variant="outline"
 							className="bg-transparent text-white"
 						>
-							<Link href="/order">Cake Menu</Link>
+							<Link href="/order">Desserts</Link>
 						</Button>
 						<Button
 							asChild
