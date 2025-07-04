@@ -45,7 +45,7 @@ export async function POST(request: Request) {
 			where: and(
 				eq(passwordResetTokens.email, email),
 				// Check if created within last 2 hours
-				sql`${passwordResetTokens.createdAt} > ${twoHoursAgo}`,
+				sql`${passwordResetTokens.createdAt} > ${twoHoursAgo.toISOString()}`,
 			),
 			orderBy: (passwordResetTokens, { desc }) => [
 				desc(passwordResetTokens.createdAt),
