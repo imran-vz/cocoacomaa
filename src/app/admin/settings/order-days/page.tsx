@@ -66,7 +66,7 @@ export default function CakeOrderDaysSettingsPage() {
 			const response = await fetch("/api/cake-order-settings", {
 				method: "PUT",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ allowedDays, isActive }),
+				body: JSON.stringify({ allowedDays, isActive, id: settingsData?.id }),
 			});
 
 			if (!response.ok) {

@@ -4,11 +4,16 @@ import { z } from "zod";
 
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { cakeOrderSettings, users } from "@/lib/db/schema";
+import {
+	type CakeOrderSettings,
+	cakeOrderSettings,
+	users,
+} from "@/lib/db/schema";
 
 const updateCakeOrderSettingsSchema = z.object({
 	allowedDays: z.array(z.number().min(0).max(6)).min(1),
 	isActive: z.boolean(),
+	id: z.number(),
 });
 
 // GET - Fetch current cake order settings
@@ -78,13 +83,26 @@ export async function PUT(request: NextRequest) {
 			);
 		}
 
-		const { allowedDays, isActive } = validation.data;
+		const { allowedDays, isActive, id } = validation.data;
 
-		// Deactivate all previous settings
-		const [newSettings] = await db
-			.update(cakeOrderSettings)
-			.set({ updatedAt: new Date(), allowedDays, isActive })
-			.returning();
+		let newSettings: CakeOrderSettings;
+		if (id === 0) {
+			[newSettings] = await db
+				.insert(cakeOrderSettings)
+				.values({
+					allowedDays,
+					isActive,
+					createdAt: new Date(),
+					updatedAt: new Date(),
+				})
+				.returning();
+		} else {
+			[newSettings] = await db
+				.update(cakeOrderSettings)
+				.set({ updatedAt: new Date(), allowedDays, isActive })
+				.where(eq(cakeOrderSettings.id, id))
+				.returning();
+		}
 
 		return NextResponse.json({
 			success: true,
