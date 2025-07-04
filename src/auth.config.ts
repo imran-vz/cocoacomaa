@@ -11,12 +11,8 @@ declare module "next-auth" {
 }
 
 export const authOptions = {
-	session: {
-		strategy: "jwt",
-	},
-	pages: {
-		signIn: "/login",
-	},
+	session: { strategy: "jwt" },
+	pages: { signIn: "/login" },
 
 	callbacks: {
 		async session({ session, token }) {

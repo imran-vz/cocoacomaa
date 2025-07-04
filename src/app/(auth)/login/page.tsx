@@ -19,6 +19,7 @@ import {
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
+import { GoogleSignInButton } from "@/components/ui/google-signin-button";
 import { Input } from "@/components/ui/input";
 import { loginSchema } from "@/lib/schema";
 
@@ -90,6 +91,25 @@ export default function LoginPage() {
 
 				<Card className="shadow-md border border-gray-200">
 					<CardContent className="pt-6">
+						{/* Google Sign-In Button */}
+						<div className="space-y-4 mb-6">
+							<GoogleSignInButton
+								text="Sign in with Google"
+								redirect={redirect}
+							/>
+
+							<div className="relative">
+								<div className="absolute inset-0 flex items-center">
+									<span className="w-full border-t" />
+								</div>
+								<div className="relative flex justify-center text-xs uppercase">
+									<span className="bg-background px-2 text-muted-foreground">
+										Or continue with
+									</span>
+								</div>
+							</div>
+						</div>
+
 						<Form {...form}>
 							<form
 								onSubmit={form.handleSubmit(onSubmit)}

@@ -3,18 +3,25 @@ import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 
 import { authOptions } from "@/auth.config";
 import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
+import { accounts, sessions, users, verificationTokens } from "@/lib/db/schema";
 import { loginSchema } from "./lib/schema";
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
 	...authOptions,
 
-	adapter: DrizzleAdapter(db),
+	adapter: DrizzleAdapter(db, {
+		usersTable: users,
+		accountsTable: accounts,
+		sessionsTable: sessions,
+		verificationTokensTable: verificationTokens,
+	}),
 
 	providers: [
+		GoogleProvider,
 		CredentialsProvider({
 			name: "credentials",
 			credentials: {

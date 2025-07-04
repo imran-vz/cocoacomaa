@@ -236,7 +236,9 @@ export default function OrderDetailsClient({
 								</div>
 								<div className="flex items-center gap-2">
 									<Phone className="h-4 w-4 text-muted-foreground" />
-									<span className="text-sm">{order.user.phone}</span>
+									<span className="text-sm">
+										{order.user.phone || "Not provided"}
+									</span>
 								</div>
 							</CardContent>
 						</Card>

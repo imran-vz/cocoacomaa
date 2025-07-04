@@ -1,6 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
 import { relations, sql } from "drizzle-orm";
-import { pgTable } from "drizzle-orm/pg-core";
+import { pgTable, primaryKey } from "drizzle-orm/pg-core";
 
 export const desserts = pgTable("desserts", (d) => {
 	return {
@@ -182,6 +182,9 @@ export const users = pgTable("users", (d) => {
 		email: d.text("email").notNull().unique(),
 		phone: d.text("phone"),
 		password: d.text("password"),
+		// NextAuth required fields
+		emailVerified: d.timestamp("emailVerified", { mode: "date" }),
+		image: d.text("image"),
 		createdAt: d.timestamp("created_at").defaultNow().notNull(),
 		updatedAt: d.timestamp("updated_at").defaultNow().notNull(),
 		role: d
@@ -190,6 +193,53 @@ export const users = pgTable("users", (d) => {
 			.default("customer"),
 	};
 });
+
+// NextAuth required tables
+export const accounts = pgTable(
+	"account",
+	(d) => ({
+		userId: d
+			.text("userId")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		type: d.text("type").notNull(),
+		provider: d.text("provider").notNull(),
+		providerAccountId: d.text("providerAccountId").notNull(),
+		refresh_token: d.text("refresh_token"),
+		access_token: d.text("access_token"),
+		expires_at: d.integer("expires_at"),
+		token_type: d.text("token_type"),
+		scope: d.text("scope"),
+		id_token: d.text("id_token"),
+		session_state: d.text("session_state"),
+	}),
+	(account) => ({
+		compoundKey: primaryKey({
+			columns: [account.provider, account.providerAccountId],
+		}),
+	}),
+);
+
+export const sessions = pgTable("session", (d) => ({
+	sessionToken: d.text("sessionToken").notNull().primaryKey(),
+	userId: d
+		.text("userId")
+		.notNull()
+		.references(() => users.id, { onDelete: "cascade" }),
+	expires: d.timestamp("expires", { mode: "date" }).notNull(),
+}));
+
+export const verificationTokens = pgTable(
+	"verificationToken",
+	(d) => ({
+		identifier: d.text("identifier").notNull(),
+		token: d.text("token").notNull(),
+		expires: d.timestamp("expires", { mode: "date" }).notNull(),
+	}),
+	(vt) => ({
+		compoundKey: primaryKey({ columns: [vt.identifier, vt.token] }),
+	}),
+);
 
 export const passwordResetTokens = pgTable("password_reset_tokens", (d) => {
 	return {
@@ -230,6 +280,24 @@ export const usersRelations = relations(users, ({ many }) => ({
 	address: many(addresses),
 	orders: many(orders),
 	passwordResetTokens: many(passwordResetTokens),
+	accounts: many(accounts, { relationName: "user_accounts" }),
+	sessions: many(sessions, { relationName: "user_sessions" }),
+}));
+
+export const accountsRelations = relations(accounts, ({ one }) => ({
+	user: one(users, {
+		fields: [accounts.userId],
+		references: [users.id],
+		relationName: "account_user",
+	}),
+}));
+
+export const sessionsRelations = relations(sessions, ({ one }) => ({
+	user: one(users, {
+		fields: [sessions.userId],
+		references: [users.id],
+		relationName: "session_user",
+	}),
 }));
 
 export const passwordResetTokensRelations = relations(
