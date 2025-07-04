@@ -63,6 +63,7 @@ export default function BrowserCompatibilityBanner() {
 		browsers: string[];
 		instructions: string;
 	} | null>(null);
+	const [bannerDismissed, setBannerDismissed] = useState(false);
 
 	useEffect(() => {
 		const checkBrowser = () => {
@@ -83,6 +84,10 @@ export default function BrowserCompatibilityBanner() {
 			document.body.style.paddingTop = "80px";
 		} else {
 			document.body.style.paddingTop = "";
+		}
+
+		if (sessionStorage.getItem("browser-banner-dismissed") === "true") {
+			setBannerDismissed(true);
 		}
 
 		// Cleanup on unmount
@@ -115,7 +120,7 @@ export default function BrowserCompatibilityBanner() {
 	};
 
 	// Don't show if dismissed in this session
-	if (sessionStorage.getItem("browser-banner-dismissed") === "true") {
+	if (bannerDismissed) {
 		return null;
 	}
 
