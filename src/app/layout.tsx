@@ -8,6 +8,7 @@ import BrowserCompatibilityBanner from "@/components/ui/browser-compatibility-ba
 import UrlCleaner from "@/components/ui/url-cleaner";
 import { CartProvider } from "@/lib/cart-context";
 import { Providers } from "./providers";
+import { Analytics } from "@vercel/analytics/next";
 
 import "./globals.css";
 
@@ -26,6 +27,7 @@ export default function RootLayout({
 	return (
 		<html lang="en">
 			<body className={inter.className}>
+				<Analytics />
 				<Providers>
 					<CartProvider>
 						<UrlCleaner />
