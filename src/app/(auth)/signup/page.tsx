@@ -3,8 +3,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import { EyeIcon, EyeOffIcon, Info } from "lucide-react";
-import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
