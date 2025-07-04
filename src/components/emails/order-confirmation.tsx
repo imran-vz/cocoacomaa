@@ -129,7 +129,7 @@ export default function OrderConfirmationEmail({
 									</Column>
 									<Column>
 										<Text className="text-gray-600 mb-1">
-											{orderDetails.id}
+											{orderDetails.id.slice(0, 8)}
 										</Text>
 									</Column>
 								</Row>
@@ -141,18 +141,6 @@ export default function OrderConfirmationEmail({
 									</Column>
 									<Column>
 										<Text className="text-gray-600 mb-1">{orderDate}</Text>
-									</Column>
-								</Row>
-								<Row className="mb-2">
-									<Column>
-										<Text className="font-semibold text-gray-700 mb-1">
-											Order Type:
-										</Text>
-									</Column>
-									<Column>
-										<Text className="text-gray-600 mb-1">
-											{isPostalOrder ? "Postal Brownies" : "Cake Orders"}
-										</Text>
 									</Column>
 								</Row>
 								{pickupInfo && !isPostalOrder && (

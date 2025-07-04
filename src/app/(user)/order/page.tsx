@@ -7,7 +7,7 @@ import lazyLoading from "next/dynamic";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -54,6 +54,15 @@ export default function OrderPage() {
 		queryKey: ["desserts"],
 		queryFn: () => fetchDesserts(),
 	});
+
+	useEffect(() => {
+		// remove any postal combos from the cart
+		for (const item of items) {
+			if (item.type === "postal-brownies") {
+				removeItem(item.id);
+			}
+		}
+	}, [items, removeItem]);
 
 	const handleAddToCart = (dessert: Dessert) => {
 		addItem({

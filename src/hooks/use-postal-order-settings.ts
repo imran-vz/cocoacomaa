@@ -30,7 +30,6 @@ export function usePostalOrderSettings(month: string) {
 		},
 		staleTime: 5 * 60 * 1000, // 5 minutes
 	});
-	console.log(" :33 | usePostalOrderSettings | data:", data);
 
 	// Check if postal orders are allowed today
 	const arePostalOrdersAllowed = () => {

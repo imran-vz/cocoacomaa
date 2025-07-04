@@ -194,6 +194,8 @@ export default function CheckoutPage({
 	const [processingStep, setProcessingStep] = useState("");
 	const [existingOrderId, setExistingOrderId] = useState<string | null>(null);
 	const [isCreatingAddress, setIsCreatingAddress] = useState(false);
+	const [isPhoneFieldEnabled, setIsPhoneFieldEnabled] = useState(false);
+	const [originalPhone, setOriginalPhone] = useState("");
 	const existingId = useId();
 	const newId = useId();
 	const { areOrdersAllowed: ordersAllowed, settings } = useCakeOrderSettings();
@@ -268,6 +270,13 @@ export default function CheckoutPage({
 			setExistingOrderId(orderId);
 		}
 	}, [searchParams]);
+
+	// Initialize phone field enablement based on whether phone is empty
+	useEffect(() => {
+		const isEmpty = !phone || phone.trim() === "";
+		setIsPhoneFieldEnabled(isEmpty);
+		setOriginalPhone(phone || "");
+	}, [phone]);
 
 	// Set default address mode when addresses are loaded
 	useEffect(() => {
@@ -347,6 +356,30 @@ export default function CheckoutPage({
 			}
 		} catch (error) {
 			console.error("Error deleting address:", error);
+		}
+	};
+
+	// Update user phone number
+	const updateUserPhone = async (newPhone: string) => {
+		try {
+			const response = await fetch("/api/user/profile", {
+				method: "PATCH",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					phone: newPhone,
+				}),
+			});
+
+			if (!response.ok) {
+				throw new Error("Failed to update phone number");
+			}
+
+			return await response.json();
+		} catch (error) {
+			console.error("Error updating phone number:", error);
+			throw error;
 		}
 	};
 
@@ -448,6 +481,20 @@ export default function CheckoutPage({
 
 		try {
 			setIsProcessing(true);
+
+			// Update phone number if it has changed and field was enabled
+			if (isPhoneFieldEnabled && data.phone !== originalPhone) {
+				setProcessingStep("Updating contact information...");
+				try {
+					await updateUserPhone(data.phone);
+				} catch (error) {
+					console.error("Failed to update phone number:", error);
+					toast.error("Failed to update phone number. Please try again.");
+					setIsProcessing(false);
+					setProcessingStep("");
+					return;
+				}
+			}
 
 			let orderData: RazorpayOrderData;
 			let orderId: string;
@@ -683,9 +730,11 @@ export default function CheckoutPage({
 													placeholder="Enter your phone number"
 													{...field}
 													className="text-sm sm:text-base "
-													readOnly
-													disabled
-													tabIndex={-1}
+													readOnly={!isPhoneFieldEnabled || isProcessing}
+													disabled={!isPhoneFieldEnabled || isProcessing}
+													tabIndex={
+														!isPhoneFieldEnabled || isProcessing ? -1 : 0
+													}
 												/>
 											</FormControl>
 											<FormMessage className="text-xs sm:text-sm" />
