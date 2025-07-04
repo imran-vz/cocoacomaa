@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 import { Footer } from "@/components/Footer";
 import { Navigation } from "@/components/Navigation";
 import BrowserCompatibilityBanner from "@/components/ui/browser-compatibility-banner";
+import UrlCleaner from "@/components/ui/url-cleaner";
 import { CartProvider } from "@/lib/cart-context";
 import { Providers } from "./providers";
 
@@ -27,6 +28,7 @@ export default function RootLayout({
 			<body className={inter.className}>
 				<Providers>
 					<CartProvider>
+						<UrlCleaner />
 						<BrowserCompatibilityBanner />
 						<Navigation />
 						{children}
