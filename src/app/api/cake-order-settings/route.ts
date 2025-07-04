@@ -16,10 +16,7 @@ export async function GET() {
 	try {
 		// Get the most recent active cake order settings
 		const currentSettings = await db.query.cakeOrderSettings.findFirst({
-			where: eq(cakeOrderSettings.isActive, true),
-			orderBy: (cakeOrderSettings, { desc }) => [
-				desc(cakeOrderSettings.createdAt),
-			],
+			orderBy: (cakeOrderSettings, { desc }) => [desc(cakeOrderSettings.id)],
 		});
 
 		// If no settings exist, return default (Monday and Tuesday)
@@ -84,22 +81,14 @@ export async function PUT(request: NextRequest) {
 		const { allowedDays, isActive } = validation.data;
 
 		// Deactivate all previous settings
-		await db
+		const [newSettings] = await db
 			.update(cakeOrderSettings)
-			.set({ isActive: false, updatedAt: new Date() });
-
-		// Create new settings
-		const newSettings = await db
-			.insert(cakeOrderSettings)
-			.values({
-				allowedDays,
-				isActive,
-			})
+			.set({ updatedAt: new Date(), allowedDays, isActive })
 			.returning();
 
 		return NextResponse.json({
 			success: true,
-			settings: newSettings[0],
+			settings: newSettings,
 		});
 	} catch (error) {
 		console.error("Error updating cake order settings:", error);
