@@ -80,7 +80,7 @@ export default function BrowserCompatibilityBanner() {
 
 	// Add/remove body padding when banner is shown/hidden
 	useEffect(() => {
-		if (showBanner) {
+		if (showBanner && !bannerDismissed) {
 			document.body.style.paddingTop = "80px";
 		} else {
 			document.body.style.paddingTop = "";
@@ -94,7 +94,7 @@ export default function BrowserCompatibilityBanner() {
 		return () => {
 			document.body.style.paddingTop = "";
 		};
-	}, [showBanner]);
+	}, [showBanner, bannerDismissed]);
 
 	const handleDismiss = () => {
 		setShowBanner(false);
