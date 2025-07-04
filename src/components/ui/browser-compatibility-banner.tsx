@@ -129,7 +129,7 @@ export default function BrowserCompatibilityBanner() {
 	}
 
 	return (
-		<div className="fixed top-0 left-0 right-0 z-50 bg-blue-600 text-white shadow-lg">
+		<div className="fixed top-0 left-0 right-0 z-[1000] bg-blue-600 text-white shadow-lg">
 			<div className="container mx-auto px-4 py-3">
 				<div className="flex items-start gap-3">
 					<div className="flex-shrink-0 mt-0.5">
