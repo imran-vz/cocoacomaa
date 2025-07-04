@@ -7,7 +7,7 @@ import { Package } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -68,6 +68,7 @@ export default function PostalBrowniesPage() {
 	const { data: session } = useSession();
 	const { clearCart, addItem } = useCart();
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const checkoutSectionRef = useRef<HTMLDivElement>(null);
 
 	// Get current month for postal order settings
 	const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
@@ -93,6 +94,20 @@ export default function PostalBrowniesPage() {
 
 	// Get the earliest available slot for displaying availability message
 	const earliestSlot = getEarliestAvailableSlot();
+
+	// Auto-scroll to checkout section when a combo is selected
+	useEffect(() => {
+		if (selectedComboId && checkoutSectionRef.current) {
+			const timer = setTimeout(() => {
+				checkoutSectionRef.current?.scrollIntoView({
+					behavior: "smooth",
+					block: "start",
+				});
+			}, 300); // Small delay to allow UI to update first
+
+			return () => clearTimeout(timer);
+		}
+	}, [selectedComboId]);
 
 	const handleAddToCart = async (data: BrownieComboFormValues) => {
 		if (!session) {
@@ -127,7 +142,6 @@ export default function PostalBrowniesPage() {
 				type: "postal-brownies",
 			});
 
-			toast.success("Brownie combo added to cart!");
 			router.push("/checkout");
 		} catch (error) {
 			console.error("Error adding to cart:", error);
@@ -341,28 +355,30 @@ export default function PostalBrowniesPage() {
 
 							{/* Selected combo summary */}
 							{selectedCombo && (
-								<Card className="bg-muted/50">
-									<CardContent className="pt-4 sm:pt-6 pb-4 sm:pb-6 px-4 sm:px-6">
-										<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
-											<div className="flex-1">
-												<h3 className="font-semibold text-sm sm:text-base">
-													{selectedCombo.name}
-												</h3>
-												<p className="text-xs sm:text-sm text-muted-foreground">
-													Ready to add to cart
-												</p>
-											</div>
-											<div className="text-left sm:text-right">
-												<div className="text-xl sm:text-2xl font-bold">
-													{formatCurrency(Number(selectedCombo.price))}
+								<div ref={checkoutSectionRef}>
+									<Card className="bg-muted/50">
+										<CardContent className="pt-4 sm:pt-6 pb-4 sm:pb-6 px-4 sm:px-6">
+											<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+												<div className="flex-1">
+													<h3 className="font-semibold text-sm sm:text-base">
+														{selectedCombo.name}
+													</h3>
+													<p className="text-xs sm:text-sm text-muted-foreground">
+														Ready to add to cart
+													</p>
 												</div>
-												<div className="text-xs text-muted-foreground">
-													Per combo
+												<div className="text-left sm:text-right">
+													<div className="text-xl sm:text-2xl font-bold">
+														{formatCurrency(Number(selectedCombo.price))}
+													</div>
+													<div className="text-xs text-muted-foreground">
+														Per combo
+													</div>
 												</div>
 											</div>
-										</div>
-									</CardContent>
-								</Card>
+										</CardContent>
+									</Card>
+								</div>
 							)}
 
 							{/* Action buttons */}
@@ -389,7 +405,7 @@ export default function PostalBrowniesPage() {
 										? "Orders Not Available"
 										: isSubmitting
 											? "Adding to Cart..."
-											: "Add to Cart & Checkout"}
+											: "Checkout"}
 								</Button>
 							</div>
 
