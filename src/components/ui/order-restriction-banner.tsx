@@ -19,6 +19,9 @@ export default function OrderRestrictionBanner() {
 		);
 	}
 
+	// Check if the system is completely disabled
+	const isSystemDisabled = !settings?.isActive;
+
 	const allowedDaysText = settings?.allowedDays
 		? settings.allowedDays
 				.map(
@@ -44,18 +47,28 @@ export default function OrderRestrictionBanner() {
 			</AlertTitle>
 			<AlertDescription className="text-orange-700">
 				<div className="space-y-2">
-					<p>
-						We only accept cake orders on <strong>{allowedDaysText}</strong>{" "}
-						each week.
-					</p>
-					<div className="flex items-center gap-2 text-sm">
-						<Clock className="h-3 w-3" />
-						<span>
-							{getNextOrderDay === "now"
-								? "Cake orders are being accepted today!"
-								: `Cake orders will resume ${getNextOrderDay}`}
-						</span>
-					</div>
+					{isSystemDisabled ? (
+						<p>
+							Our cake order system is currently disabled. Please check back
+							later or contact us for more information about upcoming order
+							periods.
+						</p>
+					) : (
+						<>
+							<p>
+								We only accept cake orders on <strong>{allowedDaysText}</strong>{" "}
+								each week.
+							</p>
+							<div className="flex items-center gap-2 text-sm">
+								<Clock className="h-3 w-3" />
+								<span>
+									{getNextOrderDay === "now"
+										? "Cake orders are being accepted today!"
+										: `Cake orders will resume ${getNextOrderDay}`}
+								</span>
+							</div>
+						</>
+					)}
 				</div>
 			</AlertDescription>
 		</Alert>

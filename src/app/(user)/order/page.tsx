@@ -48,7 +48,7 @@ export default function OrderPage() {
 	const { items, addItem, removeItem, updateQuantity, total } = useCart();
 	const { data: session } = useSession();
 	const [showLogin, setShowLogin] = useState(false);
-	const { areOrdersAllowed: ordersAllowed } = useCakeOrderSettings();
+	const { areOrdersAllowed: ordersAllowed, settings } = useCakeOrderSettings();
 
 	const { data: desserts, isLoading } = useQuery({
 		queryKey: ["desserts"],
@@ -80,7 +80,13 @@ export default function OrderPage() {
 
 	const handleCheckout = () => {
 		if (!ordersAllowed) {
-			toast.error("Cake orders are only accepted on Mondays and Tuesdays");
+			const isSystemDisabled = !settings?.isActive;
+
+			if (isSystemDisabled) {
+				toast.error("Cake order system is currently disabled");
+			} else {
+				toast.error("Cake orders are only accepted on allowed days");
+			}
 			return;
 		}
 

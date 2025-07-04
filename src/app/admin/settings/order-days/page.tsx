@@ -96,7 +96,7 @@ export default function CakeOrderDaysSettingsPage() {
 	};
 
 	const handleSave = () => {
-		if (selectedDays.length === 0) {
+		if (isActive && selectedDays.length === 0) {
 			toast.error("Please select at least one day");
 			return;
 		}
@@ -215,24 +215,37 @@ export default function CakeOrderDaysSettingsPage() {
 							<Label className="text-base font-medium">
 								Allowed Days for Cake Orders
 							</Label>
+							{!isActive && (
+								<p className="text-sm text-muted-foreground">
+									Day selection is disabled while the cake order system is
+									inactive.
+								</p>
+							)}
 							<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 								{DAYS.map((day) => (
 									<div
 										key={day.value}
 										className={`flex items-center space-x-3 p-4 border rounded-lg transition-colors ${
-											selectedDays.includes(day.value)
-												? "border-primary bg-primary/5"
-												: "border-border"
+											!isActive
+												? "border-muted bg-muted/30 opacity-60"
+												: selectedDays.includes(day.value)
+													? "border-primary bg-primary/5"
+													: "border-border"
 										}`}
 									>
 										<Checkbox
 											id={`day-${day.value}`}
 											checked={selectedDays.includes(day.value)}
 											onCheckedChange={() => handleDayToggle(day.value)}
+											disabled={!isActive}
 										/>
 										<Label
 											htmlFor={`day-${day.value}`}
-											className="flex-1 cursor-pointer font-medium"
+											className={`flex-1 font-medium ${
+												!isActive
+													? "cursor-not-allowed text-muted-foreground"
+													: "cursor-pointer"
+											}`}
 										>
 											{day.label}
 										</Label>
@@ -243,7 +256,7 @@ export default function CakeOrderDaysSettingsPage() {
 								))}
 							</div>
 
-							{selectedDays.length === 0 && (
+							{selectedDays.length === 0 && isActive && (
 								<p className="text-sm text-red-600">
 									Please select at least one day for cake orders.
 								</p>
@@ -251,24 +264,36 @@ export default function CakeOrderDaysSettingsPage() {
 						</div>
 
 						{/* Summary */}
-						{selectedDays.length > 0 && (
-							<div className="p-4 bg-muted/50 rounded-lg">
-								<p className="text-sm font-medium mb-2">Summary:</p>
+						<div className="p-4 bg-muted/50 rounded-lg">
+							<p className="text-sm font-medium mb-2">Summary:</p>
+							{!isActive ? (
 								<p className="text-sm text-muted-foreground">
-									Cake orders will be {isActive ? "accepted" : "disabled"} on:{" "}
+									The cake order system is currently{" "}
+									<span className="font-medium text-foreground">disabled</span>.
+									Customers will not be able to place orders.
+								</p>
+							) : selectedDays.length > 0 ? (
+								<p className="text-sm text-muted-foreground">
+									Cake orders will be accepted on:{" "}
 									<span className="font-medium text-foreground">
 										{selectedDays.map((day) => DAYS[day].label).join(", ")}
 									</span>
 								</p>
-							</div>
-						)}
+							) : (
+								<p className="text-sm text-red-600">
+									No days selected. Please select at least one day for cake
+									orders.
+								</p>
+							)}
+						</div>
 
 						{/* Save Button */}
 						<div className="flex justify-end pt-4">
 							<Button
 								onClick={handleSave}
 								disabled={
-									selectedDays.length === 0 || updateSettingsMutation.isPending
+									(isActive && selectedDays.length === 0) ||
+									updateSettingsMutation.isPending
 								}
 								size="lg"
 							>

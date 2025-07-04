@@ -196,7 +196,7 @@ export default function CheckoutPage({
 	const [isCreatingAddress, setIsCreatingAddress] = useState(false);
 	const existingId = useId();
 	const newId = useId();
-	const { areOrdersAllowed: ordersAllowed } = useCakeOrderSettings();
+	const { areOrdersAllowed: ordersAllowed, settings } = useCakeOrderSettings();
 
 	// Get current month for postal order settings
 	const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
@@ -436,7 +436,13 @@ export default function CheckoutPage({
 
 	const onSubmit = async (data: CheckoutFormValues) => {
 		if (!isOrderingAllowed) {
-			toast.error("Orders are only accepted on Mondays and Tuesdays");
+			const isSystemDisabled = !settings?.isActive;
+
+			if (isSystemDisabled) {
+				toast.error("Cake order system is currently disabled");
+			} else {
+				toast.error("Cake orders are only accepted on allowed days");
+			}
 			return;
 		}
 
@@ -1160,7 +1166,9 @@ export default function CheckoutPage({
 									<div className="text-center mt-2">
 										{!isOrderingAllowed ? (
 											<p className="text-xs text-muted-foreground">
-												Orders are only accepted on Mondays and Tuesdays
+												{!settings?.isActive
+													? "Cake order system is currently disabled"
+													: "Orders are only accepted on allowed days"}
 											</p>
 										) : isPostalBrownies && addressMode === "new" ? (
 											<p className="text-xs text-muted-foreground">
