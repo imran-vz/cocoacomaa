@@ -35,7 +35,16 @@ export default async function AdminOrderDetailsPage({
 					price: true,
 				},
 				with: {
-					dessert: true,
+					postalCombo: {
+						columns: {
+							name: true,
+						},
+					},
+					dessert: {
+						columns: {
+							name: true,
+						},
+					},
 				},
 			},
 			user: {

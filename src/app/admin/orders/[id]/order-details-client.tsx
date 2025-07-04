@@ -43,9 +43,11 @@ type OrderData = {
 	orderItems: Array<{
 		quantity: number;
 		price: string;
+		postalCombo: {
+			name: string;
+		} | null;
 		dessert: {
 			name: string;
-			description: string;
 		} | null;
 	}>;
 	user: {
@@ -135,29 +137,55 @@ export default function OrderDetailsClient({
 							</CardHeader>
 							<CardContent>
 								<div className="space-y-4">
-									{order.orderItems.map((item, index) => (
-										<div
-											key={`${item.dessert?.name}-${index}`}
-											className="flex justify-between items-start gap-4"
-										>
-											<div className="flex-1 min-w-0">
-												<h4 className="font-medium">{item.dessert?.name}</h4>
-												{item.dessert?.description && (
-													<p className="text-sm text-muted-foreground mt-1">
-														{item.dessert?.description}
-													</p>
-												)}
-												<p className="text-sm text-muted-foreground">
-													{formatCurrency(Number(item.price))} × {item.quantity}
-												</p>
-											</div>
-											<div className="text-right shrink-0">
-												<p className="font-medium">
-													{formatCurrency(Number(item.price) * item.quantity)}
-												</p>
-											</div>
-										</div>
-									))}
+									{order.orderType === "postal-brownies"
+										? order.orderItems.map((item, index) => {
+												return (
+													<div
+														key={`${item.postalCombo?.name}-${index}`}
+														className="flex justify-between items-start gap-4"
+													>
+														<div className="flex-1 min-w-0">
+															<h4 className="font-medium">
+																{item.postalCombo?.name}
+															</h4>
+															<p className="text-sm text-muted-foreground">
+																{formatCurrency(Number(item.price))} ×{" "}
+																{item.quantity}
+															</p>
+														</div>
+														<div className="text-right shrink-0">
+															<p className="font-medium">
+																{formatCurrency(
+																	Number(item.price) * item.quantity,
+																)}
+															</p>
+														</div>
+													</div>
+												);
+											})
+										: order.orderItems.map((item, index) => (
+												<div
+													key={`${item.dessert?.name}-${index}`}
+													className="flex justify-between items-start gap-4"
+												>
+													<div className="flex-1 min-w-0">
+														<h4 className="font-medium">
+															{item.dessert?.name}
+														</h4>
+														<p className="text-sm text-muted-foreground">
+															{formatCurrency(Number(item.price))} ×{" "}
+															{item.quantity}
+														</p>
+													</div>
+													<div className="text-right shrink-0">
+														<p className="font-medium">
+															{formatCurrency(
+																Number(item.price) * item.quantity,
+															)}
+														</p>
+													</div>
+												</div>
+											))}
 
 									<Separator />
 
