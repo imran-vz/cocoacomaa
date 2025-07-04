@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Toaster } from "sonner";
@@ -8,7 +9,6 @@ import BrowserCompatibilityBanner from "@/components/ui/browser-compatibility-ba
 import UrlCleaner from "@/components/ui/url-cleaner";
 import { CartProvider } from "@/lib/cart-context";
 import { Providers } from "./providers";
-import { Analytics } from "@vercel/analytics/next";
 
 import "./globals.css";
 
