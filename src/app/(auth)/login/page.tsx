@@ -27,7 +27,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
 	const router = useRouter();
-	const { data } = useSession();
+	const { data, status } = useSession();
 	const [showPassword, setShowPassword] = useState(false);
 	const searchParams = useSearchParams();
 	const redirect = searchParams.get("redirect");
@@ -40,14 +40,27 @@ export default function LoginPage() {
 		},
 	});
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: we only want to run this effect once
 	useEffect(() => {
-		if (data?.user.id) {
+		if (status === "authenticated" && data?.user.id) {
 			console.log("redirecting to /");
-			router.replace("/");
+			router.replace(redirect || "/");
 			return;
 		}
-	}, []);
+	}, [data?.user.id, status, router, redirect]);
+
+	// Show loading while checking session
+	if (status === "loading") {
+		return (
+			<div className="flex h-screen items-center justify-center">
+				<div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+			</div>
+		);
+	}
+
+	// Don't render login form if user is authenticated
+	if (status === "authenticated") {
+		return null;
+	}
 
 	async function onSubmit(data: LoginFormValues) {
 		try {
