@@ -12,6 +12,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import NonVegIcon from "@/components/icon/non-veg";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -312,8 +313,9 @@ export default function PostalBrowniesPage() {
 																	)}
 																	<CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
 																		<div className="flex flex-col sm:flex-row justify-between items-start gap-2">
-																			<CardTitle className="text-base sm:text-lg leading-tight flex-1">
-																				{combo.name}
+																			<CardTitle className="text-base sm:text-lg leading-tight flex-1 inline-flex items-center gap-2">
+																				{combo.name}{" "}
+																				<NonVegIcon className="w-4 h-4" />
 																			</CardTitle>
 																			<div className="bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs sm:text-sm font-medium shrink-0">
 																				{formatCurrency(Number(combo.price))}
