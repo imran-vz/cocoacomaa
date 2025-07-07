@@ -15,8 +15,29 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-	title: "Dessert Ordering Platform",
+	title: "Cocoacomaa",
 	description: "Order custom desserts online",
+
+	alternates: {
+		canonical: "https://cocoacomaa.com",
+		languages: {
+			en: "https://cocoacomaa.com",
+		},
+	},
+	authors: [
+		{
+			name: "Imran",
+			url: "https://imran.codes",
+		},
+	],
+
+	applicationName: "Cocoacomaa",
+	creator: "Imran",
+	keywords: ["cocoacomaa", "brownie", "dessert", "order", "online"],
+	openGraph: {
+		title: "Cocoacomaa",
+		description: "Order custom desserts online",
+	},
 };
 
 export default function RootLayout({
