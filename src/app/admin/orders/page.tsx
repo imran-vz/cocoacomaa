@@ -100,25 +100,29 @@ export default async function OrdersPage() {
 						columns={columns}
 						data={ordersList.map((order) => ({
 							...order,
-							orderDetails: order.orderItems
-								.map((item) => {
-									if (item.postalCombo) {
-										return (
-											<p key={item.postalCombo.name}>{item.postalCombo.name}</p>
-										);
-									}
+							orderDetails: (
+								<div className="space-y-1">
+									{order.orderItems.map((item) => {
+										if (item.postalCombo) {
+											return (
+												<p key={item.postalCombo.name}>
+													{item.postalCombo.name}
+												</p>
+											);
+										}
 
-									if (item.dessert) {
-										return (
-											<p key={item.dessert.id}>
-												{item.dessert.name} - {item.quantity}
-											</p>
-										);
-									}
+										if (item.dessert) {
+											return (
+												<p key={item.dessert.id}>
+													{item.dessert.name} - {item.quantity}
+												</p>
+											);
+										}
 
-									return "";
-								})
-								.join("\n"),
+										return null;
+									})}
+								</div>
+							),
 							userName: order.user.name || "",
 						}))}
 						searchKey="userName"
