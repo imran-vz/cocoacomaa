@@ -1,10 +1,11 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
+import type { ReactNode } from "react";
 import { DataTableRowActions } from "@/components/orders/data-table-row-actions";
 import { Badge } from "@/components/ui/badge";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 
 export const columns: ColumnDef<{
 	id: string;
@@ -21,6 +22,7 @@ export const columns: ColumnDef<{
 	orderType: "cake-orders" | "postal-brownies";
 	userName: string;
 	notes: string | null;
+	orderDetails: ReactNode;
 }>[] = [
 	{
 		accessorKey: "userName",
@@ -108,16 +110,14 @@ export const columns: ColumnDef<{
 		},
 	},
 	{
-		accessorKey: "createdAt",
+		accessorKey: "orderDetails",
 		header: ({ column }) => (
-			<DataTableColumnHeader column={column} title="Created" />
+			<DataTableColumnHeader column={column} title="Desserts/Combos" />
 		),
 		cell: ({ row }) => {
 			return (
 				<div className="flex w-[100px] items-center">
-					<span className="whitespace-nowrap">
-						{formatDate(row.getValue("createdAt"))}
-					</span>
+					{row.getValue("orderDetails")}
 				</div>
 			);
 		},

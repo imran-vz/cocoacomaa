@@ -1,4 +1,4 @@
-import { desc } from "drizzle-orm";
+import { desc, isNotNull } from "drizzle-orm";
 import { columns } from "@/components/orders/columns";
 import { DataTable } from "@/components/ui/data-table";
 import { db } from "@/lib/db";
@@ -10,10 +10,6 @@ const statuses: { label: string; value: Order["status"] }[] = [
 	{
 		label: "Pending",
 		value: "pending",
-	},
-	{
-		label: "Payment Pending",
-		value: "payment_pending",
 	},
 	{
 		label: "Paid",
@@ -54,16 +50,31 @@ const orderTypes: { label: string; value: Order["orderType"] }[] = [
 
 export default async function OrdersPage() {
 	const ordersList = await db.query.orders.findMany({
+		where: isNotNull(orders.razorpayPaymentId),
 		orderBy: desc(orders.createdAt),
 		columns: {
 			id: true,
 			total: true,
 			status: true,
 			orderType: true,
-			createdAt: true,
 			notes: true,
 		},
 		with: {
+			orderItems: {
+				with: {
+					postalCombo: {
+						columns: {
+							name: true,
+						},
+					},
+					dessert: {
+						columns: {
+							id: true,
+							name: true,
+						},
+					},
+				},
+			},
 			user: {
 				columns: {
 					name: true,
@@ -89,6 +100,25 @@ export default async function OrdersPage() {
 						columns={columns}
 						data={ordersList.map((order) => ({
 							...order,
+							orderDetails: order.orderItems
+								.map((item) => {
+									if (item.postalCombo) {
+										return (
+											<p key={item.postalCombo.name}>{item.postalCombo.name}</p>
+										);
+									}
+
+									if (item.dessert) {
+										return (
+											<p key={item.dessert.id}>
+												{item.dessert.name} - {item.quantity}
+											</p>
+										);
+									}
+
+									return "";
+								})
+								.join("\n"),
 							userName: order.user.name || "",
 						}))}
 						searchKey="userName"
