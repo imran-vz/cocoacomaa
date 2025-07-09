@@ -1,4 +1,5 @@
-import { and, eq, gte, isNotNull, sql, not } from "drizzle-orm";
+import { sub } from "date-fns";
+import { and, eq, gte, isNotNull, not, sql } from "drizzle-orm";
 import {
 	CheckCircle2,
 	Clock,
@@ -59,7 +60,7 @@ export default async function AdminDashboard() {
 		.where(
 			and(
 				validOrdersFilter,
-				gte(orders.createdAt, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)),
+				gte(orders.createdAt, sub(new Date(), { days: 7 })),
 			),
 		)
 		.then((res) => res[0].count);
