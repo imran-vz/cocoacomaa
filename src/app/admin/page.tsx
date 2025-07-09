@@ -1,4 +1,4 @@
-import { and, eq, gte, isNotNull, sql } from "drizzle-orm";
+import { and, eq, gte, isNotNull, sql, not } from "drizzle-orm";
 import {
 	CheckCircle2,
 	Clock,
@@ -68,7 +68,7 @@ export default async function AdminDashboard() {
 	const pendingOrdersPromise = db
 		.select({ count: sql<number>`count(*)` })
 		.from(orders)
-		.where(and(validOrdersFilter, eq(orders.status, "pending")))
+		.where(and(validOrdersFilter, not(eq(orders.status, "completed"))))
 		.then((res) => res[0].count);
 
 	// Get completed orders (valid orders only)
