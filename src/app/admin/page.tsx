@@ -1,4 +1,4 @@
-import { and, eq, gte, sql } from "drizzle-orm";
+import { and, eq, gte, isNotNull, sql } from "drizzle-orm";
 import {
 	CheckCircle2,
 	Clock,
@@ -18,55 +18,64 @@ import { formatCurrency } from "@/lib/utils";
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
-	// Get total orders
+	// Base filter for valid orders (not deleted and have payment ID)
+	const validOrdersFilter = and(
+		eq(orders.isDeleted, false),
+		isNotNull(orders.razorpayPaymentId),
+	);
+
+	// Get total orders (valid orders only)
 	const totalOrdersPromise = db
-		.select({ count: sql<number>`count(id)` })
+		.select({ count: sql<number>`count(*)` })
 		.from(orders)
+		.where(validOrdersFilter)
 		.then((res) => res[0].count);
 
-	// Get total revenue
+	// Get total revenue (paid orders only)
 	const totalRevenuePromise = db
-		.select({ total: sql<number>`sum(${orders.total})` })
+		.select({ total: sql<number>`sum(CAST(${orders.total} AS DECIMAL))` })
 		.from(orders)
-		.where(eq(orders.status, "completed"))
-		.then((res) => res[0].total || 0);
+		.where(validOrdersFilter)
+		.then((res) => Number(res[0].total) || 0);
 
-	// Get total desserts
+	// Get total desserts (available only)
 	const totalDessertsPromise = db
-		.select({ count: sql<number>`count(id)` })
+		.select({ count: sql<number>`count(*)` })
 		.from(desserts)
+		.where(eq(desserts.status, "available"))
 		.then((res) => res[0].count);
 
-	// Get total customers
+	// Get total customers (unchanged)
 	const totalCustomersPromise = db
-		.select({ count: sql<number>`count(id)` })
+		.select({ count: sql<number>`count(*)` })
 		.from(users)
 		.where(eq(users.role, "customer"))
 		.then((res) => res[0].count);
 
-	// Get recent orders (last 7 days)
+	// Get recent orders (last 7 days, valid orders only)
 	const recentOrdersPromise = db
-		.select({ count: sql<number>`count(id)` })
+		.select({ count: sql<number>`count(*)` })
 		.from(orders)
 		.where(
 			and(
+				validOrdersFilter,
 				gte(orders.createdAt, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)),
 			),
 		)
 		.then((res) => res[0].count);
 
-	// Get pending orders
+	// Get pending orders (valid orders only)
 	const pendingOrdersPromise = db
-		.select({ count: sql<number>`count(id)` })
+		.select({ count: sql<number>`count(*)` })
 		.from(orders)
-		.where(eq(orders.status, "pending"))
+		.where(and(validOrdersFilter, eq(orders.status, "pending")))
 		.then((res) => res[0].count);
 
-	// Get completed orders
+	// Get completed orders (valid orders only)
 	const completedOrdersPromise = db
-		.select({ count: sql<number>`count(id)` })
+		.select({ count: sql<number>`count(*)` })
 		.from(orders)
-		.where(eq(orders.status, "completed"))
+		.where(and(validOrdersFilter, eq(orders.status, "completed")))
 		.then((res) => res[0].count);
 
 	return (
@@ -151,7 +160,7 @@ export default async function AdminDashboard() {
 									<div>
 										<h3 className="font-medium">View Customers</h3>
 										<p className="text-sm text-muted-foreground">
-											Manage customer accounts
+											Manage customers
 										</p>
 									</div>
 								</div>
@@ -181,7 +190,7 @@ async function TotalRevenue({
 				<div className="text-xl sm:text-2xl font-bold">
 					{formatCurrency(totalRevenue)}
 				</div>
-				<p className="text-xs text-muted-foreground mt-1">All time revenue</p>
+				<p className="text-xs text-muted-foreground mt-1">From paid orders</p>
 			</CardContent>
 		</Card>
 	);
@@ -202,7 +211,9 @@ async function TotalOrders({
 			</CardHeader>
 			<CardContent>
 				<div className="text-xl sm:text-2xl font-bold">{totalOrders}</div>
-				<p className="text-xs text-muted-foreground mt-1">All time orders</p>
+				<p className="text-xs text-muted-foreground mt-1">
+					Valid orders with payment
+				</p>
 			</CardContent>
 		</Card>
 	);
@@ -213,7 +224,9 @@ async function TotalDesserts({
 }: {
 	totalDessertsPromise: Promise<number>;
 }) {
-	const totalDesserts = await totalDessertsPromise.catch(() => 0);
+	const totalDesserts = await totalDessertsPromise.catch(() => {
+		return 0;
+	});
 
 	return (
 		<Card className="hover:shadow-md transition-shadow">
