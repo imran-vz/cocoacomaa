@@ -167,7 +167,16 @@ export default async function AdminOrderDetailsPage({
 
 						{/* Payment Retry Section */}
 						{order.status === "payment_pending" && (
-							<RetryPaymentCard order={order} />
+							<RetryPaymentCard
+								order={{
+									id: order.id,
+									total: order.total,
+									orderType: order.orderType,
+									createdAt: order.createdAt,
+									razorpayOrderId: order.razorpayOrderId,
+									user: order.user,
+								}}
+							/>
 						)}
 
 						{/* Order Items */}

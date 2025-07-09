@@ -1,8 +1,10 @@
 import { desc, isNotNull } from "drizzle-orm";
 import { columns } from "@/components/orders/columns";
 import { DataTable } from "@/components/ui/data-table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/lib/db";
 import { type Order, orders } from "@/lib/db/schema";
+import { ShoppingCart, Clock, CheckCircle } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -83,6 +85,15 @@ export default async function OrdersPage() {
 		},
 	});
 
+	// Calculate overview metrics
+	const totalOrders = ordersList.length;
+	const pendingOrders = ordersList.filter(
+		(order) => order.status !== "completed" && order.status !== "cancelled",
+	).length;
+	const completedOrders = ordersList.filter(
+		(order) => order.status === "completed",
+	).length;
+
 	return (
 		<div className="container mx-auto p-4 sm:p-6">
 			<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -92,6 +103,50 @@ export default async function OrdersPage() {
 						Manage and track all orders
 					</p>
 				</div>
+			</div>
+
+			{/* Overview Cards */}
+			<div className="grid gap-4 md:grid-cols-3 mb-6">
+				<Card>
+					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+						<CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+						<ShoppingCart className="h-4 w-4 text-muted-foreground" />
+					</CardHeader>
+					<CardContent>
+						<div className="text-2xl font-bold">{totalOrders}</div>
+						<p className="text-xs text-muted-foreground">All paid orders</p>
+					</CardContent>
+				</Card>
+				<Card>
+					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+						<CardTitle className="text-sm font-medium">
+							Pending Orders
+						</CardTitle>
+						<Clock className="h-4 w-4 text-muted-foreground" />
+					</CardHeader>
+					<CardContent>
+						<div className="text-2xl font-bold text-orange-600">
+							{pendingOrders}
+						</div>
+						<p className="text-xs text-muted-foreground">Awaiting processing</p>
+					</CardContent>
+				</Card>
+				<Card>
+					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+						<CardTitle className="text-sm font-medium">
+							Completed Orders
+						</CardTitle>
+						<CheckCircle className="h-4 w-4 text-muted-foreground" />
+					</CardHeader>
+					<CardContent>
+						<div className="text-2xl font-bold text-green-600">
+							{completedOrders}
+						</div>
+						<p className="text-xs text-muted-foreground">
+							Successfully delivered
+						</p>
+					</CardContent>
+				</Card>
 			</div>
 
 			<div className="rounded-md">
