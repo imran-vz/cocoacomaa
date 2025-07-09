@@ -1,11 +1,14 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
+import { Eye } from "lucide-react";
+import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { DataTableRowActions } from "@/components/orders/data-table-row-actions";
 import { Badge } from "@/components/ui/badge";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import { formatCurrency } from "@/lib/utils";
+import { Button } from "../ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 export const columns: ColumnDef<{
 	id: string;
@@ -25,10 +28,19 @@ export const columns: ColumnDef<{
 	orderDetails: ReactNode;
 }>[] = [
 	{
+		accessorKey: "id",
+		header: "Order ID",
+		cell: ({ row }) => {
+			return (
+				<div className="flex w-[100px] items-center">
+					<span>{String(row.getValue("id"))?.slice(0, 10)}</span>
+				</div>
+			);
+		},
+	},
+	{
 		accessorKey: "userName",
-		header: ({ column }) => (
-			<DataTableColumnHeader column={column} title="Customer" />
-		),
+		header: "Customer",
 		cell: ({ row }) => {
 			return (
 				<div className="flex space-x-2">
@@ -41,9 +53,7 @@ export const columns: ColumnDef<{
 	},
 	{
 		accessorKey: "orderType",
-		header: ({ column }) => (
-			<DataTableColumnHeader column={column} title="Order Type" />
-		),
+		header: "Order Type",
 		cell: ({ row }) => {
 			const orderType = row.getValue("orderType") as string;
 			return (
@@ -71,14 +81,35 @@ export const columns: ColumnDef<{
 		},
 	},
 	{
-		accessorKey: "notes",
-		header: ({ column }) => (
-			<DataTableColumnHeader column={column} title="Notes" />
-		),
+		accessorKey: "orderDetails",
+		header: "Desserts/Combos",
 		cell: ({ row }) => {
 			return (
-				<div className="flex w-[100px] truncate items-center">
-					<span>{row.getValue("notes")}</span>
+				<div className="flex w-[100px] items-center">
+					{row.getValue("orderDetails")}
+				</div>
+			);
+		},
+		filterFn: (row, id, value) => {
+			return value.includes(row.getValue(id));
+		},
+	},
+	{
+		accessorKey: "notes",
+		header: "Notes",
+		cell: ({ row }) => {
+			const notes = row.getValue("notes") as string;
+			if (!notes) return null;
+			return (
+				<div className="flex w-[100px] items-center">
+					<Tooltip>
+						<TooltipTrigger>
+							<span>{notes.slice(0, 10)}...</span>
+						</TooltipTrigger>
+						<TooltipContent>
+							<p>{notes}</p>
+						</TooltipContent>
+					</Tooltip>
 				</div>
 			);
 		},
@@ -109,24 +140,23 @@ export const columns: ColumnDef<{
 			return value.includes(row.getValue(id));
 		},
 	},
+
 	{
-		accessorKey: "orderDetails",
-		header: ({ column }) => (
-			<DataTableColumnHeader column={column} title="Desserts/Combos" />
-		),
+		id: "actions",
 		cell: ({ row }) => {
+			const router = useRouter();
+			const order = row.original.id;
 			return (
 				<div className="flex w-[100px] items-center">
-					{row.getValue("orderDetails")}
+					<Button
+						onClick={() => router.push(`/admin/orders/${order}`)}
+						variant="ghost"
+					>
+						<Eye className="mr-2 h-4 w-4" />
+						View
+					</Button>
 				</div>
 			);
 		},
-		filterFn: (row, id, value) => {
-			return value.includes(row.getValue(id));
-		},
-	},
-	{
-		id: "actions",
-		cell: ({ row }) => <DataTableRowActions row={row} />,
 	},
 ];
