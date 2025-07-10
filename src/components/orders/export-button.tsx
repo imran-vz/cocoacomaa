@@ -9,6 +9,7 @@ type ExportData = {
 	customerName: string;
 	customerPhone: string;
 	address: string;
+	message: string | null;
 };
 
 interface ExportButtonProps {
@@ -19,21 +20,17 @@ function exportToCSV(data: ExportData[], filename: string) {
 	// Create CSV content
 	const csvContent = [
 		// Headers
-		[
-			"Order ID",
-			"Item Name",
-			"Customer Name",
-			"Customer Phone",
-			"Address",
-		].join(","),
+		["Item Name", "Customer Name", "Customer Phone", "Address", "Message"].join(
+			",",
+		),
 		// Data rows
 		...data.map((row) =>
 			[
-				`"${row.orderId}"`,
 				`"${row.itemName}"`,
 				`"${row.customerName}"`,
 				`"${row.customerPhone}"`,
 				`"${row.address}"`,
+				`"${row.message || "No message"}"`,
 			].join(","),
 		),
 	].join("\n");

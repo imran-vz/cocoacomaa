@@ -130,6 +130,7 @@ export default async function OrdersPage() {
 			customerName,
 			customerPhone,
 			address,
+			message: order.notes,
 		}));
 	});
 
