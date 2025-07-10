@@ -1,5 +1,6 @@
 import { desc, isNotNull } from "drizzle-orm";
 import { columns } from "@/components/orders/columns";
+import ExportButton from "@/components/orders/export-button";
 import { DataTable } from "@/components/ui/data-table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/lib/db";
@@ -80,6 +81,16 @@ export default async function OrdersPage() {
 			user: {
 				columns: {
 					name: true,
+					phone: true,
+				},
+			},
+			address: {
+				columns: {
+					addressLine1: true,
+					addressLine2: true,
+					city: true,
+					state: true,
+					zip: true,
 				},
 			},
 		},
@@ -94,6 +105,34 @@ export default async function OrdersPage() {
 		(order) => order.status === "completed",
 	).length;
 
+	// Prepare CSV export data
+	const csvData = ordersList.flatMap((order) => {
+		const customerName = order.user.name || "No name";
+		const customerPhone = order.user.phone || "No phone";
+
+		// Format address
+		let address = "No address";
+		if (order.address) {
+			const addressParts = [
+				order.address.addressLine1,
+				order.address.addressLine2,
+				order.address.city,
+				order.address.state,
+				order.address.zip,
+			].filter(Boolean);
+			address = addressParts.join(", ");
+		}
+
+		// Create a row for each order item
+		return order.orderItems.map((item) => ({
+			orderId: order.id,
+			itemName: item.postalCombo?.name || item.dessert?.name || "Unknown item",
+			customerName,
+			customerPhone,
+			address,
+		}));
+	});
+
 	return (
 		<div className="container mx-auto p-4 sm:p-6">
 			<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -103,6 +142,7 @@ export default async function OrdersPage() {
 						Manage and track all orders
 					</p>
 				</div>
+				<ExportButton data={csvData} />
 			</div>
 
 			{/* Overview Cards */}
