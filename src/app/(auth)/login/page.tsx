@@ -92,7 +92,7 @@ export default function LoginPage() {
 
 	return (
 		<div className="min-h-[calc(100svh-10rem)] flex items-center justify-center px-2 py-8 bg-background">
-			<div className="w-full max-w-xs sm:max-w-sm md:max-w-md flex flex-col justify-center space-y-6 mx-auto">
+			<div className="w-full max-w-sm md:max-w-md flex flex-col justify-center space-y-6 mx-auto">
 				<div className="flex flex-col space-y-2 text-center">
 					<h1 className="text-2xl font-semibold tracking-tight">
 						Welcome back

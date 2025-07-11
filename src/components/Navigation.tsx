@@ -1,9 +1,8 @@
 "use client";
 
-import { LogOut, Menu, Settings, ShoppingBag, Users, X } from "lucide-react";
+import { LogOut, Settings, ShoppingBag, Users } from "lucide-react";
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
-import { useState } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -18,16 +17,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export function Navigation() {
-	const [isMenuOpen, setIsMenuOpen] = useState(false);
 	const session = useSession();
-
-	const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
 	const isAdmin = session.data?.user?.role === "admin";
 
 	const handleLogout = async () => {
 		await signOut({ callbackUrl: "/" });
-		setIsMenuOpen(false);
 	};
 
 	return (
@@ -44,11 +39,11 @@ export function Navigation() {
 						</Link>
 					</div>
 
-					{/* Desktop Navigation */}
-					<div className="hidden md:flex items-center space-x-4">
+					{/* Navigation */}
+					<div className="flex items-center space-x-4">
 						{isAdmin ? (
 							<>
-								<Button variant="ghost" asChild>
+								<Button variant="ghost" asChild className="hidden md:flex">
 									<Link href="/admin">Dashboard</Link>
 								</Button>
 								<DropdownMenu>
@@ -206,153 +201,7 @@ export function Navigation() {
 							</DropdownMenu>
 						)}
 					</div>
-
-					{/* Mobile Menu Button */}
-					<div className="md:hidden flex items-center space-x-2">
-						{/* Hamburger Menu Button */}
-						<Button
-							variant="ghost"
-							size="icon"
-							onClick={toggleMenu}
-							aria-label="Toggle menu"
-						>
-							{isMenuOpen ? (
-								<X className="h-5 w-5" />
-							) : (
-								<Menu className="h-5 w-5" />
-							)}
-						</Button>
-					</div>
 				</div>
-
-				{/* Mobile Menu */}
-				{isMenuOpen && (
-					<div className="md:hidden border-t bg-white">
-						{isAdmin ? (
-							<div className="px-2 pt-2 pb-3 space-y-1">
-								<Button
-									variant="ghost"
-									asChild
-									className="w-full justify-start"
-									onClick={() => setIsMenuOpen(false)}
-								>
-									<Link href="/admin/orders">Orders</Link>
-								</Button>
-								<Button
-									variant="ghost"
-									asChild
-									className="w-full justify-start"
-									onClick={() => setIsMenuOpen(false)}
-								>
-									<Link href="/admin/desserts">Desserts</Link>
-								</Button>
-								<Button
-									variant="ghost"
-									asChild
-									className="w-full justify-start"
-									onClick={() => setIsMenuOpen(false)}
-								>
-									<Link href="/admin/postal-brownies">Postal Brownies</Link>
-								</Button>
-								<Button
-									variant="ghost"
-									asChild
-									className="w-full justify-start"
-									onClick={() => setIsMenuOpen(false)}
-								>
-									<Link href="/admin/workshops">Workshops</Link>
-								</Button>
-								<Button
-									variant="ghost"
-									asChild
-									className="w-full justify-start"
-									onClick={() => setIsMenuOpen(false)}
-								>
-									<Link href="/admin/workshop-orders">Workshop Orders</Link>
-								</Button>
-								<Button
-									variant="ghost"
-									asChild
-									className="w-full justify-start"
-									onClick={() => setIsMenuOpen(false)}
-								>
-									<Link href="/admin/settings/order-days">
-										Cake Order Settings
-									</Link>
-								</Button>
-								<Button
-									variant="ghost"
-									asChild
-									className="w-full justify-start"
-									onClick={() => setIsMenuOpen(false)}
-								>
-									<Link href="/admin/settings/postal-orders">
-										Postal Order Settings
-									</Link>
-								</Button>
-								<Button
-									variant="ghost"
-									onClick={handleLogout}
-									className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
-								>
-									<LogOut className="h-4 w-4 mr-2" />
-									Logout
-								</Button>
-							</div>
-						) : (
-							<div className="px-2 pt-2 pb-3 space-y-1">
-								<Button
-									variant="ghost"
-									asChild
-									className="w-full justify-start"
-									onClick={() => setIsMenuOpen(false)}
-								>
-									<Link href="/">Home</Link>
-								</Button>
-								{session.data?.user?.id ? (
-									<>
-										<Button
-											variant="ghost"
-											asChild
-											className="w-full justify-start"
-											onClick={() => setIsMenuOpen(false)}
-										>
-											<Link href="/workshops">Workshops</Link>
-										</Button>
-										<Button
-											variant="ghost"
-											asChild
-											className="w-full justify-start"
-											onClick={() => setIsMenuOpen(false)}
-										>
-											<Link href="/my-orders">My Orders</Link>
-										</Button>
-										<Button
-											variant="ghost"
-											asChild
-											className="w-full justify-start"
-											onClick={() => setIsMenuOpen(false)}
-										>
-											<Link href="/my-workshops">My Workshops</Link>
-										</Button>
-										<Button
-											variant="ghost"
-											onClick={handleLogout}
-											className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
-										>
-											<LogOut className="h-4 w-4 mr-2" />
-											Logout
-										</Button>
-									</>
-								) : (
-									<Button variant="ghost" asChild>
-										<Link href="/login">Login</Link>
-									</Button>
-								)}
-							</div>
-						)}
-					</div>
-				)}
 			</div>
 		</nav>
 	);
