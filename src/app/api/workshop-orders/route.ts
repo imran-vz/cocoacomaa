@@ -1,12 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+import { and, desc, eq, isNotNull } from "drizzle-orm";
+import { type NextRequest, NextResponse } from "next/server";
+import Razorpay from "razorpay";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { workshopOrders, workshops } from "@/lib/db/schema";
-import { eq, desc, and, sql } from "drizzle-orm";
-import Razorpay from "razorpay";
 
 const razorpay = new Razorpay({
-	key_id: process.env.RAZORPAY_KEY_ID || "",
+	key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
 	key_secret: process.env.RAZORPAY_KEY_SECRET || "",
 });
 
@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
 
 		const ordersList = await db.query.workshopOrders.findMany({
 			where: and(
+				isNotNull(workshopOrders.razorpayPaymentId),
 				eq(workshopOrders.userId, filterUserId),
 				eq(workshopOrders.isDeleted, false),
 			),
@@ -102,6 +103,7 @@ export async function POST(request: NextRequest) {
 				eq(workshopOrders.userId, session.user.id),
 				eq(workshopOrders.workshopId, workshopId),
 				eq(workshopOrders.isDeleted, false),
+				isNotNull(workshopOrders.razorpayPaymentId),
 			),
 		});
 

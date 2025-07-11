@@ -1,6 +1,6 @@
-import { desc, eq } from "drizzle-orm";
-import { columns } from "@/components/workshop-orders/columns";
+import { and, desc, eq, isNotNull } from "drizzle-orm";
 import { DataTable } from "@/components/ui/data-table";
+import { columns } from "@/components/workshop-orders/columns";
 import { db } from "@/lib/db";
 import { workshopOrders } from "@/lib/db/schema";
 
@@ -8,8 +8,18 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminWorkshopOrdersPage() {
 	const ordersList = await db.query.workshopOrders.findMany({
-		where: eq(workshopOrders.isDeleted, false),
+		where: and(
+			eq(workshopOrders.isDeleted, false),
+			isNotNull(workshopOrders.razorpayPaymentId),
+		),
 		orderBy: [desc(workshopOrders.createdAt)],
+		columns: {
+			id: true,
+			amount: true,
+			status: true,
+			paymentStatus: true,
+			createdAt: true,
+		},
 		with: {
 			workshop: {
 				columns: {

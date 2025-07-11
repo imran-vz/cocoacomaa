@@ -2,10 +2,12 @@
 
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import confetti from "canvas-confetti";
 import { format } from "date-fns";
 import { Calendar, MapPin, Monitor } from "lucide-react";
-import { redirect } from "next/navigation";
+import { redirect, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useEffect } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -64,12 +66,31 @@ const formatStatus = (status: string) => {
 
 export default function MyWorkshopsPage() {
 	const { data: session, status } = useSession();
+	const searchParams = useSearchParams();
+	const workshopId = searchParams.get("workshopId");
+	const newOrder = searchParams.get("newOrder") === "true";
 
 	const { data: workshopOrders = [], isLoading } = useQuery({
 		queryKey: ["my-workshops"],
 		queryFn: fetchMyWorkshops,
 		enabled: !!session?.user?.id,
 	});
+
+	useEffect(() => {
+		if (newOrder && workshopId) {
+			// Make the spread and particle count dynamic based on the screen size
+			const screenWidth = window.innerWidth;
+			const particleCount = screenWidth > 768 ? 200 : 100;
+			const spread = screenWidth > 768 ? 150 : 70;
+
+			confetti({
+				particleCount: particleCount,
+				spread: spread,
+				origin: { y: 0.3 },
+				colors: ["#551303", "#8B5A2B", "#D2B48C", "#F4E4BC"], // Brown theme colors
+			});
+		}
+	}, [newOrder, workshopId]);
 
 	if (status === "loading") {
 		return (

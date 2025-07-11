@@ -17,7 +17,6 @@ export type WorkshopOrder = {
 		| "refunded"
 		| "failed";
 	createdAt: Date;
-	notes?: string;
 	workshopTitle: string;
 	workshopType: "online" | "offline";
 	customerName: string;
@@ -50,12 +49,17 @@ const formatStatus = (status: string) => {
 
 export const columns: ColumnDef<WorkshopOrder>[] = [
 	{
-		accessorKey: "id",
-		header: "Order ID",
+		accessorKey: "workshopType",
+		header: "Workshop Type",
 		cell: ({ row }) => {
-			const id = row.getValue("id") as string;
+			const type = row.getValue("workshopType") as string;
 			return (
-				<span className="font-mono text-xs">{id.slice(-8).toUpperCase()}</span>
+				<Badge
+					variant={type === "online" ? "default" : "secondary"}
+					className="text-xs mt-1"
+				>
+					{type}
+				</Badge>
 			);
 		},
 	},
@@ -64,18 +68,7 @@ export const columns: ColumnDef<WorkshopOrder>[] = [
 		header: "Workshop",
 		cell: ({ row }) => {
 			const title = row.getValue("workshopTitle") as string;
-			const type = row.original.workshopType;
-			return (
-				<div>
-					<div className="font-medium">{title}</div>
-					<Badge
-						variant={type === "online" ? "default" : "secondary"}
-						className="text-xs mt-1"
-					>
-						{type}
-					</Badge>
-				</div>
-			);
+			return <div className="font-medium">{title}</div>;
 		},
 	},
 	{
@@ -128,20 +121,6 @@ export const columns: ColumnDef<WorkshopOrder>[] = [
 						{format(date, "h:mm a")}
 					</div>
 				</div>
-			);
-		},
-	},
-	{
-		accessorKey: "notes",
-		header: "Notes",
-		cell: ({ row }) => {
-			const notes = row.getValue("notes") as string;
-			return notes ? (
-				<span className="text-sm text-muted-foreground max-w-[200px] truncate block">
-					{notes}
-				</span>
-			) : (
-				<span className="text-sm text-muted-foreground">-</span>
 			);
 		},
 	},

@@ -11,8 +11,21 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import WorkshopTypeToggle from "@/components/workshop-type-toggle";
 import { formatCurrency } from "@/lib/utils";
 import type { RazorpayOptions, RazorpayResponse } from "@/types/razorpay";
+import { useId } from "react";
+import { useSearchParams } from "next/navigation";
 
 declare global {
 	interface Window {
@@ -44,10 +57,23 @@ const fetchWorkshops = async (): Promise<Workshop[]> => {
 export default function WorkshopsPage() {
 	const router = useRouter();
 	const { data: session } = useSession();
+	const searchParams = useSearchParams();
+	const phoneInputId = useId();
 	const [isProcessing, setIsProcessing] = useState(false);
 	const [processingWorkshopId, setProcessingWorkshopId] = useState<
 		number | null
 	>(null);
+	const [selectedType, setSelectedType] = useState<Workshop["type"]>("online");
+	const [showPhoneNumberModal, setShowPhoneNumberModal] = useState(false);
+	const [phoneNumber, setPhoneNumber] = useState("");
+	const [isUpdatingPhone, setIsUpdatingPhone] = useState(false);
+	const [user, setUser] = useState<{
+		id: string;
+		name: string;
+		email: string;
+		phone: string;
+		image: string;
+	} | null>(null);
 
 	const { data: workshops = [], isLoading } = useQuery({
 		queryKey: ["workshops"],
@@ -56,6 +82,11 @@ export default function WorkshopsPage() {
 
 	// Filter to show only active workshops
 	const activeWorkshops = workshops.filter((w) => w.status === "active");
+
+	// Filter workshops based on selected type
+	const filteredWorkshops = activeWorkshops.filter(
+		(workshop) => workshop.type === selectedType,
+	);
 
 	const handleRegister = async (workshop: Workshop) => {
 		if (!session) {
@@ -67,20 +98,83 @@ export default function WorkshopsPage() {
 		setProcessingWorkshopId(workshop.id);
 
 		try {
-			// Create workshop order
-			const response = await axios.post("/api/workshop-orders", {
-				workshopId: workshop.id,
-			});
-
-			if (response.data.success) {
-				// Initiate payment
-				await handlePayment(
-					response.data.orderId,
-					response.data.razorpayOrderId,
-					response.data.amount,
-					workshop,
-				);
+			const { data: user } = await axios.get("/api/user");
+			if (user.error) {
+				toast.error(user.error);
+				return;
 			}
+
+			if (!user.phone) {
+				toast.error(
+					"Please update your phone number to register for workshops.",
+				);
+				setShowPhoneNumberModal(true);
+				setIsProcessing(false);
+				setProcessingWorkshopId(null);
+				return;
+			}
+
+			setUser(user);
+
+			// Check if there's an existing order ID in URL for this workshop
+			const existingOrderId = searchParams.get("orderId");
+			const urlWorkshopId = searchParams.get("workshopId");
+
+			let orderData: {
+				orderId: string;
+				razorpayOrderId: string;
+				amount: number;
+			} | null = null;
+
+			if (existingOrderId && urlWorkshopId === workshop.id.toString()) {
+				// Verify existing order is valid and belongs to current user
+				try {
+					const existingOrderResponse = await axios.get(
+						`/api/workshop-orders/${existingOrderId}`,
+					);
+					if (
+						existingOrderResponse.data.success &&
+						existingOrderResponse.data.order.workshopId === workshop.id &&
+						existingOrderResponse.data.order.status === "pending"
+					) {
+						orderData = existingOrderResponse.data.order;
+						console.log("Reusing existing order:", existingOrderId);
+					}
+				} catch (error) {
+					console.log(error);
+					console.log("Existing order not found or invalid, creating new one");
+				}
+			}
+
+			// Create new order if no valid existing order found
+			if (!orderData) {
+				const response = await axios.post("/api/workshop-orders", {
+					workshopId: workshop.id,
+				});
+
+				if (response.data.success) {
+					orderData = response.data;
+					// Add order ID and workshop ID to URL
+					const newUrl = new URL(window.location.href);
+					newUrl.searchParams.set("orderId", response.data.orderId);
+					newUrl.searchParams.set("workshopId", workshop.id.toString());
+					router.replace(newUrl.pathname + newUrl.search, { scroll: false });
+				} else {
+					throw new Error("Failed to create workshop order");
+				}
+			}
+
+			// Initiate payment
+			if (!orderData) {
+				throw new Error("Failed to get order data");
+			}
+
+			await handlePayment(
+				orderData.orderId,
+				orderData.razorpayOrderId,
+				orderData.amount,
+				workshop,
+			);
 		} catch (error) {
 			console.error("Error creating workshop order:", error);
 			if (axios.isAxiosError(error)) {
@@ -125,7 +219,14 @@ export default function WorkshopsPage() {
 
 					if (verifyResponse.data.success) {
 						toast.success("Successfully registered for the workshop!");
-						router.push("/my-workshops");
+						// Clear order params from URL
+						const newUrl = new URL(window.location.href);
+						newUrl.searchParams.delete("orderId");
+						newUrl.searchParams.delete("workshopId");
+						router.replace(newUrl.pathname + newUrl.search, { scroll: false });
+						router.push(
+							`/my-workshops?workshopId=${workshop.id}&newOrder=true`,
+						);
 					} else {
 						throw new Error("Payment verification failed");
 					}
@@ -144,9 +245,9 @@ export default function WorkshopsPage() {
 				},
 			},
 			prefill: {
-				name: session?.user?.name || "",
-				email: session?.user?.email || "",
-				contact: "", // Add phone if available
+				name: user?.name || "",
+				email: user?.email || "",
+				contact: user?.phone || "",
 			},
 			theme: { color: "#551303" },
 		};
@@ -159,6 +260,41 @@ export default function WorkshopsPage() {
 			setProcessingWorkshopId(null);
 		});
 		razorpay.open();
+	};
+
+	const updatePhoneNumber = async () => {
+		if (!phoneNumber.trim()) {
+			toast.error("Please enter a valid phone number");
+			return;
+		}
+
+		setIsUpdatingPhone(true);
+
+		try {
+			const response = await axios.patch("/api/user/profile", {
+				phone: phoneNumber,
+			});
+
+			if (response.data.success) {
+				toast.success("Phone number updated successfully");
+				setShowPhoneNumberModal(false);
+				setPhoneNumber("");
+				// Refresh user data
+				const { data: updatedUser } = await axios.get("/api/user");
+				setUser(updatedUser);
+			}
+		} catch (error) {
+			console.error("Error updating phone number:", error);
+			if (axios.isAxiosError(error)) {
+				toast.error(
+					error.response?.data.message || "Failed to update phone number",
+				);
+			} else {
+				toast.error("Failed to update phone number");
+			}
+		} finally {
+			setIsUpdatingPhone(false);
+		}
 	};
 
 	// Load Razorpay script
@@ -219,25 +355,29 @@ export default function WorkshopsPage() {
 			)}
 
 			<h1 className="text-2xl sm:text-3xl font-bold mb-6">Workshops</h1>
-			<p className="text-muted-foreground mb-8">
+			<p className="text-muted-foreground mb-6">
 				Join our hands-on workshops to learn the art of dessert making from
 				Maria and the team.
 			</p>
 
-			{activeWorkshops.length === 0 ? (
+			<WorkshopTypeToggle value={selectedType} onChange={setSelectedType} />
+
+			{filteredWorkshops.length === 0 ? (
 				<Card>
 					<CardContent className="py-8 text-center">
 						<h3 className="text-lg font-semibold mb-2">
-							No workshops available
+							No {selectedType} workshops available
 						</h3>
 						<p className="text-muted-foreground">
-							Check back soon for upcoming workshops.
+							{activeWorkshops.length === 0
+								? "Check back soon for upcoming workshops."
+								: `No ${selectedType} workshops are currently available. Try switching to ${selectedType === "online" ? "offline" : "online"} workshops.`}
 						</p>
 					</CardContent>
 				</Card>
 			) : (
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-					{activeWorkshops.map((workshop) => (
+					{filteredWorkshops.map((workshop) => (
 						<Card
 							key={workshop.id}
 							className="h-full flex flex-col overflow-hidden"
@@ -292,6 +432,57 @@ export default function WorkshopsPage() {
 					))}
 				</div>
 			)}
+
+			{/* Phone Number Update Modal */}
+			<Dialog
+				open={showPhoneNumberModal}
+				onOpenChange={setShowPhoneNumberModal}
+			>
+				<DialogContent className="sm:max-w-[425px]">
+					<DialogHeader>
+						<DialogTitle>Update Phone Number</DialogTitle>
+						<DialogDescription>
+							Please enter your phone number to register for workshops. We'll
+							use this to contact you about workshop details.
+						</DialogDescription>
+					</DialogHeader>
+					<div className="grid gap-4 py-4">
+						<div className="grid grid-cols-4 items-center gap-4">
+							<Label htmlFor={phoneInputId} className="text-right">
+								Phone
+							</Label>
+							<Input
+								id={phoneInputId}
+								placeholder="Enter your phone number"
+								value={phoneNumber}
+								onChange={(e) => setPhoneNumber(e.target.value)}
+								className="col-span-3"
+								type="tel"
+							/>
+						</div>
+					</div>
+					<DialogFooter>
+						<Button
+							type="button"
+							variant="outline"
+							onClick={() => {
+								setShowPhoneNumberModal(false);
+								setPhoneNumber("");
+							}}
+							disabled={isUpdatingPhone}
+						>
+							Cancel
+						</Button>
+						<Button
+							type="button"
+							onClick={updatePhoneNumber}
+							disabled={isUpdatingPhone}
+						>
+							{isUpdatingPhone ? "Updating..." : "Update Phone Number"}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 }

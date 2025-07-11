@@ -1,8 +1,8 @@
 import { Plus } from "lucide-react";
 import Link from "next/link";
-import { columns } from "@/components/workshops/columns";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
+import { columns } from "@/components/workshops/columns";
 import { db } from "@/lib/db";
 
 export default async function AdminWorkshopsPage() {
@@ -12,6 +12,7 @@ export default async function AdminWorkshopsPage() {
 			id: true,
 			title: true,
 			description: true,
+			imageUrl: true,
 			amount: true,
 			type: true,
 			status: true,

@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
+import { and, eq } from "drizzle-orm";
+import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { workshopOrders } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
 
 interface VerifyPaymentRequest {
 	razorpay_order_id: string;
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
 			"sha256",
 			process.env.RAZORPAY_KEY_SECRET || "",
 		);
-		hmac.update(razorpay_order_id + "|" + razorpay_payment_id);
+		hmac.update(`${razorpay_order_id}|${razorpay_payment_id}`);
 		const generated_signature = hmac.digest("hex");
 
 		if (generated_signature !== razorpay_signature) {
@@ -70,8 +70,7 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		// TODO: Send confirmation email to user
-		// You can implement email sending here similar to the existing order confirmation
+		// await sendOrderConfirmationEmail(updatedOrder.user.email, updatedOrder.workshop.title);
 
 		return NextResponse.json({
 			success: true,
