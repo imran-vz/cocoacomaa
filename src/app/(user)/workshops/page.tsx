@@ -63,7 +63,7 @@ export default function WorkshopsPage() {
 	const [processingWorkshopId, setProcessingWorkshopId] = useState<
 		number | null
 	>(null);
-	const [selectedType, setSelectedType] = useState<Workshop["type"]>("online");
+	const [selectedType, setSelectedType] = useState<Workshop["type"]>("offline");
 	const [showPhoneNumberModal, setShowPhoneNumberModal] = useState(false);
 	const [phoneNumber, setPhoneNumber] = useState("");
 	const [isUpdatingPhone, setIsUpdatingPhone] = useState(false);
