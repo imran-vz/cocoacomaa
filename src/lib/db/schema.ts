@@ -279,6 +279,7 @@ export const addresses = pgTable("addresses", (d) => {
 export const usersRelations = relations(users, ({ many }) => ({
 	address: many(addresses),
 	orders: many(orders),
+	workshopOrders: many(workshopOrders),
 	passwordResetTokens: many(passwordResetTokens),
 	accounts: many(accounts, { relationName: "user_accounts" }),
 	sessions: many(sessions, { relationName: "user_sessions" }),
@@ -357,3 +358,93 @@ export const postalOrderSettings = pgTable("postal_order_settings", (d) => {
 });
 
 export type PostalOrderSettings = typeof postalOrderSettings.$inferSelect;
+
+// Workshops Schema
+export const workshops = pgTable("workshops", (d) => {
+	return {
+		id: d.integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		title: d.varchar("title", { length: 255 }).notNull(),
+		description: d.text("description").notNull(),
+		amount: d.numeric("amount", { precision: 10, scale: 2 }).notNull(),
+		type: d.varchar("type", { enum: ["online", "offline"] }).notNull(),
+		imageUrl: d.text("image_url"),
+		status: d
+			.varchar("status", { enum: ["active", "inactive"] })
+			.notNull()
+			.default("active"),
+		isDeleted: d.boolean("is_deleted").notNull().default(false),
+		createdAt: d
+			.timestamp("created_at")
+			.default(sql`CURRENT_TIMESTAMP`)
+			.notNull(),
+		updatedAt: d
+			.timestamp("updated_at")
+			.default(sql`CURRENT_TIMESTAMP`)
+			.notNull(),
+	};
+});
+
+export type Workshop = typeof workshops.$inferSelect;
+
+export const workshopsRelations = relations(workshops, ({ many }) => ({
+	workshopOrders: many(workshopOrders),
+}));
+
+// Workshop Orders Schema
+export const workshopOrders = pgTable("workshop_orders", (d) => {
+	return {
+		id: d
+			.text("id")
+			.primaryKey()
+			.$defaultFn(() => createId()),
+		userId: d
+			.text("user_id")
+			.notNull()
+			.references(() => users.id),
+		workshopId: d
+			.integer("workshop_id")
+			.notNull()
+			.references(() => workshops.id),
+		createdAt: d.timestamp("created_at").notNull().defaultNow(),
+		updatedAt: d.timestamp("updated_at").notNull().defaultNow(),
+		amount: d.numeric("amount", { precision: 10, scale: 2 }).notNull(),
+		status: d
+			.varchar("status", {
+				enum: ["pending", "payment_pending", "paid", "confirmed", "cancelled"],
+			})
+			.notNull()
+			.default("pending"),
+		isDeleted: d.boolean("is_deleted").notNull().default(false),
+		// Razorpay fields
+		razorpayOrderId: d.varchar("razorpay_order_id", { length: 255 }),
+		razorpayPaymentId: d.varchar("razorpay_payment_id", { length: 255 }),
+		razorpaySignature: d.varchar("razorpay_signature", { length: 255 }),
+		paymentStatus: d
+			.varchar("payment_status", {
+				enum: [
+					"pending",
+					"created",
+					"authorized",
+					"captured",
+					"refunded",
+					"failed",
+				],
+			})
+			.notNull()
+			.default("pending"),
+		notes: d.text("notes"),
+	};
+});
+
+export type WorkshopOrder = typeof workshopOrders.$inferSelect;
+
+export const workshopOrdersRelations = relations(workshopOrders, ({ one }) => ({
+	user: one(users, {
+		fields: [workshopOrders.userId],
+		references: [users.id],
+	}),
+	workshop: one(workshops, {
+		fields: [workshopOrders.workshopId],
+		references: [workshops.id],
+	}),
+}));

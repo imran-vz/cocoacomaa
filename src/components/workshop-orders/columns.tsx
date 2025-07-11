@@ -1,0 +1,148 @@
+"use client";
+
+import type { ColumnDef } from "@tanstack/react-table";
+import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
+import { formatCurrency } from "@/lib/utils";
+
+export type WorkshopOrder = {
+	id: string;
+	amount: string;
+	status: "pending" | "payment_pending" | "paid" | "confirmed" | "cancelled";
+	paymentStatus:
+		| "pending"
+		| "created"
+		| "authorized"
+		| "captured"
+		| "refunded"
+		| "failed";
+	createdAt: Date;
+	notes?: string;
+	workshopTitle: string;
+	workshopType: "online" | "offline";
+	customerName: string;
+	customerEmail: string;
+	customerPhone: string;
+};
+
+const getStatusColor = (status: string) => {
+	switch (status) {
+		case "pending":
+			return "bg-yellow-100 text-yellow-800 border-yellow-200";
+		case "payment_pending":
+			return "bg-orange-100 text-orange-800 border-orange-200";
+		case "paid":
+		case "confirmed":
+			return "bg-green-100 text-green-800 border-green-200";
+		case "cancelled":
+			return "bg-red-100 text-red-800 border-red-200";
+		default:
+			return "bg-gray-100 text-gray-800 border-gray-200";
+	}
+};
+
+const formatStatus = (status: string) => {
+	return status
+		.split("_")
+		.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+		.join(" ");
+};
+
+export const columns: ColumnDef<WorkshopOrder>[] = [
+	{
+		accessorKey: "id",
+		header: "Order ID",
+		cell: ({ row }) => {
+			const id = row.getValue("id") as string;
+			return (
+				<span className="font-mono text-xs">{id.slice(-8).toUpperCase()}</span>
+			);
+		},
+	},
+	{
+		accessorKey: "workshopTitle",
+		header: "Workshop",
+		cell: ({ row }) => {
+			const title = row.getValue("workshopTitle") as string;
+			const type = row.original.workshopType;
+			return (
+				<div>
+					<div className="font-medium">{title}</div>
+					<Badge
+						variant={type === "online" ? "default" : "secondary"}
+						className="text-xs mt-1"
+					>
+						{type}
+					</Badge>
+				</div>
+			);
+		},
+	},
+	{
+		accessorKey: "customerName",
+		header: "Customer",
+		cell: ({ row }) => {
+			const name = row.getValue("customerName") as string;
+			const email = row.original.customerEmail;
+			const phone = row.original.customerPhone;
+			return (
+				<div>
+					<div className="font-medium">{name}</div>
+					<div className="text-sm text-muted-foreground">{email}</div>
+					{phone !== "Not provided" && (
+						<div className="text-sm text-muted-foreground">{phone}</div>
+					)}
+				</div>
+			);
+		},
+	},
+	{
+		accessorKey: "amount",
+		header: "Amount",
+		cell: ({ row }) => {
+			const amount = row.getValue("amount") as string;
+			return (
+				<span className="font-medium">{formatCurrency(Number(amount))}</span>
+			);
+		},
+	},
+	{
+		accessorKey: "status",
+		header: "Status",
+		cell: ({ row }) => {
+			const status = row.getValue("status") as string;
+			return (
+				<Badge className={getStatusColor(status)}>{formatStatus(status)}</Badge>
+			);
+		},
+	},
+	{
+		accessorKey: "createdAt",
+		header: "Registered",
+		cell: ({ row }) => {
+			const date = row.getValue("createdAt") as Date;
+			return (
+				<div>
+					<div>{format(date, "MMM d, yyyy")}</div>
+					<div className="text-sm text-muted-foreground">
+						{format(date, "h:mm a")}
+					</div>
+				</div>
+			);
+		},
+	},
+	{
+		accessorKey: "notes",
+		header: "Notes",
+		cell: ({ row }) => {
+			const notes = row.getValue("notes") as string;
+			return notes ? (
+				<span className="text-sm text-muted-foreground max-w-[200px] truncate block">
+					{notes}
+				</span>
+			) : (
+				<span className="text-sm text-muted-foreground">-</span>
+			);
+		},
+	},
+];

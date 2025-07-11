@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNotNull } from "drizzle-orm";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -18,7 +18,10 @@ export default async function MyOrdersPage() {
 	}
 
 	const userOrders = await db.query.orders.findMany({
-		where: eq(orders.userId, session.user.id),
+		where: and(
+			eq(orders.userId, session.user.id),
+			isNotNull(orders.razorpayPaymentId),
+		),
 		orderBy: desc(orders.createdAt),
 		columns: {
 			id: true,
