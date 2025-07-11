@@ -83,7 +83,7 @@ function getStatusInfo(status: string) {
 			label: "Order Completed",
 			emoji: "✨",
 			description: "Your order has been successfully completed. Thank you!",
-			color: "#6b7280", // gray
+			color: "#10b981", // emerald
 		},
 		cancelled: {
 			label: "Order Cancelled",
@@ -121,7 +121,7 @@ function getStatusBannerText(status: string, customerName: string): string {
 		confirmed: `Hi ${customerName}, your order is confirmed and we'll start preparing it soon!`,
 		preparing: `Hi ${customerName}, our team is busy preparing your delicious treats!`,
 		ready: `Hi ${customerName}, great news - your order is ready for pickup!`,
-		completed: `Hi ${customerName}, your order is complete - we hope you enjoyed every bite!`,
+		completed: `Hi ${customerName}, your order is complete - we hope you enjoy every bite!`,
 		cancelled: `Hi ${customerName}, your order has been cancelled. We're here to help if you have questions.`,
 	};
 
@@ -278,7 +278,7 @@ export default function OrderStatusUpdateEmail({
 									</Heading>
 									<div className="bg-gray-50 p-4 rounded-lg">
 										<Text className="text-gray-700 mb-2">
-											✨ We hope you enjoyed your delicious treats from Cocoa
+											✨ We hope you enjoy your delicious treats from Cocoa
 											Comaa!
 										</Text>
 										<Text className="text-gray-700 mb-0">
