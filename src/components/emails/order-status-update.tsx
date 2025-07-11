@@ -112,6 +112,25 @@ function formatCurrency(amount: number): string {
 	}).format(amount);
 }
 
+// Function to get descriptive banner text based on status
+function getStatusBannerText(status: string, customerName: string): string {
+	const bannerTextMap: Record<string, string> = {
+		pending: `Hi ${customerName}, we've received your order and are getting everything ready!`,
+		payment_pending: `Hi ${customerName}, we're waiting for your payment to complete your order.`,
+		paid: `Hi ${customerName}, your payment has been confirmed - thank you!`,
+		confirmed: `Hi ${customerName}, your order is confirmed and we'll start preparing it soon!`,
+		preparing: `Hi ${customerName}, our team is busy preparing your delicious treats!`,
+		ready: `Hi ${customerName}, great news - your order is ready for pickup!`,
+		completed: `Hi ${customerName}, your order is complete - we hope you enjoyed every bite!`,
+		cancelled: `Hi ${customerName}, your order has been cancelled. We're here to help if you have questions.`,
+	};
+
+	return (
+		bannerTextMap[status] ||
+		`Hi ${customerName}, here's an update on your order!`
+	);
+}
+
 export default function OrderStatusUpdateEmail({
 	orderDetails,
 }: OrderStatusUpdateEmailProps) {
@@ -162,7 +181,7 @@ export default function OrderStatusUpdateEmail({
 								{statusInfo.label}
 							</Heading>
 							<Text className="text-gray-700 text-lg mb-0">
-								Hi {customerName}, your order status has been updated!
+								{getStatusBannerText(orderDetails.status, customerName)}
 							</Text>
 						</Section>
 
@@ -252,46 +271,45 @@ export default function OrderStatusUpdateEmail({
 						)}
 
 						{orderDetails.status === "completed" && (
-							<Section className="mb-8">
-								<Heading className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-amber-800">
-									Thank You!
-								</Heading>
-								<div className="bg-gray-50 p-4 rounded-lg">
-									<Text className="text-gray-700 mb-2">
-										✨ We hope you enjoyed your delicious treats from Cocoa
-										Comaa!
-									</Text>
-									<Text className="text-gray-700 mb-0">
-										Your feedback means the world to us. Follow us on Instagram
-										@cocoa_comaa to share your experience!
-									</Text>
-								</div>
-							</Section>
-						)}
-
-						{orderDetails.status === "completed" && (
-							<Section className="mb-8">
-								<Heading className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-amber-800">
-									Storage Instructions
-								</Heading>
-								<div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-									<Text className="text-blue-800 mb-2 font-semibold">
-										🍫 Keep your brownies fresh and delicious:
-									</Text>
-									<Text className="text-blue-700 mb-2">
-										• Store brownies in an airtight container at room
-										temperature for up to 5 days.
-									</Text>
-									<Text className="text-blue-700 mb-2">
-										• For longer storage, refrigerate them in an airtight
-										container for up to 20 days.
-									</Text>
-									<Text className="text-blue-700 mb-0">
-										• Reheat slightly before serving for the best taste and
-										texture.
-									</Text>
-								</div>
-							</Section>
+							<>
+								<Section className="mb-8">
+									<Heading className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-amber-800">
+										Thank You!
+									</Heading>
+									<div className="bg-gray-50 p-4 rounded-lg">
+										<Text className="text-gray-700 mb-2">
+											✨ We hope you enjoyed your delicious treats from Cocoa
+											Comaa!
+										</Text>
+										<Text className="text-gray-700 mb-0">
+											Your feedback means the world to us. Follow us on
+											Instagram @cocoa_comaa to share your experience!
+										</Text>
+									</div>
+								</Section>
+								<Section className="mb-8">
+									<Heading className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-amber-800">
+										Storage Instructions
+									</Heading>
+									<div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+										<Text className="text-blue-800 mb-2 font-semibold">
+											🍫 Keep your brownies fresh and delicious:
+										</Text>
+										<Text className="text-blue-700 mb-2">
+											• Store brownies in an airtight container at room
+											temperature for up to 5 days.
+										</Text>
+										<Text className="text-blue-700 mb-2">
+											• For longer storage, refrigerate them in an airtight
+											container for up to 20 days.
+										</Text>
+										<Text className="text-blue-700 mb-0">
+											• Reheat slightly before serving for the best taste and
+											texture.
+										</Text>
+									</div>
+								</Section>
+							</>
 						)}
 
 						{/* Contact Information */}

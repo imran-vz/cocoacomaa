@@ -135,6 +135,22 @@ export async function sendOrderStatusUpdateEmail(
 		throw new Error("Resend is not initialized");
 	}
 
+	// Function to get descriptive subject line based on status
+	function getStatusSubject(status: string): string {
+		const subjectMap: Record<string, string> = {
+			pending: "Order Received - We're Processing Your Request",
+			payment_pending: "Payment Required - Complete Your Order",
+			paid: "Payment Confirmed - Thank You!",
+			confirmed: "Order Confirmed - We'll Start Preparing Soon",
+			preparing: "In the Kitchen - Your Order is Being Prepared",
+			ready: "Ready for Pickup - Come Get Your Treats!",
+			completed: "Order Complete - Thank You for Choosing Us!",
+			cancelled: "Order Cancelled - We're Here to Help",
+		};
+
+		return subjectMap[status] || "Order Status Updated";
+	}
+
 	try {
 		const emailHtml = await render(OrderStatusUpdateEmail({ orderDetails }));
 
@@ -161,7 +177,7 @@ Team Cocoa Comaa
 		const result = await resend.emails.send({
 			from: "Cocoa Comaa <orders@cocoacomaa.com>",
 			to: orderDetails.user.email,
-			subject: `Order Update #${orderDetails.id.slice(-8).toUpperCase()} - Status Changed`,
+			subject: `${getStatusSubject(orderDetails.status)} - Order #${orderDetails.id.slice(-8).toUpperCase()}`,
 			html: emailHtml,
 			text: plainText,
 		});
