@@ -90,8 +90,8 @@ export default function OrderConfirmationEmail({
 		<Html>
 			<Head />
 			<Preview>
-				🎉 Order Confirmed #{orderDetails.id} - Thank you for choosing Cocoa
-				Comaa!
+				🎉 Order Confirmed #{orderDetails.id.slice(-8).toUpperCase()} - Thank
+				you for choosing Cocoa Comaa!
 			</Preview>
 			<Tailwind>
 				<Body className="bg-gray-50 font-sans">

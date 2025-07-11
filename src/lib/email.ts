@@ -48,7 +48,7 @@ export async function sendOrderConfirmationEmail(orderDetails: OrderDetails) {
 Thank you for your order, ${customerName}!
 
 ORDER DETAILS:
-Order ID: ${orderDetails.id}
+Order ID: ${orderDetails.id.slice(-8).toUpperCase()}
 Order Type: ${isPostalOrder ? "Postal Brownies" : "Cake Orders"}
 
 ORDER ITEMS:
@@ -88,7 +88,7 @@ Thank you for choosing Cocoa Comaa! 🍰
 		await resend.emails.send({
 			from: "Cocoa Comaa <orders@cocoacomaa.com>",
 			to: [orderDetails.user.email],
-			subject: `Order Confirmed #${orderDetails.id} - Cocoa Comaa`,
+			subject: `Order Confirmed #${orderDetails.id.slice(-8).toUpperCase()} - Cocoa Comaa`,
 			html: emailHtml,
 			text: textContent.trim(),
 		});
@@ -139,14 +139,14 @@ export async function sendOrderStatusUpdateEmail(
 		const emailHtml = await render(OrderStatusUpdateEmail({ orderDetails }));
 
 		const plainText = `
-Order Status Update - ${orderDetails.id}
+Order Status Update - ${orderDetails.id.slice(-8).toUpperCase()}
 
 Hi ${orderDetails.user.name || "Customer"},
 
 Your order status has been updated from ${previousStatus} to ${orderDetails.status}.
 
 Order Details:
-- Order ID: ${orderDetails.id}
+- Order ID: ${orderDetails.id.slice(-8).toUpperCase()}
 - Total: ₹${orderDetails.total}
 - Order Type: ${orderDetails.orderType === "postal-brownies" ? "Postal Brownies" : "Cake Orders"}
 
@@ -161,7 +161,7 @@ Team Cocoa Comaa
 		const result = await resend.emails.send({
 			from: "Cocoa Comaa <orders@cocoacomaa.com>",
 			to: orderDetails.user.email,
-			subject: `Order Update #${orderDetails.id} - Status Changed`,
+			subject: `Order Update #${orderDetails.id.slice(-8).toUpperCase()} - Status Changed`,
 			html: emailHtml,
 			text: plainText,
 		});

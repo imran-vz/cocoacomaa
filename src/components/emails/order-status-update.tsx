@@ -130,7 +130,8 @@ export default function OrderStatusUpdateEmail({
 		<Html>
 			<Head />
 			<Preview>
-				{statusInfo.emoji} Order Update #{orderDetails.id} - {statusInfo.label}
+				{statusInfo.emoji} Order Update #
+				{orderDetails.id.slice(-8).toUpperCase()} - {statusInfo.label}
 			</Preview>
 			<Tailwind>
 				<Body className="bg-gray-50 font-sans">
