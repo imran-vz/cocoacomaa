@@ -15,6 +15,7 @@ import {
 	Text,
 } from "@react-email/components";
 import { format } from "date-fns";
+import * as React from "react";
 
 interface OrderItem {
 	itemName: string;

@@ -33,12 +33,7 @@ interface StatusUpdateProps {
 }
 
 const ORDER_STATUSES = [
-	{ value: "pending", label: "Order Received" },
-	{ value: "payment_pending", label: "Payment Pending" },
-	{ value: "paid", label: "Payment Confirmed" },
-	{ value: "confirmed", label: "Order Confirmed" },
 	{ value: "preparing", label: "Preparing" },
-	{ value: "ready", label: "Ready for Pickup" },
 	{ value: "completed", label: "Completed" },
 	{ value: "cancelled", label: "Cancelled" },
 ];

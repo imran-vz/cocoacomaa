@@ -266,6 +266,31 @@ export default function OrderStatusUpdateEmail({
 							</Section>
 						)}
 
+						{orderDetails.status === "completed" && (
+							<Section className="mb-8">
+								<Heading className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-amber-800">
+									Storage Instructions
+								</Heading>
+								<div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+									<Text className="text-blue-800 mb-2 font-semibold">
+										🍫 Keep your brownies fresh and delicious:
+									</Text>
+									<Text className="text-blue-700 mb-2">
+										• Store brownies in an airtight container at room
+										temperature for up to 5 days.
+									</Text>
+									<Text className="text-blue-700 mb-2">
+										• For longer storage, refrigerate them in an airtight
+										container for up to 20 days.
+									</Text>
+									<Text className="text-blue-700 mb-0">
+										• Reheat slightly before serving for the best taste and
+										texture.
+									</Text>
+								</div>
+							</Section>
+						)}
+
 						{/* Contact Information */}
 						<Section className="mb-8">
 							<Heading className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-amber-800">
