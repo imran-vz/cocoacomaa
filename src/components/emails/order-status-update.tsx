@@ -183,7 +183,9 @@ export default function OrderStatusUpdateEmail({
 							<div className="bg-gray-50 p-4 rounded-lg">
 								<Text className="font-semibold text-gray-700 mb-2">
 									Order ID:{" "}
-									<span className="font-normal">{orderDetails.id}</span>
+									<span className="font-normal">
+										{orderDetails.id.slice(-8).toUpperCase()}
+									</span>
 								</Text>
 								<Text className="font-semibold text-gray-700 mb-2">
 									Total Amount:{" "}

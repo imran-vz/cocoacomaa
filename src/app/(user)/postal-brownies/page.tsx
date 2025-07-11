@@ -28,6 +28,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { usePostalOrderSettings } from "@/hooks/use-postal-order-settings";
 import { useCart } from "@/lib/cart-context";
 import { formatCurrency } from "@/lib/utils";
+import { format } from "date-fns";
 
 const brownieComboSchema = z.object({
 	selectedCombo: z
@@ -72,7 +73,7 @@ export default function PostalBrowniesPage() {
 	const checkoutSectionRef = useRef<HTMLDivElement>(null);
 
 	// Get current month for postal order settings
-	const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
+	const currentMonth = format(new Date(), "yyyy-MM"); // YYYY-MM format
 	const {
 		arePostalOrdersAllowed,
 		getEarliestAvailableSlot,

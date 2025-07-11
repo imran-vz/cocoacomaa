@@ -130,7 +130,7 @@ export default function OrderConfirmationEmail({
 									</Column>
 									<Column>
 										<Text className="text-gray-600 mb-1">
-											{orderDetails.id.slice(0, 8)}
+											{orderDetails.id.slice(-8).toUpperCase()}
 										</Text>
 									</Column>
 								</Row>

@@ -201,7 +201,7 @@ export default function CheckoutPage({
 	const { areOrdersAllowed: ordersAllowed, settings } = useCakeOrderSettings();
 
 	// Get current month for postal order settings
-	const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
+	const currentMonth = format(new Date(), "yyyy-MM"); // YYYY-MM format
 	const { getCurrentActiveSlot } = usePostalOrderSettings(currentMonth);
 
 	// React Query hooks for address management

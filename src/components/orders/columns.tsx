@@ -33,7 +33,7 @@ export const columns: ColumnDef<{
 		cell: ({ row }) => {
 			return (
 				<div className="flex w-[100px] items-center">
-					<span>{String(row.getValue("id"))?.slice(0, 10)}</span>
+					<span>{String(row.getValue("id"))?.slice(-8).toUpperCase()}</span>
 				</div>
 			);
 		},
