@@ -188,40 +188,9 @@ export default function MyWorkshopsPage() {
 								</p>
 
 								<div className="space-y-3 mt-auto">
-									<div className="space-y-2">
-										<div className="text-sm space-y-1">
-											<div className="flex justify-between items-center">
-												<span className="text-muted-foreground">
-													Base Amount:
-												</span>
-												<span className="font-medium">
-													{formatCurrency(
-														calculateNetAmount(
-															Number(order.amount),
-															config.paymentProcessingFee,
-														),
-													)}
-												</span>
-											</div>
-											<div className="flex justify-between items-center">
-												<span className="text-muted-foreground">
-													Gateway Fee ({config.paymentProcessingFee}%):
-												</span>
-												<span className="font-medium">
-													{formatCurrency(
-														Number(order.amount) -
-															calculateNetAmount(
-																Number(order.amount),
-																config.paymentProcessingFee,
-															),
-													)}
-												</span>
-											</div>
-										</div>
-										<div className="flex justify-between items-center font-semibold text-lg border-t pt-2">
-											<span>Total Paid:</span>
-											<span>{formatCurrency(Number(order.amount))}</span>
-										</div>
+									<div className="flex justify-between items-center font-semibold text-lg">
+										<span>Amount Paid:</span>
+										<span>{formatCurrency(Number(order.amount))}</span>
 									</div>
 
 									<div className="flex items-center gap-2 text-sm text-muted-foreground">
