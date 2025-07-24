@@ -45,7 +45,7 @@ export default function UrlCleaner() {
 
 			// If tracking parameters were found and removed, update the URL
 			if (hasTracking) {
-				const cleanedUrl = `${currentUrl.pathname}${urlParams.toString() ? "?" + urlParams.toString() : ""}`;
+				const cleanedUrl = `${currentUrl.pathname}${urlParams.toString() ? `?${urlParams.toString()}` : ""}`;
 
 				// Use router.replace to update URL without page refresh and without adding to history
 				router.replace(cleanedUrl);

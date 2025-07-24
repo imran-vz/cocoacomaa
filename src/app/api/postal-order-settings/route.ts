@@ -42,7 +42,7 @@ const postalOrderSettingsSchema = z
 			}
 
 			// Check if all dates are within the specified month
-			const monthStart = new Date(data.month + "-01");
+			const monthStart = new Date(`${data.month}-01`);
 			const monthEnd = new Date(
 				monthStart.getFullYear(),
 				monthStart.getMonth() + 1,

@@ -520,13 +520,13 @@ export default function PostalOrderSettingsPage() {
 											disabled={isCreating || isUpdating}
 											className="flex-1"
 										>
-											{isCreating || isUpdating ? (
-												<>{editingId ? "Updating..." : "Creating..."}</>
-											) : editingId ? (
-												"Update Settings"
-											) : (
-												"Create Settings"
-											)}
+											{isCreating || isUpdating
+												? editingId
+													? "Updating..."
+													: "Creating..."
+												: editingId
+													? "Update Settings"
+													: "Create Settings"}
 										</Button>
 										{editingId && (
 											<Button

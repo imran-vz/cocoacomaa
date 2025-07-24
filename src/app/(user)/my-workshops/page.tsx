@@ -12,8 +12,6 @@ import { useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
-import { calculateNetAmount } from "@/lib/calculateGrossAmount";
-import { config } from "@/lib/config";
 
 interface WorkshopOrder {
 	id: string;

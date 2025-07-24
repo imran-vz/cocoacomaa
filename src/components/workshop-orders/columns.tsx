@@ -3,9 +3,9 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { formatCurrency } from "@/lib/utils";
 import { calculateNetAmount } from "@/lib/calculateGrossAmount";
 import { config } from "@/lib/config";
+import { formatCurrency } from "@/lib/utils";
 
 export type WorkshopOrder = {
 	id: string;

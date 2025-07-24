@@ -3,9 +3,9 @@
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -24,8 +24,6 @@ import { Label } from "@/components/ui/label";
 import WorkshopTypeToggle from "@/components/workshop-type-toggle";
 import { formatCurrency } from "@/lib/utils";
 import type { RazorpayOptions, RazorpayResponse } from "@/types/razorpay";
-import { useId } from "react";
-import { useSearchParams } from "next/navigation";
 
 declare global {
 	interface Window {
@@ -70,6 +68,9 @@ export default function WorkshopsPage() {
 	const [showPhoneNumberModal, setShowPhoneNumberModal] = useState(false);
 	const [phoneNumber, setPhoneNumber] = useState("");
 	const [isUpdatingPhone, setIsUpdatingPhone] = useState(false);
+	const [expandedDescriptions, setExpandedDescriptions] = useState<Set<number>>(
+		new Set(),
+	);
 	const [user, setUser] = useState<{
 		id: string;
 		name: string;
@@ -90,6 +91,18 @@ export default function WorkshopsPage() {
 	const filteredWorkshops = activeWorkshops.filter(
 		(workshop) => workshop.type === selectedType,
 	);
+
+	const toggleDescription = (workshopId: number) => {
+		setExpandedDescriptions((prev) => {
+			const newSet = new Set(prev);
+			if (newSet.has(workshopId)) {
+				newSet.delete(workshopId);
+			} else {
+				newSet.add(workshopId);
+			}
+			return newSet;
+		});
+	};
 
 	const handleRegister = async (workshop: Workshop) => {
 		if (!session) {
@@ -435,9 +448,45 @@ export default function WorkshopsPage() {
 								</div>
 							</CardHeader>
 							<CardContent className="flex-1 flex flex-col">
-								<p className="text-muted-foreground mb-4 flex-1 whitespace-pre-wrap">
-									{workshop.description}
-								</p>
+								<div className="mb-4 flex-1">
+									{workshop.description.split("\n").length > 5 ? (
+										<div className="text-muted-foreground whitespace-pre-wrap">
+											{expandedDescriptions.has(workshop.id) ? (
+												<>
+													{workshop.description}
+													<span className="ml-2">
+														<button
+															type="button"
+															onClick={() => toggleDescription(workshop.id)}
+															className="text-primary hover:text-primary/80 text-sm font-medium cursor-pointer underline"
+														>
+															Show less
+														</button>
+													</span>
+												</>
+											) : (
+												<div className="relative">
+													<div className="line-clamp-5">
+														{workshop.description}
+													</div>
+													<div className="absolute bottom-0 right-0 bg-white pl-2">
+														<button
+															type="button"
+															onClick={() => toggleDescription(workshop.id)}
+															className="text-primary hover:text-primary/80 text-sm font-medium cursor-pointer underline"
+														>
+															...Show more
+														</button>
+													</div>
+												</div>
+											)}
+										</div>
+									) : (
+										<p className="text-muted-foreground whitespace-pre-wrap">
+											{workshop.description}
+										</p>
+									)}
+								</div>
 								<div className="mt-auto">
 									<div className="flex justify-between items-center font-bold text-lg mb-4">
 										<span>Price:</span>

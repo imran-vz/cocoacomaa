@@ -1,8 +1,8 @@
-import { desc, eq, and, isNotNull, count } from "drizzle-orm";
+import { and, count, desc, eq, isNotNull } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { workshops, workshopOrders } from "@/lib/db/schema";
+import { workshopOrders, workshops } from "@/lib/db/schema";
 
 export async function GET(request: NextRequest) {
 	try {

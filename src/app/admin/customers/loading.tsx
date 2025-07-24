@@ -1,8 +1,8 @@
+import { Calendar, ShoppingCart, Users } from "lucide-react";
 import { columns } from "@/components/customers/columns";
-import { DataTable } from "@/components/ui/data-table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DataTable } from "@/components/ui/data-table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, ShoppingCart, Calendar } from "lucide-react";
 
 export default function CustomersLoading() {
 	return (

@@ -1,11 +1,11 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import { Mail, Phone, User, Calendar } from "lucide-react";
+import { format } from "date-fns";
+import { Calendar, Mail, Phone, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import { formatCurrency } from "@/lib/utils";
-import { format } from "date-fns";
 
 export const columns: ColumnDef<{
 	id: string;

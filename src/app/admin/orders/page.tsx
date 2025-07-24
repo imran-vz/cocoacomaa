@@ -1,54 +1,27 @@
 import { desc, isNotNull } from "drizzle-orm";
+import { CheckCircle, Clock, ShoppingCart } from "lucide-react";
 import { columns } from "@/components/orders/columns";
 import ExportButton from "@/components/orders/export-button";
-import { DataTable } from "@/components/ui/data-table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DataTable } from "@/components/ui/data-table";
 import { db } from "@/lib/db";
 import { type Order, orders } from "@/lib/db/schema";
-import { ShoppingCart, Clock, CheckCircle } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 const statuses: { label: string; value: Order["status"] }[] = [
-	{
-		label: "Pending",
-		value: "pending",
-	},
-	{
-		label: "Paid",
-		value: "paid",
-	},
-	{
-		label: "Confirmed",
-		value: "confirmed",
-	},
-	{
-		label: "Preparing",
-		value: "preparing",
-	},
-	{
-		label: "Ready",
-		value: "ready",
-	},
-	{
-		label: "Completed",
-		value: "completed",
-	},
-	{
-		label: "Cancelled",
-		value: "cancelled",
-	},
+	{ label: "Pending", value: "pending" },
+	{ label: "Paid", value: "paid" },
+	{ label: "Confirmed", value: "confirmed" },
+	{ label: "Preparing", value: "preparing" },
+	{ label: "Ready", value: "ready" },
+	{ label: "Completed", value: "completed" },
+	{ label: "Cancelled", value: "cancelled" },
 ];
 
 const orderTypes: { label: string; value: Order["orderType"] }[] = [
-	{
-		label: "Cake Orders",
-		value: "cake-orders",
-	},
-	{
-		label: "Postal Brownies",
-		value: "postal-brownies",
-	},
+	{ label: "Cake Orders", value: "cake-orders" },
+	{ label: "Postal Brownies", value: "postal-brownies" },
 ];
 
 export default async function OrdersPage() {

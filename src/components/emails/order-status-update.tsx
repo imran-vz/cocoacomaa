@@ -13,6 +13,7 @@ import {
 	Text,
 } from "@react-email/components";
 import { format } from "date-fns";
+// biome-ignore lint/correctness/noUnusedImports: React is used for email components
 import * as React from "react";
 
 interface OrderStatusUpdateEmailProps {
