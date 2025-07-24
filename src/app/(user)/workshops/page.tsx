@@ -435,7 +435,7 @@ export default function WorkshopsPage() {
 								</div>
 							</CardHeader>
 							<CardContent className="flex-1 flex flex-col">
-								<p className="text-muted-foreground mb-4 flex-1">
+								<p className="text-muted-foreground mb-4 flex-1 whitespace-pre-wrap">
 									{workshop.description}
 								</p>
 								<div className="mt-auto">
