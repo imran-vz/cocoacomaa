@@ -4,6 +4,8 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
+import { calculateNetAmount } from "@/lib/calculateGrossAmount";
+import { config } from "@/lib/config";
 
 export type WorkshopOrder = {
 	id: string;
@@ -94,8 +96,20 @@ export const columns: ColumnDef<WorkshopOrder>[] = [
 		header: "Amount",
 		cell: ({ row }) => {
 			const amount = row.getValue("amount") as string;
+			const netAmount = calculateNetAmount(
+				Number(amount),
+				config.paymentProcessingFee,
+			);
+			const gatewayCost = Number(amount) - netAmount;
+
 			return (
-				<span className="font-medium">{formatCurrency(Number(amount))}</span>
+				<div className="text-sm">
+					<div className="font-medium">{formatCurrency(Number(amount))}</div>
+					<div className="text-xs text-muted-foreground">
+						Base: {formatCurrency(netAmount)} + Fee:{" "}
+						{formatCurrency(gatewayCost)}
+					</div>
+				</div>
 			);
 		},
 	},

@@ -409,6 +409,10 @@ export const workshopOrders = pgTable("workshop_orders", (d) => {
 		createdAt: d.timestamp("created_at").notNull().defaultNow(),
 		updatedAt: d.timestamp("updated_at").notNull().defaultNow(),
 		amount: d.numeric("amount", { precision: 10, scale: 2 }).notNull(),
+		gatewayCost: d
+			.numeric("gateway_cost", { precision: 10, scale: 2 })
+			.notNull()
+			.default("0"),
 		status: d
 			.varchar("status", {
 				enum: ["pending", "payment_pending", "paid", "confirmed", "cancelled"],

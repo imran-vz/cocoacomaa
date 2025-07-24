@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -28,6 +28,11 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+	calculateGrossAmount,
+	calculateNetAmount,
+} from "@/lib/calculateGrossAmount";
+import { config } from "@/lib/config";
 
 const workshopSchema = z.object({
 	title: z.string().min(1, "Title is required").max(255),
@@ -54,19 +59,62 @@ export function WorkshopForm({ mode, initialData }: WorkshopFormProps) {
 		initialData?.imageUrl || null,
 	);
 	const [uploading, setUploading] = useState(false);
+	const [grossAmount, setGrossAmount] = useState<number>(0);
+
+	// Convert gross price to net price for editing
+	const getInitialData = () => {
+		if (!initialData) {
+			return {
+				title: "",
+				description: "",
+				amount: "",
+				type: "online" as const,
+				maxBookings: "10",
+				imageUrl: "",
+				status: "active" as const,
+			};
+		}
+
+		// If editing, convert stored gross price back to net price
+		const storedPrice = parseFloat(initialData.amount);
+		const netPrice =
+			mode === "edit" && !Number.isNaN(storedPrice) && storedPrice > 0
+				? calculateNetAmount(
+						storedPrice,
+						config.paymentProcessingFee,
+					).toString()
+				: initialData.amount;
+
+		return {
+			...initialData,
+			amount: netPrice,
+			maxBookings: initialData.maxBookings?.toString() || "10",
+		};
+	};
 
 	const form = useForm<WorkshopFormValues>({
 		resolver: zodResolver(workshopSchema),
-		defaultValues: {
-			title: initialData?.title || "",
-			description: initialData?.description || "",
-			amount: initialData?.amount || "",
-			type: initialData?.type || "online",
-			maxBookings: initialData?.maxBookings?.toString() || "10",
-			imageUrl: initialData?.imageUrl || "",
-			status: initialData?.status || "active",
-		},
+		defaultValues: getInitialData(),
 	});
+
+	// Calculate gross amount when amount changes
+	const watchAmount = form.watch("amount");
+	useEffect(() => {
+		const netPrice = parseFloat(watchAmount);
+		if (!Number.isNaN(netPrice) && netPrice > 0) {
+			const gross = calculateGrossAmount(netPrice, config.paymentProcessingFee);
+			setGrossAmount(gross);
+		} else {
+			setGrossAmount(0);
+		}
+	}, [watchAmount]);
+
+	useEffect(() => {
+		if (mode === "edit" && !initialData) {
+			toast.error("Failed to load workshop data");
+			router.push("/admin/workshops");
+		}
+	}, [mode, initialData, router]);
 
 	const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
@@ -140,6 +188,7 @@ export function WorkshopForm({ mode, initialData }: WorkshopFormProps) {
 
 			const submissionData = {
 				...data,
+				amount: grossAmount.toString(), // Send gross amount instead of net
 				imageUrl,
 			};
 
@@ -227,16 +276,22 @@ export function WorkshopForm({ mode, initialData }: WorkshopFormProps) {
 									name="amount"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>Amount (₹)</FormLabel>
+											<FormLabel>Net Amount (₹)</FormLabel>
 											<FormControl>
 												<Input
 													type="number"
 													step="0.01"
 													min="0"
-													placeholder="0.00"
+													placeholder="Enter net amount"
 													{...field}
 												/>
 											</FormControl>
+											{grossAmount > 0 && (
+												<p className="text-sm text-muted-foreground">
+													Gross Amount (with {config.paymentProcessingFee}%
+													fee): ₹{grossAmount}
+												</p>
+											)}
 											<FormMessage />
 										</FormItem>
 									)}

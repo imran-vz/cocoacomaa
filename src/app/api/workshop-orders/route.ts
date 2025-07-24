@@ -4,6 +4,8 @@ import Razorpay from "razorpay";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { workshopOrders, workshops } from "@/lib/db/schema";
+import { calculateNetAmount } from "@/lib/calculateGrossAmount";
+import { config } from "@/lib/config";
 
 const razorpay = new Razorpay({
 	key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
@@ -142,6 +144,14 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
+		// Calculate gateway cost
+		const grossAmount = Number(workshop.amount);
+		const netAmount = calculateNetAmount(
+			grossAmount,
+			config.paymentProcessingFee,
+		);
+		const gatewayCost = grossAmount - netAmount;
+
 		// Create workshop order
 		const [order] = await db
 			.insert(workshopOrders)
@@ -149,6 +159,7 @@ export async function POST(request: NextRequest) {
 				userId: session.user.id,
 				workshopId: workshopId,
 				amount: workshop.amount,
+				gatewayCost: gatewayCost.toString(),
 				status: "payment_pending",
 				notes: notes || null,
 			})

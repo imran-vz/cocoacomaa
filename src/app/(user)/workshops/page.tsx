@@ -26,6 +26,8 @@ import { formatCurrency } from "@/lib/utils";
 import type { RazorpayOptions, RazorpayResponse } from "@/types/razorpay";
 import { useId } from "react";
 import { useSearchParams } from "next/navigation";
+import { calculateNetAmount } from "@/lib/calculateGrossAmount";
+import { config } from "@/lib/config";
 
 declare global {
 	interface Window {
@@ -439,10 +441,40 @@ export default function WorkshopsPage() {
 									{workshop.description}
 								</p>
 								<div className="mt-auto">
-									<div className="flex items-center justify-between mb-2">
-										<span className="text-2xl font-bold">
-											{formatCurrency(Number(workshop.amount))}
-										</span>
+									<div className="space-y-2 mb-4">
+										<div className="text-sm space-y-1">
+											<div className="flex justify-between items-center">
+												<span className="text-muted-foreground">
+													Base Amount:
+												</span>
+												<span className="font-medium">
+													{formatCurrency(
+														calculateNetAmount(
+															Number(workshop.amount),
+															config.paymentProcessingFee,
+														),
+													)}
+												</span>
+											</div>
+											<div className="flex justify-between items-center">
+												<span className="text-muted-foreground">
+													Gateway Fee ({config.paymentProcessingFee}%):
+												</span>
+												<span className="font-medium">
+													{formatCurrency(
+														Number(workshop.amount) -
+															calculateNetAmount(
+																Number(workshop.amount),
+																config.paymentProcessingFee,
+															),
+													)}
+												</span>
+											</div>
+											<div className="flex justify-between items-center font-bold text-lg border-t pt-2">
+												<span>Total:</span>
+												<span>{formatCurrency(Number(workshop.amount))}</span>
+											</div>
+										</div>
 									</div>
 									<div className="flex items-center justify-between mb-4 text-sm">
 										<span className="text-muted-foreground">

@@ -12,6 +12,8 @@ import { useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
+import { calculateNetAmount } from "@/lib/calculateGrossAmount";
+import { config } from "@/lib/config";
 
 interface WorkshopOrder {
 	id: string;
@@ -186,11 +188,40 @@ export default function MyWorkshopsPage() {
 								</p>
 
 								<div className="space-y-3 mt-auto">
-									<div className="flex items-center justify-between">
-										<span className="font-semibold">Amount Paid:</span>
-										<span className="text-lg font-bold">
-											{formatCurrency(Number(order.amount))}
-										</span>
+									<div className="space-y-2">
+										<div className="text-sm space-y-1">
+											<div className="flex justify-between items-center">
+												<span className="text-muted-foreground">
+													Base Amount:
+												</span>
+												<span className="font-medium">
+													{formatCurrency(
+														calculateNetAmount(
+															Number(order.amount),
+															config.paymentProcessingFee,
+														),
+													)}
+												</span>
+											</div>
+											<div className="flex justify-between items-center">
+												<span className="text-muted-foreground">
+													Gateway Fee ({config.paymentProcessingFee}%):
+												</span>
+												<span className="font-medium">
+													{formatCurrency(
+														Number(order.amount) -
+															calculateNetAmount(
+																Number(order.amount),
+																config.paymentProcessingFee,
+															),
+													)}
+												</span>
+											</div>
+										</div>
+										<div className="flex justify-between items-center font-semibold text-lg border-t pt-2">
+											<span>Total Paid:</span>
+											<span>{formatCurrency(Number(order.amount))}</span>
+										</div>
 									</div>
 
 									<div className="flex items-center gap-2 text-sm text-muted-foreground">
