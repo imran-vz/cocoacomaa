@@ -44,13 +44,16 @@ interface Workshop {
 	description: string;
 	amount: string;
 	type: "online" | "offline";
+	maxBookings: number;
+	currentBookings: number;
+	availableSlots: number;
 	status: "active" | "inactive";
 	imageUrl?: string | null;
 	createdAt: Date;
 }
 
 const fetchWorkshops = async (): Promise<Workshop[]> => {
-	const { data } = await axios.get("/api/workshops");
+	const { data } = await axios.get("/api/workshops?includeBookings=true");
 	return data.data;
 };
 
@@ -115,6 +118,23 @@ export default function WorkshopsPage() {
 			}
 
 			setUser(user);
+
+			// Double-check availability before creating order
+			const { data: currentWorkshops } = await axios.get(
+				"/api/workshops?includeBookings=true",
+			);
+			const currentWorkshop = currentWorkshops.data.find(
+				(w: Workshop) => w.id === workshop.id,
+			);
+
+			if (!currentWorkshop || currentWorkshop.availableSlots <= 0) {
+				toast.error("Sorry, this workshop is now fully booked!");
+				setIsProcessing(false);
+				setProcessingWorkshopId(null);
+				// Refresh the workshop list to show updated availability
+				window.location.reload();
+				return;
+			}
 
 			// Check if there's an existing order ID in URL for this workshop
 			const existingOrderId = searchParams.get("orderId");
@@ -228,7 +248,14 @@ export default function WorkshopsPage() {
 							`/my-workshops?workshopId=${workshop.id}&newOrder=true`,
 						);
 					} else {
-						throw new Error("Payment verification failed");
+						// Check if it's a fully booked error
+						if (verifyResponse.data.message?.includes("fully booked")) {
+							toast.error(verifyResponse.data.message);
+							// Refresh the page to show updated availability
+							setTimeout(() => window.location.reload(), 1500);
+						} else {
+							throw new Error("Payment verification failed");
+						}
 					}
 				} catch (error) {
 					console.error("Payment verification error:", error);
@@ -412,19 +439,31 @@ export default function WorkshopsPage() {
 									{workshop.description}
 								</p>
 								<div className="mt-auto">
-									<div className="flex items-center justify-between mb-4">
+									<div className="flex items-center justify-between mb-2">
 										<span className="text-2xl font-bold">
 											{formatCurrency(Number(workshop.amount))}
 										</span>
 									</div>
+									<div className="flex items-center justify-between mb-4 text-sm">
+										<span className="text-muted-foreground">
+											Available Slots:
+										</span>
+										<span
+											className={`font-medium ${workshop.availableSlots === 0 ? "text-red-500" : workshop.availableSlots <= 3 ? "text-orange-500" : "text-green-600"}`}
+										>
+											{workshop.availableSlots} / {workshop.maxBookings}
+										</span>
+									</div>
 									<Button
 										onClick={() => handleRegister(workshop)}
-										disabled={isProcessing}
+										disabled={isProcessing || workshop.availableSlots === 0}
 										className="w-full"
 									>
-										{processingWorkshopId === workshop.id
-											? "Processing..."
-											: "Register Now"}
+										{workshop.availableSlots === 0
+											? "Fully Booked"
+											: processingWorkshopId === workshop.id
+												? "Processing..."
+												: "Register Now"}
 									</Button>
 								</div>
 							</CardContent>

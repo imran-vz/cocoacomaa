@@ -1,4 +1,4 @@
-import { and, desc, eq, isNotNull } from "drizzle-orm";
+import { and, desc, eq, isNotNull, sql } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 import Razorpay from "razorpay";
 import { auth } from "@/auth";
@@ -112,6 +112,31 @@ export async function POST(request: NextRequest) {
 				{
 					success: false,
 					message: "You have already registered for this workshop",
+				},
+				{ status: 400 },
+			);
+		}
+
+		// Check if workshop has available slots
+		const [bookingCount] = await db
+			.select({ count: sql<number>`count(*)` })
+			.from(workshopOrders)
+			.where(
+				and(
+					eq(workshopOrders.workshopId, workshopId),
+					eq(workshopOrders.isDeleted, false),
+					isNotNull(workshopOrders.razorpayPaymentId),
+				),
+			);
+
+		const currentBookings = bookingCount.count;
+		const availableSlots = workshop.maxBookings - currentBookings;
+
+		if (availableSlots <= 0) {
+			return NextResponse.json(
+				{
+					success: false,
+					message: "Sorry, this workshop is fully booked",
 				},
 				{ status: 400 },
 			);

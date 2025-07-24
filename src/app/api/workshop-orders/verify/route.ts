@@ -1,9 +1,9 @@
 import crypto from "crypto";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNotNull, sql } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { workshopOrders } from "@/lib/db/schema";
+import { workshopOrders, workshops } from "@/lib/db/schema";
 
 interface VerifyPaymentRequest {
 	razorpay_order_id: string;
@@ -41,6 +41,78 @@ export async function POST(request: NextRequest) {
 		if (generated_signature !== razorpay_signature) {
 			return NextResponse.json(
 				{ success: false, message: "Payment verification failed" },
+				{ status: 400 },
+			);
+		}
+
+		// Get the current order to check workshop ID
+		const currentOrder = await db.query.workshopOrders.findFirst({
+			where: and(
+				eq(workshopOrders.id, orderId),
+				eq(workshopOrders.userId, session.user.id),
+			),
+		});
+
+		if (!currentOrder) {
+			return NextResponse.json(
+				{ success: false, message: "Workshop order not found" },
+				{ status: 404 },
+			);
+		}
+
+		// Get workshop details to check max bookings
+		const workshop = await db.query.workshops.findFirst({
+			where: and(
+				eq(workshops.id, currentOrder.workshopId),
+				eq(workshops.isDeleted, false),
+				eq(workshops.status, "active"),
+			),
+		});
+
+		if (!workshop) {
+			return NextResponse.json(
+				{ success: false, message: "Workshop not found or inactive" },
+				{ status: 404 },
+			);
+		}
+
+		// Final check for available slots before confirming payment
+		const [bookingCount] = await db
+			.select({ count: sql<number>`count(*)` })
+			.from(workshopOrders)
+			.where(
+				and(
+					eq(workshopOrders.workshopId, currentOrder.workshopId),
+					eq(workshopOrders.isDeleted, false),
+					isNotNull(workshopOrders.razorpayPaymentId),
+				),
+			);
+
+		const currentBookings = bookingCount.count;
+		const availableSlots = workshop.maxBookings - currentBookings;
+
+		if (availableSlots <= 0) {
+			// Mark the order as failed since workshop is full
+			await db
+				.update(workshopOrders)
+				.set({
+					status: "cancelled",
+					paymentStatus: "refunded",
+					updatedAt: new Date(),
+				})
+				.where(
+					and(
+						eq(workshopOrders.id, orderId),
+						eq(workshopOrders.userId, session.user.id),
+					),
+				);
+
+			return NextResponse.json(
+				{
+					success: false,
+					message:
+						"Sorry, this workshop is now fully booked. Your payment will be refunded within 5-7 business days.",
+				},
 				{ status: 400 },
 			);
 		}

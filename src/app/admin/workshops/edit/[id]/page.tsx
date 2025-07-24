@@ -31,6 +31,7 @@ export default async function EditWorkshopPage({
 				description: workshop.description,
 				amount: workshop.amount,
 				type: workshop.type as "online" | "offline",
+				maxBookings: workshop.maxBookings.toString(),
 				imageUrl: workshop.imageUrl || undefined,
 				status: workshop.status as "active" | "inactive",
 			}}

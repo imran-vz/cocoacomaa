@@ -34,6 +34,7 @@ const workshopSchema = z.object({
 	description: z.string().min(1, "Description is required"),
 	amount: z.string().min(1, "Amount is required"),
 	type: z.enum(["online", "offline"]),
+	maxBookings: z.string().min(1, "Max bookings is required"),
 	imageUrl: z.string().optional(),
 	status: z.enum(["active", "inactive"]).optional(),
 });
@@ -61,6 +62,7 @@ export function WorkshopForm({ mode, initialData }: WorkshopFormProps) {
 			description: initialData?.description || "",
 			amount: initialData?.amount || "",
 			type: initialData?.type || "online",
+			maxBookings: initialData?.maxBookings?.toString() || "10",
 			imageUrl: initialData?.imageUrl || "",
 			status: initialData?.status || "active",
 		},
@@ -219,7 +221,7 @@ export function WorkshopForm({ mode, initialData }: WorkshopFormProps) {
 								)}
 							/>
 
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+							<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 								<FormField
 									control={form.control}
 									name="amount"
@@ -260,6 +262,25 @@ export function WorkshopForm({ mode, initialData }: WorkshopFormProps) {
 													<SelectItem value="offline">Offline</SelectItem>
 												</SelectContent>
 											</Select>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="maxBookings"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>Max Bookings</FormLabel>
+											<FormControl>
+												<Input
+													type="number"
+													min="1"
+													placeholder="10"
+													{...field}
+												/>
+											</FormControl>
 											<FormMessage />
 										</FormItem>
 									)}

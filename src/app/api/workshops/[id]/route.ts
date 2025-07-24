@@ -53,9 +53,10 @@ export async function PUT(
 
 		const { id } = await params;
 		const body = await request.json();
-		const { title, description, amount, type, status, imageUrl } = body;
+		const { title, description, amount, type, maxBookings, status, imageUrl } =
+			body;
 
-		if (!title || !description || !amount || !type) {
+		if (!title || !description || !amount || !type || !maxBookings) {
 			return NextResponse.json(
 				{ success: false, message: "Missing required fields" },
 				{ status: 400 },
@@ -83,6 +84,7 @@ export async function PUT(
 				description,
 				amount: amount.toString(),
 				type,
+				maxBookings: parseInt(maxBookings.toString()),
 				imageUrl,
 				status: status || "active",
 				updatedAt: new Date(),

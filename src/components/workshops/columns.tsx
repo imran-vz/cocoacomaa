@@ -26,9 +26,13 @@ export type Workshop = {
 	description: string;
 	amount: string;
 	type: "online" | "offline";
+	maxBookings: number;
+	currentBookings?: number;
+	availableSlots?: number;
 	status: "active" | "inactive";
 	imageUrl?: string | null;
 	createdAt: Date;
+	workshopOrders: { userId: string }[];
 };
 
 const handleDelete = async (id: number, title: string) => {
@@ -92,6 +96,27 @@ export const columns: ColumnDef<Workshop>[] = [
 		cell: ({ row }) => {
 			const amount = row.getValue("amount") as string;
 			return formatCurrency(Number(amount));
+		},
+	},
+	{
+		accessorKey: "maxBookings",
+		header: "Bookings",
+		cell: ({ row }) => {
+			const maxBookings = row.getValue("maxBookings") as number;
+			const currentBookings = row.original.workshopOrders.length ?? 0;
+			const availableSlots = maxBookings - currentBookings;
+			return (
+				<div className="text-sm">
+					<div className="font-medium">
+						{currentBookings} / {maxBookings}
+					</div>
+					<div
+						className={`text-xs ${availableSlots === 0 ? "text-red-500" : availableSlots <= 3 ? "text-orange-500" : "text-green-600"}`}
+					>
+						{availableSlots} available
+					</div>
+				</div>
+			);
 		},
 	},
 	{

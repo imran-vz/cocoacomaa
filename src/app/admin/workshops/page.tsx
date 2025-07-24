@@ -15,8 +15,16 @@ export default async function AdminWorkshopsPage() {
 			imageUrl: true,
 			amount: true,
 			type: true,
+			maxBookings: true,
 			status: true,
 			createdAt: true,
+		},
+		with: {
+			workshopOrders: {
+				columns: {
+					userId: true,
+				},
+			},
 		},
 	});
 
