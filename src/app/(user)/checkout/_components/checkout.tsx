@@ -46,6 +46,10 @@ import { useCakeOrderSettings } from "@/hooks/use-order-settings";
 import { usePostalOrderSettings } from "@/hooks/use-postal-order-settings";
 import { useCart } from "@/lib/cart-context";
 import { config } from "@/lib/config";
+import {
+	calculateDeliveryCost,
+	isBengaluruAddress,
+} from "@/lib/delivery-pricing";
 import { formatCurrency } from "@/lib/utils";
 import type {
 	RazorpayOptions,
@@ -216,8 +220,46 @@ export default function CheckoutPage({
 	const isOrderingAllowed = isPostalBrownies || ordersAllowed;
 	const checkoutFormSchema = createCheckoutFormSchema(isPostalBrownies);
 
-	// Calculate final total including delivery cost for postal brownies
-	const deliveryCost = isPostalBrownies ? config.postalDeliveryCost : 0;
+	// Calculate delivery cost and check for Bengaluru discount
+	const { deliveryCost, isDiscountApplied } = isPostalBrownies
+		? (() => {
+				let currentAddress = null;
+
+				// If using existing address
+				if (addressMode === "existing" && selectedAddressId) {
+					const selectedAddress = addresses.find(
+						(addr) => addr.id === selectedAddressId,
+					);
+					if (selectedAddress) {
+						currentAddress = {
+							city: selectedAddress.city,
+							zip: selectedAddress.zip,
+						};
+					}
+				}
+
+				// If creating new address and both city and zip are entered
+				if (addressMode === "new" && newAddressCity && newAddressZip) {
+					currentAddress = {
+						city: newAddressCity,
+						zip: newAddressZip,
+					};
+				}
+
+				if (currentAddress) {
+					const cost = calculateDeliveryCost(currentAddress);
+					const isDiscount = isBengaluruAddress(currentAddress);
+					return { deliveryCost: cost, isDiscountApplied: isDiscount };
+				}
+
+				// Default delivery cost
+				return {
+					deliveryCost: config.postalDeliveryCost,
+					isDiscountApplied: false,
+				};
+			})()
+		: { deliveryCost: 0, isDiscountApplied: false };
+
 	const finalTotal = Number(total) + deliveryCost;
 
 	type CheckoutFormValues = z.infer<typeof checkoutFormSchema>;
@@ -249,6 +291,17 @@ export default function CheckoutPage({
 	const selectedAddressId = useWatch({
 		control: form.control,
 		name: "selectedAddressId",
+	});
+
+	// Watch new address form fields for dynamic pricing
+	const newAddressCity = useWatch({
+		control: form.control,
+		name: "city",
+	});
+
+	const newAddressZip = useWatch({
+		control: form.control,
+		name: "zip",
 	});
 
 	// Load Razorpay script
@@ -1269,9 +1322,31 @@ export default function CheckoutPage({
 								</div>
 
 								{isPostalBrownies && (
-									<div className="flex justify-between items-center text-sm sm:text-base">
-										<span>Delivery:</span>
-										<span>{formatCurrency(deliveryCost)}</span>
+									<div className="space-y-1">
+										<div className="flex justify-between items-center text-sm sm:text-base">
+											<span>Delivery:</span>
+											<div className="text-right">
+												{isDiscountApplied && (
+													<div className="text-xs text-muted-foreground line-through">
+														{formatCurrency(config.postalDeliveryCost)}
+													</div>
+												)}
+												<span
+													className={
+														isDiscountApplied
+															? "text-green-600 font-medium"
+															: ""
+													}
+												>
+													{formatCurrency(deliveryCost)}
+												</span>
+											</div>
+										</div>
+										{isDiscountApplied && (
+											<div className="text-xs text-green-600 text-right">
+												Bengaluru discount applied! 🎉
+											</div>
+										)}
 									</div>
 								)}
 
