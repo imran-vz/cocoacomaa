@@ -220,6 +220,46 @@ export default function CheckoutPage({
 	const isOrderingAllowed = isPostalBrownies || ordersAllowed;
 	const checkoutFormSchema = createCheckoutFormSchema(isPostalBrownies);
 
+	const form = useForm<CheckoutFormValues>({
+		resolver: zodResolver(checkoutFormSchema),
+		defaultValues: {
+			name: name ?? "",
+			email: email ?? "",
+			phone: phone ?? "",
+			pickupTime: "",
+			notes: "",
+			orderType: isPostalBrownies ? "postal-brownies" : "cake-orders",
+			addressMode: isPostalBrownies ? "new" : undefined,
+			selectedAddressId: undefined,
+			addressLine1: "",
+			addressLine2: "",
+			city: "",
+			state: "",
+			zip: "",
+		},
+	});
+
+	const addressMode = useWatch({
+		control: form.control,
+		name: "addressMode",
+	});
+
+	// Watch new address form fields for dynamic pricing
+	const newAddressCity = useWatch({
+		control: form.control,
+		name: "city",
+	});
+
+	const newAddressZip = useWatch({
+		control: form.control,
+		name: "zip",
+	});
+
+	const selectedAddressId = useWatch({
+		control: form.control,
+		name: "selectedAddressId",
+	});
+
 	// Calculate delivery cost and check for Bengaluru discount
 	const { deliveryCost, isDiscountApplied } = isPostalBrownies
 		? (() => {
@@ -263,46 +303,6 @@ export default function CheckoutPage({
 	const finalTotal = Number(total) + deliveryCost;
 
 	type CheckoutFormValues = z.infer<typeof checkoutFormSchema>;
-
-	const form = useForm<CheckoutFormValues>({
-		resolver: zodResolver(checkoutFormSchema),
-		defaultValues: {
-			name: name ?? "",
-			email: email ?? "",
-			phone: phone ?? "",
-			pickupTime: "",
-			notes: "",
-			orderType: isPostalBrownies ? "postal-brownies" : "cake-orders",
-			addressMode: isPostalBrownies ? "new" : undefined,
-			selectedAddressId: undefined,
-			addressLine1: "",
-			addressLine2: "",
-			city: "",
-			state: "",
-			zip: "",
-		},
-	});
-
-	const addressMode = useWatch({
-		control: form.control,
-		name: "addressMode",
-	});
-
-	const selectedAddressId = useWatch({
-		control: form.control,
-		name: "selectedAddressId",
-	});
-
-	// Watch new address form fields for dynamic pricing
-	const newAddressCity = useWatch({
-		control: form.control,
-		name: "city",
-	});
-
-	const newAddressZip = useWatch({
-		control: form.control,
-		name: "zip",
-	});
 
 	// Load Razorpay script
 	useEffect(() => {
