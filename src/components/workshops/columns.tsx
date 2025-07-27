@@ -28,6 +28,7 @@ export type Workshop = {
 	type: "online" | "offline";
 	maxBookings: number;
 	currentBookings?: number;
+	currentSlotsUsed?: number;
 	availableSlots?: number;
 	status: "active" | "inactive";
 	imageUrl?: string | null;
@@ -100,15 +101,21 @@ export const columns: ColumnDef<Workshop>[] = [
 	},
 	{
 		accessorKey: "maxBookings",
-		header: "Bookings",
+		header: "Slots",
 		cell: ({ row }) => {
 			const maxBookings = row.getValue("maxBookings") as number;
-			const currentBookings = row.original.workshopOrders.length ?? 0;
-			const availableSlots = maxBookings - currentBookings;
+			const currentSlotsUsed = row.original.currentSlotsUsed ?? 0;
+			const currentBookings = row.original.currentBookings ?? 0;
+			const availableSlots =
+				row.original.availableSlots ?? maxBookings - currentSlotsUsed;
+
 			return (
 				<div className="text-sm">
 					<div className="font-medium">
-						{currentBookings} / {maxBookings}
+						{currentSlotsUsed} / {maxBookings} slots
+					</div>
+					<div className="text-xs text-muted-foreground">
+						{currentBookings} order{currentBookings !== 1 ? "s" : ""}
 					</div>
 					<div
 						className={`text-xs ${availableSlots === 0 ? "text-red-500" : availableSlots <= 3 ? "text-orange-500" : "text-green-600"}`}
