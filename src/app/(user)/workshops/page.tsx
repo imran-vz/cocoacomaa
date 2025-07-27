@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import { Minus, Plus } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -71,6 +72,9 @@ export default function WorkshopsPage() {
 	const [expandedDescriptions, setExpandedDescriptions] = useState<Set<number>>(
 		new Set(),
 	);
+	const [selectedSlots, setSelectedSlots] = useState<Record<number, number>>(
+		{},
+	);
 	const [user, setUser] = useState<{
 		id: string;
 		name: string;
@@ -102,6 +106,17 @@ export default function WorkshopsPage() {
 			}
 			return newSet;
 		});
+	};
+
+	const getSelectedSlots = (workshopId: number) => {
+		return selectedSlots[workshopId] || 1;
+	};
+
+	const setSlotCount = (workshopId: number, slots: number) => {
+		setSelectedSlots((prev) => ({
+			...prev,
+			[workshopId]: slots,
+		}));
 	};
 
 	const handleRegister = async (workshop: Workshop) => {
@@ -181,8 +196,10 @@ export default function WorkshopsPage() {
 
 			// Create new order if no valid existing order found
 			if (!orderData) {
+				const slots = getSelectedSlots(workshop.id);
 				const response = await axios.post("/api/workshop-orders", {
 					workshopId: workshop.id,
+					slots,
 				});
 
 				if (response.data.success) {
@@ -337,6 +354,21 @@ export default function WorkshopsPage() {
 		}
 	};
 
+	// Initialize selected slots when workshops are loaded
+	useEffect(() => {
+		if (workshops.length > 0) {
+			const initialSlots: Record<number, number> = {};
+			workshops.forEach((workshop) => {
+				if (!(workshop.id in selectedSlots)) {
+					initialSlots[workshop.id] = 1;
+				}
+			});
+			if (Object.keys(initialSlots).length > 0) {
+				setSelectedSlots((prev) => ({ ...prev, ...initialSlots }));
+			}
+		}
+	}, [workshops, selectedSlots]);
+
 	// Load Razorpay script
 	useEffect(() => {
 		const script = document.createElement("script");
@@ -488,9 +520,64 @@ export default function WorkshopsPage() {
 									)}
 								</div>
 								<div className="mt-auto">
+									{/* Slot Selection */}
+									<div className="mb-4">
+										<div className="flex items-center justify-between mb-2">
+											<Label className="text-sm font-medium">Slots:</Label>
+											<div className="flex items-center space-x-2">
+												<Button
+													variant="outline"
+													size="icon"
+													className="h-7 w-7"
+													onClick={() =>
+														setSlotCount(
+															workshop.id,
+															Math.max(1, getSelectedSlots(workshop.id) - 1),
+														)
+													}
+													disabled={getSelectedSlots(workshop.id) <= 1}
+												>
+													<Minus className="h-3 w-3" />
+												</Button>
+												<span className="w-8 text-center text-sm font-medium">
+													{getSelectedSlots(workshop.id)}
+												</span>
+												<Button
+													variant="outline"
+													size="icon"
+													className="h-7 w-7"
+													onClick={() =>
+														setSlotCount(
+															workshop.id,
+															Math.min(
+																2,
+																getSelectedSlots(workshop.id) + 1,
+																workshop.availableSlots,
+															),
+														)
+													}
+													disabled={
+														getSelectedSlots(workshop.id) >= 2 ||
+														getSelectedSlots(workshop.id) >=
+															workshop.availableSlots
+													}
+												>
+													<Plus className="h-3 w-3" />
+												</Button>
+											</div>
+										</div>
+										<p className="text-xs text-muted-foreground">
+											Maximum 2 slots per person
+										</p>
+									</div>
+
 									<div className="flex justify-between items-center font-bold text-lg mb-4">
-										<span>Price:</span>
-										<span>{formatCurrency(Number(workshop.amount))}</span>
+										<span>Total Price:</span>
+										<span>
+											{formatCurrency(
+												Number(workshop.amount) * getSelectedSlots(workshop.id),
+											)}
+										</span>
 									</div>
 									<div className="flex items-center justify-between mb-4 text-sm">
 										<span className="text-muted-foreground">
@@ -511,7 +598,7 @@ export default function WorkshopsPage() {
 											? "Fully Booked"
 											: processingWorkshopId === workshop.id
 												? "Processing..."
-												: "Register Now"}
+												: `Register for ${getSelectedSlots(workshop.id)} slot${getSelectedSlots(workshop.id) > 1 ? "s" : ""}`}
 									</Button>
 								</div>
 							</CardContent>

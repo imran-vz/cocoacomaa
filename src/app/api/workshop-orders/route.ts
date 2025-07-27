@@ -74,11 +74,19 @@ export async function POST(request: NextRequest) {
 		}
 
 		const body = await request.json();
-		const { workshopId, notes } = body;
+		const { workshopId, notes, slots = 1 } = body;
 
 		if (!workshopId) {
 			return NextResponse.json(
 				{ success: false, message: "Workshop ID is required" },
+				{ status: 400 },
+			);
+		}
+
+		// Validate slots
+		if (!Number.isInteger(slots) || slots < 1 || slots > 2) {
+			return NextResponse.json(
+				{ success: false, message: "Slots must be between 1 and 2" },
 				{ status: 400 },
 			);
 		}
@@ -99,8 +107,8 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		// Check if user already has an order for this workshop
-		const existingOrder = await db.query.workshopOrders.findFirst({
+		// Check existing bookings for this user and workshop
+		const existingOrders = await db.query.workshopOrders.findMany({
 			where: and(
 				eq(workshopOrders.userId, session.user.id),
 				eq(workshopOrders.workshopId, workshopId),
@@ -109,19 +117,27 @@ export async function POST(request: NextRequest) {
 			),
 		});
 
-		if (existingOrder) {
+		const totalUserSlots = existingOrders.reduce(
+			(sum, order) => sum + (order.slots || 1),
+			0,
+		);
+
+		// Check if user would exceed maximum slots (2 per person)
+		if (totalUserSlots + slots > 2) {
 			return NextResponse.json(
 				{
 					success: false,
-					message: "You have already registered for this workshop",
+					message: `You can only book up to 2 slots total. You currently have ${totalUserSlots} slot${totalUserSlots > 1 ? "s" : ""}.`,
 				},
 				{ status: 400 },
 			);
 		}
 
 		// Check if workshop has available slots
-		const [bookingCount] = await db
-			.select({ count: sql<number>`count(*)` })
+		const [totalSlotsUsed] = await db
+			.select({
+				totalSlots: sql<number>`coalesce(sum(${workshopOrders.slots}), 0)`,
+			})
 			.from(workshopOrders)
 			.where(
 				and(
@@ -131,21 +147,22 @@ export async function POST(request: NextRequest) {
 				),
 			);
 
-		const currentBookings = bookingCount.count;
-		const availableSlots = workshop.maxBookings - currentBookings;
+		const currentSlotsUsed = totalSlotsUsed.totalSlots;
+		const availableSlots = workshop.maxBookings - currentSlotsUsed;
 
-		if (availableSlots <= 0) {
+		if (availableSlots < slots) {
 			return NextResponse.json(
 				{
 					success: false,
-					message: "Sorry, this workshop is fully booked",
+					message: `Sorry, only ${availableSlots} slot${availableSlots !== 1 ? "s" : ""} remaining. You requested ${slots} slot${slots > 1 ? "s" : ""}.`,
 				},
 				{ status: 400 },
 			);
 		}
 
-		// Calculate gateway cost
-		const grossAmount = Number(workshop.amount);
+		// Calculate gateway cost based on slots
+		const workshopAmount = Number(workshop.amount);
+		const grossAmount = workshopAmount * slots;
 		const netAmount = calculateNetAmount(
 			grossAmount,
 			config.paymentProcessingFee,
@@ -158,7 +175,8 @@ export async function POST(request: NextRequest) {
 			.values({
 				userId: session.user.id,
 				workshopId: workshopId,
-				amount: workshop.amount,
+				slots: slots,
+				amount: grossAmount.toString(),
 				gatewayCost: gatewayCost.toString(),
 				status: "payment_pending",
 				notes: notes || null,
@@ -167,7 +185,7 @@ export async function POST(request: NextRequest) {
 
 		// Create Razorpay order
 		const razorpayOrder = await razorpay.orders.create({
-			amount: Math.round(Number(workshop.amount) * 100), // Convert to paise
+			amount: Math.round(grossAmount * 100), // Convert to paise
 			currency: "INR",
 			receipt: `workshop_${order.id}`,
 		});

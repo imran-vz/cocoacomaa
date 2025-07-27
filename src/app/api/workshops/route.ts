@@ -1,4 +1,4 @@
-import { and, count, desc, eq, isNotNull } from "drizzle-orm";
+import { and, count, desc, eq, isNotNull, sql } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -21,11 +21,14 @@ export async function GET(request: NextRequest) {
 			});
 		}
 
-		// Get booking counts for each workshop
+		// Get slot counts for each workshop
 		const workshopsWithBookings = await Promise.all(
 			workshopsList.map(async (workshop) => {
-				const [bookingCount] = await db
-					.select({ count: count() })
+				const [slotCount] = await db
+					.select({
+						totalSlots: sql<number>`coalesce(sum(${workshopOrders.slots}), 0)`,
+						orderCount: count(),
+					})
 					.from(workshopOrders)
 					.where(
 						and(
@@ -35,8 +38,9 @@ export async function GET(request: NextRequest) {
 						),
 					);
 
-				const currentBookings = bookingCount.count;
-				const availableSlots = workshop.maxBookings - currentBookings;
+				const currentBookings = slotCount.orderCount;
+				const currentSlotsUsed = slotCount.totalSlots;
+				const availableSlots = workshop.maxBookings - currentSlotsUsed;
 
 				return {
 					...workshop,

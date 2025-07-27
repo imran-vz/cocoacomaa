@@ -406,6 +406,7 @@ export const workshopOrders = pgTable("workshop_orders", (d) => {
 			.integer("workshop_id")
 			.notNull()
 			.references(() => workshops.id),
+		slots: d.integer("slots").notNull().default(1), // Number of slots booked (max 2)
 		createdAt: d.timestamp("created_at").notNull().defaultNow(),
 		updatedAt: d.timestamp("updated_at").notNull().defaultNow(),
 		amount: d.numeric("amount", { precision: 10, scale: 2 }).notNull(),

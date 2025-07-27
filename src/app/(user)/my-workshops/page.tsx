@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import confetti from "canvas-confetti";
 import { format } from "date-fns";
-import { Calendar, MapPin, Monitor } from "lucide-react";
+import { Calendar, MapPin, Monitor, Users } from "lucide-react";
 import { redirect, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useEffect } from "react";
@@ -16,6 +16,7 @@ import { formatCurrency } from "@/lib/utils";
 interface WorkshopOrder {
 	id: string;
 	amount: string;
+	slots: number;
 	status: "pending" | "payment_pending" | "paid" | "confirmed" | "cancelled";
 	paymentStatus:
 		| "pending"
@@ -189,6 +190,14 @@ export default function MyWorkshopsPage() {
 									<div className="flex justify-between items-center font-semibold text-lg">
 										<span>Amount Paid:</span>
 										<span>{formatCurrency(Number(order.amount))}</span>
+									</div>
+
+									<div className="flex items-center gap-2 text-sm text-muted-foreground">
+										<Users className="w-4 h-4" />
+										<span>
+											{order.slots || 1} slot{(order.slots || 1) > 1 ? "s" : ""}{" "}
+											booked
+										</span>
 									</div>
 
 									<div className="flex items-center gap-2 text-sm text-muted-foreground">

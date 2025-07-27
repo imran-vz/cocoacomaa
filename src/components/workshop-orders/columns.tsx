@@ -10,6 +10,7 @@ import { formatCurrency } from "@/lib/utils";
 export type WorkshopOrder = {
 	id: string;
 	amount: string;
+	slots: number;
 	status: "pending" | "payment_pending" | "paid" | "confirmed" | "cancelled";
 	paymentStatus:
 		| "pending"
@@ -71,6 +72,20 @@ export const columns: ColumnDef<WorkshopOrder>[] = [
 		cell: ({ row }) => {
 			const title = row.getValue("workshopTitle") as string;
 			return <div className="font-medium">{title}</div>;
+		},
+	},
+	{
+		accessorKey: "slots",
+		header: "Slots",
+		cell: ({ row }) => {
+			const slots = row.getValue("slots") as number;
+			return (
+				<div className="text-center">
+					<Badge variant="outline" className="text-xs">
+						{slots || 1} slot{(slots || 1) > 1 ? "s" : ""}
+					</Badge>
+				</div>
+			);
 		},
 	},
 	{
