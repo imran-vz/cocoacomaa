@@ -16,6 +16,16 @@ export default async function EditDessertPage({
 	const { id } = await params;
 	const dessert = await db.query.desserts.findFirst({
 		where: eq(desserts.id, Number.parseInt(id, 10)),
+		columns: {
+			id: true,
+			name: true,
+			price: true,
+			description: true,
+			imageUrl: true,
+			status: true,
+			category: true,
+			leadTimeDays: true,
+		},
 	});
 	if (!dessert) {
 		notFound();
@@ -30,7 +40,9 @@ export default async function EditDessertPage({
 				price: dessert.price,
 				description: dessert.description,
 				imageUrl: dessert.imageUrl || "",
-				status: dessert.status as "available" | "unavailable",
+				status: dessert.status,
+				category: dessert.category,
+				leadTimeDays: dessert.leadTimeDays,
 			}}
 		/>
 	);

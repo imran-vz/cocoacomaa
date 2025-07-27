@@ -9,11 +9,15 @@ export const desserts = pgTable("desserts", (d) => {
 		description: d.text("description").notNull(),
 		price: d.varchar("price", { length: 10 }).notNull(),
 		imageUrl: d.text("image_url"),
-		status: d.varchar("status", { length: 50 }).notNull().default("available"),
-		category: d
-			.varchar("category", { length: 50 })
+		status: d
+			.varchar("status", { enum: ["available", "unavailable"] })
 			.notNull()
-			.default("regular"),
+			.default("available"),
+		category: d
+			.varchar("category", { enum: ["cake", "dessert"] })
+			.notNull()
+			.default("dessert"),
+		leadTimeDays: d.integer("lead_time_days").notNull().default(3), // Lead time in days
 		createdAt: d
 			.timestamp("created_at")
 			.default(sql`CURRENT_TIMESTAMP`)

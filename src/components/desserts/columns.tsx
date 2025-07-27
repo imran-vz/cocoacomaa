@@ -3,6 +3,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import Image from "next/image";
 import { DessertActions } from "@/components/dessert-actions";
+import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 
 export type Dessert = {
@@ -10,6 +11,9 @@ export type Dessert = {
 	name: string;
 	price: string;
 	imageUrl: string | null;
+	category: "cake" | "dessert";
+	leadTimeDays: number;
+	status: "available" | "unavailable";
 	createdAt: Date;
 };
 
@@ -46,6 +50,38 @@ export const columns: ColumnDef<Dessert>[] = [
 		cell: ({ row }) => {
 			const price = row.getValue("price") as string;
 			return formatCurrency(Number(price));
+		},
+	},
+	{
+		accessorKey: "category",
+		header: "Category",
+		cell: ({ row }) => {
+			const category = row.getValue("category") as string;
+			return (
+				<Badge variant={category === "cake" ? "default" : "secondary"}>
+					{category === "cake" ? "Cake" : "Dessert"}
+				</Badge>
+			);
+		},
+	},
+	{
+		accessorKey: "leadTimeDays",
+		header: "Lead Time",
+		cell: ({ row }) => {
+			const leadTime = row.getValue("leadTimeDays") as number;
+			return `${leadTime} day${leadTime > 1 ? "s" : ""}`;
+		},
+	},
+	{
+		accessorKey: "status",
+		header: "Status",
+		cell: ({ row }) => {
+			const status = row.getValue("status") as string;
+			return (
+				<Badge variant={status === "available" ? "default" : "destructive"}>
+					{status === "available" ? "Available" : "Unavailable"}
+				</Badge>
+			);
 		},
 	},
 	{

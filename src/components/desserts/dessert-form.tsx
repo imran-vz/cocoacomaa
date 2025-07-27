@@ -44,6 +44,11 @@ const dessertSchema = z.object({
 	description: z.string().min(1, "Description is required"),
 	imageUrl: z.string().optional(),
 	status: z.enum(["available", "unavailable"]),
+	category: z.enum(["cake", "dessert"]),
+	leadTimeDays: z.coerce
+		.number()
+		.min(1, "Lead time must be at least 1 day")
+		.max(30, "Lead time cannot exceed 30 days"),
 });
 
 type DessertFormValues = z.infer<typeof dessertSchema>;
@@ -71,6 +76,8 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 				description: "",
 				imageUrl: "",
 				status: "available" as const,
+				category: "dessert" as const,
+				leadTimeDays: 3,
 			};
 		}
 
@@ -312,6 +319,53 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 										</p>
 									</div>
 								</div>
+							</div>
+
+							<div className="grid gap-4 md:grid-cols-2">
+								<FormField
+									control={form.control}
+									name="category"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>Category</FormLabel>
+											<Select
+												onValueChange={field.onChange}
+												defaultValue={field.value}
+											>
+												<FormControl>
+													<SelectTrigger>
+														<SelectValue placeholder="Select category" />
+													</SelectTrigger>
+												</FormControl>
+												<SelectContent>
+													<SelectItem value="cake">Cake</SelectItem>
+													<SelectItem value="dessert">Dessert</SelectItem>
+												</SelectContent>
+											</Select>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="leadTimeDays"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>Lead Time (Days)</FormLabel>
+											<FormControl>
+												<Input
+													type="number"
+													min="1"
+													max="30"
+													placeholder="Enter lead time in days"
+													{...field}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
 							</div>
 
 							<FormField

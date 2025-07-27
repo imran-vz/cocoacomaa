@@ -13,6 +13,9 @@ export default async function DessertsPage() {
 			name: true,
 			price: true,
 			imageUrl: true,
+			category: true,
+			leadTimeDays: true,
+			status: true,
 			createdAt: true,
 		},
 	});
@@ -36,6 +39,24 @@ export default async function DessertsPage() {
 						data={dessertsList}
 						searchKey="name"
 						searchPlaceholder="Filter Desserts..."
+						filterableColumns={[
+							{
+								id: "category",
+								title: "Category",
+								options: [
+									{ label: "Cake", value: "cake" },
+									{ label: "Dessert", value: "dessert" },
+								],
+							},
+							{
+								id: "status",
+								title: "Status",
+								options: [
+									{ label: "Available", value: "available" },
+									{ label: "Unavailable", value: "unavailable" },
+								],
+							},
+						]}
 					/>
 				</div>
 			</div>

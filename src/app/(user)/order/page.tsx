@@ -7,7 +7,7 @@ import lazyLoading from "next/dynamic";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,8 @@ interface Dessert {
 	price: number;
 	description: string | null;
 	imageUrl: string | null;
+	category: "cake" | "dessert";
+	leadTimeDays: number;
 	enabled: boolean;
 }
 
@@ -48,12 +50,22 @@ export default function OrderPage() {
 	const { items, addItem, removeItem, updateQuantity, total } = useCart();
 	const { data: session } = useSession();
 	const [showLogin, setShowLogin] = useState(false);
+	const [selectedCategory, setSelectedCategory] = useState<
+		"all" | "cake" | "dessert"
+	>("all");
 	const { areOrdersAllowed: ordersAllowed, settings } = useCakeOrderSettings();
 
 	const { data: desserts, isLoading } = useQuery({
 		queryKey: ["desserts"],
 		queryFn: () => fetchDesserts(),
 	});
+
+	// Filter desserts by category
+	const filteredDesserts = useMemo(() => {
+		if (!desserts) return [];
+		if (selectedCategory === "all") return desserts;
+		return desserts.filter((dessert) => dessert.category === selectedCategory);
+	}, [desserts, selectedCategory]);
 
 	useEffect(() => {
 		// remove any postal combos from the cart
@@ -249,6 +261,31 @@ export default function OrderPage() {
 						Our Desserts
 					</h1>
 
+					{/* Category Filter */}
+					<div className="flex gap-2 mb-4 sm:mb-6">
+						<Button
+							variant={selectedCategory === "all" ? "default" : "outline"}
+							size="sm"
+							onClick={() => setSelectedCategory("all")}
+						>
+							All
+						</Button>
+						<Button
+							variant={selectedCategory === "cake" ? "default" : "outline"}
+							size="sm"
+							onClick={() => setSelectedCategory("cake")}
+						>
+							Cakes
+						</Button>
+						<Button
+							variant={selectedCategory === "dessert" ? "default" : "outline"}
+							size="sm"
+							onClick={() => setSelectedCategory("dessert")}
+						>
+							Desserts
+						</Button>
+					</div>
+
 					{/* Show order restriction banner for desktop view */}
 					{!ordersAllowed && (
 						<div className="hidden sm:block">
@@ -256,17 +293,19 @@ export default function OrderPage() {
 						</div>
 					)}
 
-					{desserts?.length === 0 ? (
+					{filteredDesserts?.length === 0 ? (
 						<Card>
 							<CardContent className="py-6 sm:py-8 text-center">
 								<p className="text-muted-foreground text-sm sm:text-base">
-									No desserts available at the moment.
+									{selectedCategory === "all"
+										? "No desserts available at the moment."
+										: `No ${selectedCategory === "cake" ? "cakes" : "desserts"} available at the moment.`}
 								</p>
 							</CardContent>
 						</Card>
 					) : (
 						<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-							{desserts?.map((dessert) => {
+							{filteredDesserts?.map((dessert) => {
 								const quantity = getItemQuantity(dessert.id);
 								return (
 									<Card
@@ -294,6 +333,20 @@ export default function OrderPage() {
 													className="shrink-0 text-xs sm:text-sm"
 												>
 													{formatCurrency(Number(dessert.price))}
+												</Badge>
+											</div>
+											<div className="flex gap-2 mt-2">
+												<Badge
+													variant={
+														dessert.category === "cake" ? "default" : "outline"
+													}
+													className="text-xs"
+												>
+													{dessert.category === "cake" ? "Cake" : "Dessert"}
+												</Badge>
+												<Badge variant="outline" className="text-xs">
+													{dessert.leadTimeDays} day
+													{dessert.leadTimeDays > 1 ? "s" : ""} lead time
 												</Badge>
 											</div>
 										</CardHeader>

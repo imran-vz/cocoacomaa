@@ -1,10 +1,12 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 import { format } from "date-fns";
 import { CalendarIcon, Clock, Package, Trash2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
@@ -57,6 +59,15 @@ import type {
 	RazorpayResponse,
 } from "@/types/razorpay";
 
+interface Dessert {
+	id: number;
+	name: string;
+	price: string;
+	category: "cake" | "dessert";
+	leadTimeDays: number;
+	status: "available" | "unavailable";
+}
+
 declare global {
 	interface Window {
 		Razorpay: new (
@@ -67,6 +78,12 @@ declare global {
 		};
 	}
 }
+
+// Fetch desserts function
+const fetchDesserts = async (): Promise<Dessert[]> => {
+	const response = await axios.get("/api/desserts");
+	return response.data;
+};
 
 // Generate available time slots from 12pm to 6pm
 const timeSlots = [
@@ -85,11 +102,11 @@ const timeSlots = [
 	{ value: "18:00", label: "6:00 PM" },
 ];
 
-// Calculate date constraints
-const getDateConstraints = () => {
+// Calculate date constraints based on lead time
+const getDateConstraints = (leadTimeDays: number = 3) => {
 	const today = new Date();
 	const minDate = new Date(today);
-	minDate.setDate(today.getDate() + 3); // Minimum 3 days from today
+	minDate.setDate(today.getDate() + leadTimeDays); // Minimum based on lead time
 
 	const maxDate = new Date(today);
 	maxDate.setDate(today.getDate() + 33); // Maximum 33 days from today
@@ -98,8 +115,8 @@ const getDateConstraints = () => {
 };
 
 // Check if date is disabled (Monday, Tuesday, or outside range)
-const isDateDisabled = (date: Date) => {
-	const { minDate, maxDate } = getDateConstraints();
+const isDateDisabled = (date: Date, leadTimeDays: number = 3) => {
+	const { minDate, maxDate } = getDateConstraints(leadTimeDays);
 	const dayOfWeek = date.getDay();
 
 	// Disable if before min date or after max date
@@ -203,6 +220,26 @@ export default function CheckoutPage({
 	const existingId = useId();
 	const newId = useId();
 	const { areOrdersAllowed: ordersAllowed, settings } = useCakeOrderSettings();
+
+	// Fetch desserts to get lead time information
+	const { data: desserts = [], isLoading: dessertsLoading } = useQuery({
+		queryKey: ["desserts"],
+		queryFn: fetchDesserts,
+	});
+
+	// Calculate maximum lead time from cart items
+	const maxLeadTime = useMemo(() => {
+		if (!desserts.length || !items.length) return 3; // Default 3 days
+
+		const leadTimes = items
+			.filter((item) => item.type === "cake-orders") // Only cake orders have lead times
+			.map((item) => {
+				const dessert = desserts.find((d) => d.id === item.id);
+				return dessert?.leadTimeDays || 3;
+			});
+
+		return leadTimes.length > 0 ? Math.max(...leadTimes) : 3;
+	}, [desserts, items]);
 
 	// Get current month for postal order settings
 	const currentMonth = format(new Date(), "yyyy-MM"); // YYYY-MM format
@@ -1116,8 +1153,9 @@ export default function CheckoutPage({
 											</h3>
 											<p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 leading-relaxed">
 												Select your preferred pickup date and time. Available
-												Wednesday to Sunday, 12PM to 6PM. Minimum 3 days advance
-												booking required.
+												Wednesday to Sunday, 12PM to 6PM. Minimum {maxLeadTime}{" "}
+												day{maxLeadTime > 1 ? "s" : ""} advance booking required
+												based on your cart items.
 											</p>
 										</div>
 
@@ -1158,7 +1196,9 @@ export default function CheckoutPage({
 																	mode="single"
 																	selected={field.value}
 																	onSelect={field.onChange}
-																	disabled={isDateDisabled}
+																	disabled={(date) =>
+																		isDateDisabled(date, maxLeadTime)
+																	}
 																	initialFocus
 																	className="rounded-md border-0"
 																/>
@@ -1293,27 +1333,53 @@ export default function CheckoutPage({
 				<Card className="order-1 lg:order-2">
 					<CardHeader className="pb-4 sm:pb-6">
 						<CardTitle className="text-lg sm:text-xl">Order Summary</CardTitle>
+						{!isPostalBrownies && items.length > 0 && (
+							<div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+								<Clock className="h-4 w-4 text-blue-600" />
+								<div className="text-sm">
+									<span className="font-medium text-blue-800">
+										Lead Time Required:{" "}
+									</span>
+									<span className="text-blue-700">
+										{maxLeadTime} day{maxLeadTime > 1 ? "s" : ""} minimum
+									</span>
+								</div>
+							</div>
+						)}
 					</CardHeader>
 					<CardContent className="pt-0">
 						<div className="space-y-3 sm:space-y-4">
-							{items.map((item) => (
-								<div
-									key={item.id}
-									className="flex justify-between items-start gap-2"
-								>
-									<div className="flex-1 min-w-0">
-										<h4 className="font-medium text-sm sm:text-base leading-tight">
-											{item.name}
-										</h4>
-										<p className="text-xs sm:text-sm text-muted-foreground">
-											{formatCurrency(Number(item.price))} x {item.quantity}
-										</p>
+							{items.map((item) => {
+								const dessert =
+									item.type === "cake-orders"
+										? desserts.find((d) => d.id === item.id)
+										: null;
+
+								return (
+									<div
+										key={item.id}
+										className="flex justify-between items-start gap-2"
+									>
+										<div className="flex-1 min-w-0">
+											<h4 className="font-medium text-sm sm:text-base leading-tight">
+												{item.name}
+											</h4>
+											<p className="text-xs sm:text-sm text-muted-foreground">
+												{formatCurrency(Number(item.price))} x {item.quantity}
+											</p>
+											{dessert && (
+												<p className="text-xs text-blue-600 mt-1">
+													{dessert.leadTimeDays} day
+													{dessert.leadTimeDays > 1 ? "s" : ""} lead time
+												</p>
+											)}
+										</div>
+										<div className="font-medium text-sm sm:text-base shrink-0">
+											{formatCurrency(Number(item.price) * item.quantity)}
+										</div>
 									</div>
-									<div className="font-medium text-sm sm:text-base shrink-0">
-										{formatCurrency(Number(item.price) * item.quantity)}
-									</div>
-								</div>
-							))}
+								);
+							})}
 
 							<div className="border-t pt-3 sm:pt-4 space-y-2">
 								<div className="flex justify-between items-center text-sm sm:text-base">

@@ -35,7 +35,15 @@ export async function PATCH(
 ) {
 	try {
 		const body = await request.json();
-		const { name, description, price, imageUrl, status } = body;
+		const {
+			name,
+			description,
+			price,
+			imageUrl,
+			status,
+			category,
+			leadTimeDays,
+		} = body;
 
 		// Note: price received here is already the gross amount (including payment processing fees)
 		// calculated by the admin form using calculateGrossAmount()
@@ -47,6 +55,8 @@ export async function PATCH(
 				price, // Gross amount
 				imageUrl,
 				status,
+				category,
+				leadTimeDays: Number(leadTimeDays),
 				updatedAt: new Date(),
 			})
 			.where(eq(desserts.id, Number.parseInt((await params).id, 10)))

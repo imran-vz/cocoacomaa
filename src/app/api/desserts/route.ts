@@ -23,11 +23,22 @@ export async function GET() {
 export async function POST(request: Request) {
 	try {
 		const body = await request.json();
-		const { name, description, price, imageUrl, status } = body;
+		const {
+			name,
+			description,
+			price,
+			imageUrl,
+			status,
+			category,
+			leadTimeDays,
+		} = body;
 
-		if (!name || !description || !price) {
+		if (!name || !description || !price || !category || !leadTimeDays) {
 			return NextResponse.json(
-				{ error: "Name, description, and price are required" },
+				{
+					error:
+						"Name, description, price, category, and lead time are required",
+				},
 				{ status: 400 },
 			);
 		}
@@ -42,6 +53,8 @@ export async function POST(request: Request) {
 				price, // Gross amount
 				imageUrl,
 				status: status || "available",
+				category,
+				leadTimeDays: Number(leadTimeDays),
 			})
 			.returning();
 
