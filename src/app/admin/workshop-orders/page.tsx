@@ -19,6 +19,7 @@ export default async function AdminWorkshopOrdersPage() {
 			status: true,
 			paymentStatus: true,
 			createdAt: true,
+			slots: true,
 		},
 		with: {
 			workshop: {
