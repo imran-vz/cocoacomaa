@@ -33,6 +33,7 @@ export default async function AdminOrderDetailsPage({
 				columns: {
 					quantity: true,
 					price: true,
+					itemType: true,
 				},
 				with: {
 					postalCombo: {

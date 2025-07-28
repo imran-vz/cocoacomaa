@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import Razorpay from "razorpay";
 
 import { db } from "@/lib/db";
-import { orderItems, orders, users, specialsSettings } from "@/lib/db/schema";
+import { orderItems, orders, users } from "@/lib/db/schema";
 import { checkoutFormSchemaDB } from "@/lib/schema";
 
 const razorpay = new Razorpay({
@@ -50,9 +50,9 @@ export async function POST(request: NextRequest) {
 				},
 			);
 
-			if (currentSpecialsSettings && currentSpecialsSettings.isActive) {
+			if (currentSpecialsSettings?.isActive) {
 				pickupDateObj = new Date(currentSpecialsSettings.pickupDate);
-				// Use the start time for the snapshot (admin can configure the window)
+				// Use the start time for the pickup date/time
 				const [hours, minutes] =
 					currentSpecialsSettings.pickupStartTime.split(":");
 				pickupDateObj.setHours(

@@ -29,6 +29,21 @@ export default async function MyOrdersPage() {
 			status: true,
 			createdAt: true,
 			pickupDateTime: true,
+			orderType: true,
+		},
+		with: {
+			orderItems: {
+				columns: {
+					itemType: true,
+				},
+				with: {
+					dessert: {
+						columns: {
+							category: true,
+						},
+					},
+				},
+			},
 		},
 	});
 
@@ -38,12 +53,15 @@ export default async function MyOrdersPage() {
 			{userOrders.length === 0 ? (
 				<div className="text-center text-muted-foreground py-12">
 					<p className="text-lg">You haven't placed any orders yet.</p>
-					<Link
-						href="/order"
-						className="text-primary underline mt-4 inline-block"
-					>
-						Browse Desserts
-					</Link>
+					<div className="flex flex-col sm:flex-row gap-2 justify-center mt-4">
+						<Link href="/order" className="text-primary underline">
+							Browse Desserts
+						</Link>
+						<span className="hidden sm:inline">•</span>
+						<Link href="/specials" className="text-primary underline">
+							Check Specials
+						</Link>
+					</div>
 				</div>
 			) : (
 				<Suspense

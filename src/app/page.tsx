@@ -45,14 +45,6 @@ export default function Home() {
 							variant="outline"
 							className="bg-transparent text-white"
 						>
-							<Link href="/specials">Specials</Link>
-						</Button>
-						<Button
-							asChild
-							size="lg"
-							variant="outline"
-							className="bg-transparent text-white"
-						>
 							<Link href="/postal-brownies">Postal Brownies</Link>
 						</Button>
 						<Button

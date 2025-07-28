@@ -42,6 +42,7 @@ type OrderData = {
 	notes: string | null;
 	orderItems: Array<{
 		quantity: number;
+		itemType: string;
 		price: string;
 		postalCombo: {
 			name: string;
@@ -60,6 +61,19 @@ type OrderData = {
 
 interface OrderDetailsClientProps {
 	initialOrder: OrderData;
+}
+
+// Helper function to check if order contains special desserts
+function hasSpecialDesserts(
+	orderItems: {
+		itemType: string;
+		dessert: { category: string } | null;
+	}[],
+): boolean {
+	return orderItems.some(
+		(item) =>
+			item.itemType === "dessert" && item.dessert?.category === "special",
+	);
 }
 
 export default function OrderDetailsClient({
@@ -279,6 +293,11 @@ export default function OrderDetailsClient({
 									<CardTitle className="flex items-center gap-2">
 										<Calendar className="h-5 w-5" />
 										Pickup Details
+										{hasSpecialDesserts(order.orderItems) && (
+											<span className="ml-2 px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full">
+												Special
+											</span>
+										)}
 									</CardTitle>
 								</CardHeader>
 								<CardContent className="space-y-3">

@@ -1395,7 +1395,7 @@ export default function CheckoutPage({
 											<p className="text-xs sm:text-sm text-muted-foreground">
 												{formatCurrency(Number(item.price))} x {item.quantity}
 											</p>
-											{dessert && (
+											{dessert && item.category !== "special" && (
 												<p className="text-xs text-blue-600 mt-1">
 													{dessert.leadTimeDays} day
 													{dessert.leadTimeDays > 1 ? "s" : ""} lead time
