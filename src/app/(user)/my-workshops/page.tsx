@@ -223,7 +223,7 @@ export default function MyWorkshopsPage() {
 												✓ Registration Confirmed
 											</p>
 											<p className="text-xs text-green-600 mt-1">
-												You'll receive workshop details via email soon.
+												You'll receive workshop details via WhatsApp soon.
 											</p>
 										</div>
 									) : order.status === "payment_pending" ? (
