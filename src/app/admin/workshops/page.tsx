@@ -25,7 +25,7 @@ export default async function AdminWorkshopsPage() {
 		})
 		.from(workshops)
 		.leftJoin(workshopOrders, eq(workshops.id, workshopOrders.workshopId))
-		.where(isNotNull(workshopOrders.razorpayPaymentId))
+		// .where(isNotNull(workshopOrders.razorpayPaymentId))
 		.groupBy(
 			workshops.id,
 			workshops.title,
