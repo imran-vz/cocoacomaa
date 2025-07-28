@@ -66,6 +66,7 @@ export const checkoutFormSchemaDB = z
 				name: z.string(),
 				price: z.number(),
 				quantity: z.number(),
+				category: z.string().optional(),
 			}),
 		),
 		orderType: z.enum(["cake-orders", "postal-brownies"]),
@@ -76,14 +77,26 @@ export const checkoutFormSchemaDB = z
 	})
 	.refine(
 		(data) => {
-			// If orderType is NOT postal-brownies, pickup fields are required
-			if (data.orderType !== "postal-brownies") {
-				return data.pickupDate && data.pickupTime;
+			// If orderType is postal-brownies, pickup fields are not required
+			if (data.orderType === "postal-brownies") {
+				return true;
 			}
-			return true;
+
+			// Check if order contains special desserts
+			const hasSpecials = data.items.some(
+				(item) => item.category === "special",
+			);
+
+			// If order contains specials, pickup fields are not required
+			if (hasSpecials) {
+				return true;
+			}
+
+			// For regular cake orders, pickup fields are required
+			return data.pickupDate && data.pickupTime;
 		},
 		{
-			message: "Pickup date and time are required for cake orders",
+			message: "Pickup date and time are required for regular cake orders",
 			path: ["pickupDate"],
 		},
 	)

@@ -46,6 +46,7 @@ import {
 } from "@/hooks/use-addresses";
 import { useCakeOrderSettings } from "@/hooks/use-order-settings";
 import { usePostalOrderSettings } from "@/hooks/use-postal-order-settings";
+import { useSpecialsSettings } from "@/hooks/use-specials-settings";
 import { useCart } from "@/lib/cart-context";
 import { config } from "@/lib/config";
 import {
@@ -128,7 +129,10 @@ const isDateDisabled = (date: Date, leadTimeDays: number = 3) => {
 	return dayOfWeek === 1 || dayOfWeek === 2;
 };
 
-const createCheckoutFormSchema = (isPostalBrownies: boolean) => {
+const createCheckoutFormSchema = (
+	isPostalBrownies: boolean,
+	hasSpecials: boolean = false,
+) => {
 	const baseSchema = z.object({
 		name: z.string().min(2, {
 			message: "Name must be at least 2 characters.",
@@ -144,17 +148,19 @@ const createCheckoutFormSchema = (isPostalBrownies: boolean) => {
 			.regex(/^[0-9+\-\s()]+$/, {
 				message: "Please enter a valid phone number.",
 			}),
-		// Pickup fields - only required for non-postal orders
-		pickupDate: isPostalBrownies
-			? z.date().optional()
-			: z.date({
-					required_error: "Please select a pickup date.",
-				}),
-		pickupTime: isPostalBrownies
-			? z.string().optional()
-			: z.string().min(1, {
-					message: "Please select a pickup time.",
-				}),
+		// Pickup fields - only required for non-postal orders and non-specials
+		pickupDate:
+			isPostalBrownies || hasSpecials
+				? z.date().optional()
+				: z.date({
+						required_error: "Please select a pickup date.",
+					}),
+		pickupTime:
+			isPostalBrownies || hasSpecials
+				? z.string().optional()
+				: z.string().min(1, {
+						message: "Please select a pickup time.",
+					}),
 		notes: z
 			.string()
 			.max(isPostalBrownies ? 250 : 25, {
@@ -220,9 +226,10 @@ export default function CheckoutPage({
 	const existingId = useId();
 	const newId = useId();
 	const { areOrdersAllowed: ordersAllowed, settings } = useCakeOrderSettings();
+	const { settings: specialsSettings } = useSpecialsSettings();
 
 	// Fetch desserts to get lead time information
-	const { data: desserts = [], isLoading: dessertsLoading } = useQuery({
+	const { data: desserts = [] } = useQuery({
 		queryKey: ["desserts"],
 		queryFn: fetchDesserts,
 	});
@@ -254,8 +261,13 @@ export default function CheckoutPage({
 	const isPostalBrownies = items.some(
 		(item) => item.type === "postal-brownies",
 	);
+
+	const hasSpecials = items.some((item) => item.category === "special");
 	const isOrderingAllowed = isPostalBrownies || ordersAllowed;
-	const checkoutFormSchema = createCheckoutFormSchema(isPostalBrownies);
+	const checkoutFormSchema = createCheckoutFormSchema(
+		isPostalBrownies,
+		hasSpecials,
+	);
 
 	const form = useForm<CheckoutFormValues>({
 		resolver: zodResolver(checkoutFormSchema),
@@ -641,6 +653,7 @@ export default function CheckoutPage({
 							name: item.name,
 							price: item.price,
 							quantity: item.quantity,
+							category: item.category,
 						})),
 						orderType: isPostalBrownies ? "postal-brownies" : "cake-orders",
 						total: finalTotal, // Include delivery cost for postal brownies
@@ -1144,7 +1157,7 @@ export default function CheckoutPage({
 								)}
 
 								{/* Pickup Date and Time - Only for non-postal orders */}
-								{!isPostalBrownies && (
+								{!isPostalBrownies && !hasSpecials && (
 									<div className="space-y-3 sm:space-y-4 lg:space-y-6">
 										<div className="border-t pt-3 sm:pt-4 lg:pt-6">
 											<h3 className="text-sm sm:text-base lg:text-lg font-semibold mb-2 sm:mb-3 lg:mb-4 flex items-center gap-2">
@@ -1333,7 +1346,7 @@ export default function CheckoutPage({
 				<Card className="order-1 lg:order-2">
 					<CardHeader className="pb-4 sm:pb-6">
 						<CardTitle className="text-lg sm:text-xl">Order Summary</CardTitle>
-						{!isPostalBrownies && items.length > 0 && (
+						{!isPostalBrownies && !hasSpecials && items.length > 0 && (
 							<div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
 								<Clock className="h-4 w-4 text-blue-600" />
 								<div className="text-sm">
@@ -1342,6 +1355,21 @@ export default function CheckoutPage({
 									</span>
 									<span className="text-blue-700">
 										{maxLeadTime} day{maxLeadTime > 1 ? "s" : ""} minimum
+									</span>
+								</div>
+							</div>
+						)}
+						{hasSpecials && specialsSettings && (
+							<div className="flex items-center gap-2 p-3 bg-purple-50 rounded-lg border border-purple-200">
+								<CalendarIcon className="h-4 w-4 text-purple-600" />
+								<div className="text-sm">
+									<span className="font-medium text-purple-800">
+										Fixed Pickup:{" "}
+									</span>
+									<span className="text-purple-700">
+										{format(new Date(specialsSettings.pickupDate), "PPP")} at{" "}
+										{specialsSettings.pickupStartTime} -{" "}
+										{specialsSettings.pickupEndTime}
 									</span>
 								</div>
 							</div>
@@ -1422,8 +1450,9 @@ export default function CheckoutPage({
 								</div>
 							</div>
 
-							{/* Pickup Info Display - Only for non-postal orders */}
+							{/* Pickup Info Display - Only for non-postal orders and non-specials */}
 							{!isPostalBrownies &&
+								!hasSpecials &&
 								(form.watch("pickupDate") || form.watch("pickupTime")) && (
 									<div className="border-t pt-3 sm:pt-4">
 										<div className="flex items-center gap-2 mb-2">

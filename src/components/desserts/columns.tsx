@@ -2,6 +2,7 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import Image from "next/image";
+
 import { DessertActions } from "@/components/dessert-actions";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
@@ -11,7 +12,7 @@ export type Dessert = {
 	name: string;
 	price: string;
 	imageUrl: string | null;
-	category: "cake" | "dessert";
+	category: "cake" | "dessert" | "special";
 	leadTimeDays: number;
 	status: "available" | "unavailable";
 	createdAt: Date;

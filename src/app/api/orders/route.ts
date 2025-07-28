@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import Razorpay from "razorpay";
 
 import { db } from "@/lib/db";
-import { orderItems, orders, users } from "@/lib/db/schema";
+import { orderItems, orders, users, specialsSettings } from "@/lib/db/schema";
 import { checkoutFormSchemaDB } from "@/lib/schema";
 
 const razorpay = new Razorpay({
@@ -36,9 +36,34 @@ export async function POST(request: NextRequest) {
 			selectedAddressId,
 		} = data;
 
-		// Combine pickup date and time into a single datetime (only for non-postal orders)
+		// Check if order contains special items
+		const hasSpecials = items.some((item) => item.category === "special");
+
+		// Combine pickup date and time into a single datetime
 		let pickupDateObj: Date | null = null;
-		if (pickupDate && pickupTime) {
+
+		if (hasSpecials) {
+			// For special orders, use the programmed pickup date/time from settings
+			const currentSpecialsSettings = await db.query.specialsSettings.findFirst(
+				{
+					orderBy: (specialsSettings, { desc }) => [desc(specialsSettings.id)],
+				},
+			);
+
+			if (currentSpecialsSettings && currentSpecialsSettings.isActive) {
+				pickupDateObj = new Date(currentSpecialsSettings.pickupDate);
+				// Use the start time for the snapshot (admin can configure the window)
+				const [hours, minutes] =
+					currentSpecialsSettings.pickupStartTime.split(":");
+				pickupDateObj.setHours(
+					Number.parseInt(hours),
+					Number.parseInt(minutes),
+					0,
+					0,
+				);
+			}
+		} else if (pickupDate && pickupTime) {
+			// For regular orders, use customer-selected pickup date/time
 			pickupDateObj = new Date(pickupDate);
 			const [hours, minutes] = pickupTime.split(":");
 			pickupDateObj.setHours(

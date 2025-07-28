@@ -1,14 +1,25 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { desserts } from "@/lib/db/schema";
 
-export async function GET() {
+export async function GET(request: Request) {
 	try {
+		const { searchParams } = new URL(request.url);
+		const category = searchParams.get("category");
+
+		const whereConditions = [eq(desserts.status, "available")];
+
+		if (category) {
+			whereConditions.push(
+				eq(desserts.category, category as "cake" | "dessert" | "special"),
+			);
+		}
+
 		const availableDesserts = await db
 			.select()
 			.from(desserts)
-			.where(eq(desserts.status, "available"));
+			.where(and(...whereConditions));
 
 		return NextResponse.json(availableDesserts);
 	} catch (error) {

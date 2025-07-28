@@ -14,7 +14,7 @@ export const desserts = pgTable("desserts", (d) => {
 			.notNull()
 			.default("available"),
 		category: d
-			.varchar("category", { enum: ["cake", "dessert"] })
+			.varchar("category", { enum: ["cake", "dessert", "special"] })
 			.notNull()
 			.default("dessert"),
 		leadTimeDays: d.integer("lead_time_days").notNull().default(3), // Lead time in days
@@ -361,7 +361,33 @@ export const postalOrderSettings = pgTable("postal_order_settings", (d) => {
 	};
 });
 
+export const specialsSettings = pgTable("specials_settings", (d) => {
+	return {
+		id: d.integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		isActive: d.boolean("is_active").notNull().default(true),
+		pickupDate: d.date("pickup_date").notNull(), // Programmable pickup date
+		pickupStartTime: d
+			.varchar("pickup_start_time", { length: 5 })
+			.notNull()
+			.default("10:00"), // Format: "HH:MM"
+		pickupEndTime: d
+			.varchar("pickup_end_time", { length: 5 })
+			.notNull()
+			.default("18:00"), // Format: "HH:MM"
+		description: d.text("description"), // Optional description for the special
+		createdAt: d
+			.timestamp("created_at")
+			.default(sql`CURRENT_TIMESTAMP`)
+			.notNull(),
+		updatedAt: d
+			.timestamp("updated_at")
+			.default(sql`CURRENT_TIMESTAMP`)
+			.notNull(),
+	};
+});
+
 export type PostalOrderSettings = typeof postalOrderSettings.$inferSelect;
+export type SpecialsSettings = typeof specialsSettings.$inferSelect;
 
 // Workshops Schema
 export const workshops = pgTable("workshops", (d) => {

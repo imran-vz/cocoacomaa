@@ -48,6 +48,7 @@ type OrderData = {
 		} | null;
 		dessert: {
 			name: string;
+			category: string;
 		} | null;
 	}>;
 	user: {

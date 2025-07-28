@@ -307,7 +307,7 @@ export default async function AdminOrderDetailsPage({
 							</CardContent>
 						</Card>
 
-						{/* Pickup Information - Only for cake orders */}
+						{/* Pickup Information - For cake orders */}
 						{order.orderType !== "postal-brownies" && order.pickupDateTime && (
 							<Card>
 								<CardHeader>

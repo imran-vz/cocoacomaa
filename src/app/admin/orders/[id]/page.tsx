@@ -43,6 +43,7 @@ export default async function AdminOrderDetailsPage({
 					dessert: {
 						columns: {
 							name: true,
+							category: true,
 						},
 					},
 				},

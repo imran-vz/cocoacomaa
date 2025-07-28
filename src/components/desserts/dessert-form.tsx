@@ -44,7 +44,7 @@ const dessertSchema = z.object({
 	description: z.string().min(1, "Description is required"),
 	imageUrl: z.string().optional(),
 	status: z.enum(["available", "unavailable"]),
-	category: z.enum(["cake", "dessert"]),
+	category: z.enum(["cake", "dessert", "special"]),
 	leadTimeDays: z.coerce
 		.number()
 		.min(1, "Lead time must be at least 1 day")
@@ -340,6 +340,7 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 												<SelectContent>
 													<SelectItem value="cake">Cake</SelectItem>
 													<SelectItem value="dessert">Dessert</SelectItem>
+													<SelectItem value="special">Special</SelectItem>
 												</SelectContent>
 											</Select>
 											<FormMessage />

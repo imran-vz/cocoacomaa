@@ -1,13 +1,13 @@
 import { Plus } from "lucide-react";
 import Link from "next/link";
-
 import { columns } from "@/components/desserts/columns";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { db } from "@/lib/db";
 
-export default async function DessertsPage() {
-	const dessertsList = await db.query.desserts.findMany({
+export default async function SpecialsPage() {
+	const specialsList = await db.query.desserts.findMany({
+		where: (desserts, { eq }) => eq(desserts.category, "special"),
 		orderBy: (desserts, { desc }) => [desc(desserts.createdAt)],
 		columns: {
 			id: true,
@@ -24,11 +24,11 @@ export default async function DessertsPage() {
 	return (
 		<div className="container mx-auto p-4 sm:p-6">
 			<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-				<h1 className="text-3xl font-bold">Desserts</h1>
+				<h1 className="text-3xl font-bold">Specials</h1>
 				<Button asChild>
-					<Link href="/admin/desserts/new">
+					<Link href="/admin/specials/new">
 						<Plus className="mr-2 h-4 w-4" />
-						Add Dessert
+						Add Special
 					</Link>
 				</Button>
 			</div>
@@ -37,19 +37,10 @@ export default async function DessertsPage() {
 				<div className="overflow-x-auto">
 					<DataTable
 						columns={columns}
-						data={dessertsList}
+						data={specialsList}
 						searchKey="name"
-						searchPlaceholder="Filter Desserts..."
+						searchPlaceholder="Filter Specials..."
 						filterableColumns={[
-							{
-								id: "category",
-								title: "Category",
-								options: [
-									{ label: "Cake", value: "cake" },
-									{ label: "Dessert", value: "dessert" },
-									{ label: "Special", value: "special" },
-								],
-							},
 							{
 								id: "status",
 								title: "Status",

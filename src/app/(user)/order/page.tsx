@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,7 +26,7 @@ interface Dessert {
 	price: number;
 	description: string | null;
 	imageUrl: string | null;
-	category: "cake" | "dessert";
+	category: "cake" | "dessert" | "special";
 	leadTimeDays: number;
 	enabled: boolean;
 }
@@ -83,6 +84,7 @@ export default function OrderPage() {
 			price: Number(dessert.price),
 			quantity: 1,
 			type: "cake-orders",
+			category: dessert.category,
 		});
 	};
 

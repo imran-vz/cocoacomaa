@@ -103,6 +103,15 @@ export function Navigation() {
 											</DropdownMenuItem>
 											<DropdownMenuItem asChild>
 												<Link
+													href="/admin/specials"
+													className="flex items-center gap-2"
+												>
+													<Settings className="h-4 w-4" />
+													Specials
+												</Link>
+											</DropdownMenuItem>
+											<DropdownMenuItem asChild>
+												<Link
 													href="/admin/workshops"
 													className="flex items-center gap-2"
 												>
@@ -130,6 +139,15 @@ export function Navigation() {
 												>
 													<Settings className="h-4 w-4" />
 													Postal Order Settings
+												</Link>
+											</DropdownMenuItem>
+											<DropdownMenuItem asChild>
+												<Link
+													href="/admin/settings/specials"
+													className="flex items-center gap-2"
+												>
+													<Settings className="h-4 w-4" />
+													Specials Settings
 												</Link>
 											</DropdownMenuItem>
 										</DropdownMenuGroup>

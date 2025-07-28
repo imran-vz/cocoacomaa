@@ -9,6 +9,7 @@ interface CartItem {
 	price: number;
 	quantity: number;
 	type: "postal-brownies" | "cake-orders";
+	category?: "cake" | "dessert" | "special";
 }
 
 interface CartState {
@@ -20,7 +21,8 @@ type CartAction =
 	| { type: "ADD_ITEM"; payload: CartItem }
 	| { type: "REMOVE_ITEM"; payload: number }
 	| { type: "UPDATE_QUANTITY"; payload: { id: number; quantity: number } }
-	| { type: "CLEAR_CART" };
+	| { type: "CLEAR_CART" }
+	| { type: "CLEAR_NON_SPECIALS" };
 
 const initialState: CartState = {
 	items: [],
@@ -84,6 +86,22 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 		case "CLEAR_CART":
 			return initialState;
 
+		case "CLEAR_NON_SPECIALS": {
+			const specialItems = state.items.filter(
+				(item) => item.category === "special",
+			);
+			const specialTotal = specialItems.reduce(
+				(total, item) => total + item.price * item.quantity,
+				0,
+			);
+
+			return {
+				...state,
+				items: specialItems,
+				total: specialTotal,
+			};
+		}
+
 		default:
 			return state;
 	}
@@ -96,6 +114,7 @@ const CartContext = createContext<{
 	removeItem: (id: number) => void;
 	updateQuantity: (id: number, quantity: number) => void;
 	clearCart: () => void;
+	clearNonSpecials: () => void;
 } | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
@@ -132,6 +151,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 		dispatch({ type: "CLEAR_CART" });
 	};
 
+	const clearNonSpecials = () => {
+		dispatch({ type: "CLEAR_NON_SPECIALS" });
+	};
+
 	return (
 		<CartContext.Provider
 			value={{
@@ -141,6 +164,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 				removeItem,
 				updateQuantity,
 				clearCart,
+				clearNonSpecials,
 			}}
 		>
 			{children}
