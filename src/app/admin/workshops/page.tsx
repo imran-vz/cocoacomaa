@@ -1,4 +1,4 @@
-import { desc, eq, isNotNull, sql } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,7 @@ export default async function AdminWorkshopsPage() {
 		})
 		.from(workshops)
 		.leftJoin(workshopOrders, eq(workshops.id, workshopOrders.workshopId))
-		// .where(isNotNull(workshopOrders.razorpayPaymentId))
+		.where(eq(workshops.isDeleted, false))
 		.groupBy(
 			workshops.id,
 			workshops.title,
