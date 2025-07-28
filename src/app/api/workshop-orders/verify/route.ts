@@ -77,8 +77,10 @@ export async function POST(request: NextRequest) {
 		}
 
 		// Final check for available slots before confirming payment
-		const [bookingCount] = await db
-			.select({ count: sql<number>`count(*)` })
+		const [totalSlotsUsed] = await db
+			.select({
+				totalSlots: sql<number>`coalesce(sum(${workshopOrders.slots}), 0)`,
+			})
 			.from(workshopOrders)
 			.where(
 				and(
@@ -88,10 +90,11 @@ export async function POST(request: NextRequest) {
 				),
 			);
 
-		const currentBookings = bookingCount.count;
-		const availableSlots = workshop.maxBookings - currentBookings;
+		const currentSlotsUsed = totalSlotsUsed.totalSlots;
+		const requestedSlots = currentOrder.slots || 1;
+		const availableSlots = workshop.maxBookings - currentSlotsUsed;
 
-		if (availableSlots <= 0) {
+		if (availableSlots < requestedSlots) {
 			// Mark the order as failed since workshop is full
 			await db
 				.update(workshopOrders)
@@ -111,7 +114,9 @@ export async function POST(request: NextRequest) {
 				{
 					success: false,
 					message:
-						"Sorry, this workshop is now fully booked. Your payment will be refunded within 5-7 business days.",
+						availableSlots <= 0
+							? "Sorry, this workshop is now fully booked. Your payment will be refunded within 5-7 business days."
+							: `Sorry, only ${availableSlots} slot${availableSlots !== 1 ? "s" : ""} remaining, but you requested ${requestedSlots}. Your payment will be refunded within 5-7 business days.`,
 				},
 				{ status: 400 },
 			);

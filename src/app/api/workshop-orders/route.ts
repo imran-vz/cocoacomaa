@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
 		}
 
 		const body = await request.json();
-		const { workshopId, notes, slots = 1 } = body;
+		const { workshopId, notes, slots } = body;
 
 		if (!workshopId) {
 			return NextResponse.json(
@@ -83,15 +83,7 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		// Validate slots
-		if (!Number.isInteger(slots) || slots < 1 || slots > 2) {
-			return NextResponse.json(
-				{ success: false, message: "Slots must be between 1 and 2" },
-				{ status: 400 },
-			);
-		}
-
-		// Get workshop details
+		// Get workshop details first to validate slots based on type
 		const workshop = await db.query.workshops.findFirst({
 			where: and(
 				eq(workshops.id, workshopId),
@@ -105,6 +97,25 @@ export async function POST(request: NextRequest) {
 				{ success: false, message: "Workshop not found or inactive" },
 				{ status: 404 },
 			);
+		}
+
+		// Set slots based on workshop type
+		let actualSlots: number;
+		if (workshop.type === "online") {
+			// Online workshops always get 1 slot, ignore any slots parameter
+			actualSlots = 1;
+		} else {
+			// Offline workshops require valid slots parameter
+			if (!Number.isInteger(slots) || slots < 1 || slots > 2) {
+				return NextResponse.json(
+					{
+						success: false,
+						message: "Slots must be between 1 and 2 for offline workshops",
+					},
+					{ status: 400 },
+				);
+			}
+			actualSlots = slots;
 		}
 
 		// Check existing bookings for this user and workshop
@@ -122,12 +133,17 @@ export async function POST(request: NextRequest) {
 			0,
 		);
 
-		// Check if user would exceed maximum slots (2 per person)
-		if (totalUserSlots + slots > 2) {
+		// Check if user would exceed maximum slots (1 for online, 2 for offline)
+		const maxSlotsAllowed = workshop.type === "online" ? 1 : 2;
+
+		if (totalUserSlots + actualSlots > maxSlotsAllowed) {
 			return NextResponse.json(
 				{
 					success: false,
-					message: `You can only book up to 2 slots total. You currently have ${totalUserSlots} slot${totalUserSlots > 1 ? "s" : ""}.`,
+					message:
+						workshop.type === "online"
+							? `Online workshops allow only 1 slot per person. You currently have ${totalUserSlots} slot${totalUserSlots > 1 ? "s" : ""}.`
+							: `You can only book up to 2 slots total. You currently have ${totalUserSlots} slot${totalUserSlots > 1 ? "s" : ""}.`,
 				},
 				{ status: 400 },
 			);
@@ -150,11 +166,11 @@ export async function POST(request: NextRequest) {
 		const currentSlotsUsed = totalSlotsUsed.totalSlots;
 		const availableSlots = workshop.maxBookings - currentSlotsUsed;
 
-		if (availableSlots < slots) {
+		if (availableSlots < actualSlots) {
 			return NextResponse.json(
 				{
 					success: false,
-					message: `Sorry, only ${availableSlots} slot${availableSlots !== 1 ? "s" : ""} remaining. You requested ${slots} slot${slots > 1 ? "s" : ""}.`,
+					message: `Sorry, only ${availableSlots} slot${availableSlots !== 1 ? "s" : ""} remaining. You requested ${actualSlots} slot${actualSlots > 1 ? "s" : ""}.`,
 				},
 				{ status: 400 },
 			);
@@ -162,7 +178,7 @@ export async function POST(request: NextRequest) {
 
 		// Calculate gateway cost based on slots
 		const workshopAmount = Number(workshop.amount);
-		const grossAmount = workshopAmount * slots;
+		const grossAmount = workshopAmount * actualSlots;
 		const netAmount = calculateNetAmount(
 			grossAmount,
 			config.paymentProcessingFee,
@@ -175,7 +191,7 @@ export async function POST(request: NextRequest) {
 			.values({
 				userId: session.user.id,
 				workshopId: workshopId,
-				slots: slots,
+				slots: actualSlots,
 				amount: grossAmount.toString(),
 				gatewayCost: gatewayCost.toString(),
 				status: "payment_pending",

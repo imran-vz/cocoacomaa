@@ -196,11 +196,16 @@ export default function WorkshopsPage() {
 
 			// Create new order if no valid existing order found
 			if (!orderData) {
-				const slots = getSelectedSlots(workshop.id);
-				const response = await axios.post("/api/workshop-orders", {
+				const requestBody: { workshopId: number; slots?: number } = {
 					workshopId: workshop.id,
-					slots,
-				});
+				};
+
+				// Only include slots for offline workshops
+				if (workshop.type === "offline") {
+					requestBody.slots = getSelectedSlots(workshop.id);
+				}
+
+				const response = await axios.post("/api/workshop-orders", requestBody);
 
 				if (response.data.success) {
 					orderData = response.data;
@@ -520,63 +525,70 @@ export default function WorkshopsPage() {
 									)}
 								</div>
 								<div className="mt-auto">
-									{/* Slot Selection */}
-									<div className="mb-4">
-										<div className="flex items-center justify-between mb-2">
-											<Label className="text-sm font-medium">Slots:</Label>
-											<div className="flex items-center space-x-2">
-												<Button
-													variant="outline"
-													size="icon"
-													className="h-7 w-7"
-													onClick={() =>
-														setSlotCount(
-															workshop.id,
-															Math.max(1, getSelectedSlots(workshop.id) - 1),
-														)
-													}
-													disabled={getSelectedSlots(workshop.id) <= 1}
-												>
-													<Minus className="h-3 w-3" />
-												</Button>
-												<span className="w-8 text-center text-sm font-medium">
-													{getSelectedSlots(workshop.id)}
-												</span>
-												<Button
-													variant="outline"
-													size="icon"
-													className="h-7 w-7"
-													onClick={() =>
-														setSlotCount(
-															workshop.id,
-															Math.min(
-																2,
-																getSelectedSlots(workshop.id) + 1,
-																workshop.availableSlots,
-															),
-														)
-													}
-													disabled={
-														getSelectedSlots(workshop.id) >= 2 ||
-														getSelectedSlots(workshop.id) >=
-															workshop.availableSlots
-													}
-												>
-													<Plus className="h-3 w-3" />
-												</Button>
+									{/* Slot Selection - Only for offline workshops */}
+									{workshop.type === "offline" && (
+										<div className="mb-4">
+											<div className="flex items-center justify-between mb-2">
+												<Label className="text-sm font-medium">Slots:</Label>
+												<div className="flex items-center space-x-2">
+													<Button
+														variant="outline"
+														size="icon"
+														className="h-7 w-7"
+														onClick={() =>
+															setSlotCount(
+																workshop.id,
+																Math.max(1, getSelectedSlots(workshop.id) - 1),
+															)
+														}
+														disabled={getSelectedSlots(workshop.id) <= 1}
+													>
+														<Minus className="h-3 w-3" />
+													</Button>
+													<span className="w-8 text-center text-sm font-medium">
+														{getSelectedSlots(workshop.id)}
+													</span>
+													<Button
+														variant="outline"
+														size="icon"
+														className="h-7 w-7"
+														onClick={() => {
+															setSlotCount(
+																workshop.id,
+																Math.min(
+																	2,
+																	getSelectedSlots(workshop.id) + 1,
+																	workshop.availableSlots,
+																),
+															);
+														}}
+														disabled={
+															getSelectedSlots(workshop.id) >= 2 ||
+															getSelectedSlots(workshop.id) >=
+																workshop.availableSlots
+														}
+													>
+														<Plus className="h-3 w-3" />
+													</Button>
+												</div>
 											</div>
+											<p className="text-xs text-muted-foreground">
+												Maximum 2 slots per person
+											</p>
 										</div>
-										<p className="text-xs text-muted-foreground">
-											Maximum 2 slots per person
-										</p>
-									</div>
+									)}
 
 									<div className="flex justify-between items-center font-bold text-lg mb-4">
-										<span>Total Price:</span>
 										<span>
-											{formatCurrency(
-												Number(workshop.amount) * getSelectedSlots(workshop.id),
-											)}
+											{workshop.type === "offline" ? "Total Price:" : "Price:"}
+										</span>
+										<span>
+											{workshop.type === "offline"
+												? formatCurrency(
+														Number(workshop.amount) *
+															getSelectedSlots(workshop.id),
+													)
+												: formatCurrency(Number(workshop.amount))}
 										</span>
 									</div>
 									<div className="flex items-center justify-between mb-4 text-sm">
@@ -598,7 +610,9 @@ export default function WorkshopsPage() {
 											? "Fully Booked"
 											: processingWorkshopId === workshop.id
 												? "Processing..."
-												: `Register for ${getSelectedSlots(workshop.id)} slot${getSelectedSlots(workshop.id) > 1 ? "s" : ""}`}
+												: workshop.type === "online"
+													? "Register Now"
+													: `Register for ${getSelectedSlots(workshop.id)} slot${getSelectedSlots(workshop.id) > 1 ? "s" : ""}`}
 									</Button>
 								</div>
 							</CardContent>
