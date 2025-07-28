@@ -66,14 +66,35 @@ TOTAL: ₹${Number(orderDetails.total).toFixed(0)}
 ${orderDetails.notes ? `NOTES: "${orderDetails.notes}"` : ""}
 
 ${
-	!isPostalOrder
-		? `PICKUP LOCATION:
+	isPostalOrder
+		? `DELIVERY ADDRESS:
+${orderDetails.address?.addressLine1}${
+	orderDetails.address?.addressLine2
+		? `\n${orderDetails.address.addressLine2}`
+		: ""
+}
+${orderDetails.address?.city}, ${orderDetails.address?.state} - ${
+				orderDetails.address?.zip
+			}
+
+📦 POSTAL BROWNIES INFO:
+🍫 Your fresh brownies will be baked to perfection
+📦 Special insulated packaging ensures freshness
+📱 Tracking info will be sent via SMS/WhatsApp
+🚛 Expected delivery: 2-3 business days
+❄️ Best consumed within 3-4 days for optimal taste
+
+CARE INSTRUCTIONS:
+• Inspect brownies immediately upon delivery
+• Store in cool, dry place (room temperature)
+• Refrigerate only if area is very humid
+• Pair with milk or hot beverage for best experience`
+		: `PICKUP LOCATION:
 Cocoa Comaa
 Akshaya Gold Apartment,
 Pipe Line Rd, VGS Layout,
 Ejipura, Bengaluru - 560047
 Phone: ${process.env.NEXT_PUBLIC_BUSINESS_PHONE}`
-		: ""
 }
 
 NEED HELP?

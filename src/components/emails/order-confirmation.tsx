@@ -312,6 +312,36 @@ export default function OrderConfirmationEmail({
 							</Section>
 						)}
 
+						{/* Postal Brownies Care Instructions */}
+						{isPostalOrder && (
+							<Section className="mb-8">
+								<Heading className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-amber-800">
+									📦 Postal Brownies Care Instructions
+								</Heading>
+								<div className="bg-gradient-to-r from-amber-50 to-orange-50 p-4 rounded-lg border border-amber-200">
+									<Text className="text-gray-700 mb-2 font-medium">
+										🍫 Upon Delivery:
+									</Text>
+									<Text className="text-gray-700 mb-2 text-sm">
+										• Inspect your brownies immediately upon delivery
+									</Text>
+									<Text className="text-gray-700 mb-2 text-sm">
+										• Store in a cool, dry place (room temperature is perfect)
+									</Text>
+									<Text className="text-gray-700 mb-3 text-sm">
+										• Refrigerate only if your area is very humid
+									</Text>
+									<Text className="text-gray-700 mb-2 font-medium">
+										🥛 Best Enjoyed:
+									</Text>
+									<Text className="text-gray-700 mb-0 text-sm">
+										• Pair with a glass of cold milk or your favorite hot
+										beverage for the ultimate experience!
+									</Text>
+								</div>
+							</Section>
+						)}
+
 						{/* What's Next */}
 						<Section className="mb-8">
 							<Heading className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-amber-800">
@@ -321,15 +351,24 @@ export default function OrderConfirmationEmail({
 								{isPostalOrder ? (
 									<>
 										<Text className="text-gray-700 mb-2">
-											📦 Your brownies will be carefully packaged and shipped to
-											your address
+											🍫 Your fresh brownies will be baked to perfection and
+											carefully packaged
 										</Text>
 										<Text className="text-gray-700 mb-2">
-											📱 You'll receive tracking information once your order is
-											dispatched
+											📦 We use special insulated packaging to ensure freshness
+											during transit
+										</Text>
+										<Text className="text-gray-700 mb-2">
+											📱 You'll receive tracking information via SMS/WhatsApp
+											once dispatched
+										</Text>
+										<Text className="text-gray-700 mb-2">
+											🚛 Expected delivery: 2-3 business days (Monday to
+											Saturday)
 										</Text>
 										<Text className="text-gray-700 mb-0">
-											⏰ Expected delivery: 2-3 business days
+											❄️ Best consumed within 3-4 days of delivery for optimal
+											taste
 										</Text>
 									</>
 								) : (

@@ -149,6 +149,15 @@ export default function SpecialsPage() {
 				<div className="mb-8">
 					<h1 className="text-3xl font-bold mb-4">Specials</h1>
 
+					{/* Specials Description */}
+					{settings?.description && (
+						<div className="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+							<p className="text-purple-800 text-center font-medium">
+								{settings.description}
+							</p>
+						</div>
+					)}
+
 					{settings && (
 						<Card className="mb-6">
 							<CardHeader>
@@ -173,11 +182,6 @@ export default function SpecialsPage() {
 											{settings.pickupStartTime} - {settings.pickupEndTime}
 										</Badge>
 									</div>
-									{settings.description && (
-										<p className="text-sm text-muted-foreground mt-2">
-											{settings.description}
-										</p>
-									)}
 								</div>
 							</CardContent>
 						</Card>
