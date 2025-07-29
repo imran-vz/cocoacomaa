@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { desserts } from "@/lib/db/schema";
@@ -19,7 +19,8 @@ export async function GET(request: Request) {
 		const availableDesserts = await db
 			.select()
 			.from(desserts)
-			.where(and(...whereConditions));
+			.where(and(...whereConditions))
+			.orderBy(asc(desserts.price));
 
 		return NextResponse.json(availableDesserts);
 	} catch (error) {

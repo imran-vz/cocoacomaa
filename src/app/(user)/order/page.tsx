@@ -61,11 +61,14 @@ export default function OrderPage() {
 		queryFn: () => fetchDesserts(),
 	});
 
-	// Filter desserts by category
+	// Filter desserts by category and sort by price (lowest to highest)
 	const filteredDesserts = useMemo(() => {
 		if (!desserts) return [];
-		if (selectedCategory === "all") return desserts;
-		return desserts.filter((dessert) => dessert.category === selectedCategory);
+		const filtered =
+			selectedCategory === "all"
+				? desserts
+				: desserts.filter((dessert) => dessert.category === selectedCategory);
+		return filtered.sort((a, b) => Number(a.price) - Number(b.price));
 	}, [desserts, selectedCategory]);
 
 	useEffect(() => {
