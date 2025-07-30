@@ -1,7 +1,7 @@
 import { desc, isNotNull } from "drizzle-orm";
 import { CheckCircle, Clock, ShoppingCart } from "lucide-react";
 import { columns } from "@/components/orders/columns";
-import ExportButton from "@/components/orders/export-button";
+import ExportFilterDialog from "@/components/orders/export-filter-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { db } from "@/lib/db";
@@ -34,6 +34,7 @@ export default async function OrdersPage() {
 			status: true,
 			orderType: true,
 			notes: true,
+			createdAt: true,
 		},
 		with: {
 			orderItems: {
@@ -104,6 +105,9 @@ export default async function OrdersPage() {
 			customerPhone,
 			address,
 			message: order.notes,
+			status: order.status,
+			orderType: order.orderType,
+			createdAt: new Date(order.createdAt),
 		}));
 	});
 
@@ -116,7 +120,11 @@ export default async function OrdersPage() {
 						Manage and track all orders
 					</p>
 				</div>
-				<ExportButton data={csvData} />
+				<ExportFilterDialog
+					data={csvData}
+					statuses={statuses}
+					orderTypes={orderTypes}
+				/>
 			</div>
 
 			{/* Overview Cards */}
