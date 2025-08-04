@@ -261,9 +261,12 @@ export default function CheckoutPage({
 	const isPostalBrownies = items.some(
 		(item) => item.type === "postal-brownies",
 	);
-
 	const hasSpecials = items.some((item) => item.category === "special");
-	const isOrderingAllowed = isPostalBrownies || ordersAllowed;
+	const isOrderingAllowed =
+		(hasSpecials && specialsSettings?.isActive) ||
+		isPostalBrownies ||
+		ordersAllowed;
+
 	const checkoutFormSchema = createCheckoutFormSchema(
 		isPostalBrownies,
 		hasSpecials,
@@ -845,35 +848,37 @@ export default function CheckoutPage({
 									)}
 								/>
 
-								<FormField
-									control={form.control}
-									name="notes"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel className="text-sm sm:text-base">
-												{isPostalBrownies
-													? "Message (Optional)"
-													: "Message on Cake"}
-											</FormLabel>
-											<FormControl>
-												<Input
-													placeholder={
-														isPostalBrownies
-															? "Special delivery instructions or notes"
-															: "Keep it short and sweet"
-													}
-													{...field}
-													className="text-sm sm:text-base"
-													maxLength={isPostalBrownies ? 250 : 25}
-												/>
-											</FormControl>
-											<FormDescription className="text-xs sm:text-sm text-muted-foreground">
-												Maximum {isPostalBrownies ? 250 : 25} characters
-											</FormDescription>
-											<FormMessage className="text-xs sm:text-sm" />
-										</FormItem>
-									)}
-								/>
+								{!hasSpecials && (
+									<FormField
+										control={form.control}
+										name="notes"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel className="text-sm sm:text-base">
+													{isPostalBrownies
+														? "Message (Optional)"
+														: "Message on Cake"}
+												</FormLabel>
+												<FormControl>
+													<Input
+														placeholder={
+															isPostalBrownies
+																? "Special delivery instructions or notes"
+																: "Keep it short and sweet"
+														}
+														{...field}
+														className="text-sm sm:text-base"
+														maxLength={isPostalBrownies ? 250 : 25}
+													/>
+												</FormControl>
+												<FormDescription className="text-xs sm:text-sm text-muted-foreground">
+													Maximum {isPostalBrownies ? 250 : 25} characters
+												</FormDescription>
+												<FormMessage className="text-xs sm:text-sm" />
+											</FormItem>
+										)}
+									/>
+								)}
 
 								{/* Address Fields - Only for postal brownies */}
 								{isPostalBrownies && (
