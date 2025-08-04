@@ -1,6 +1,7 @@
 import { Plus } from "lucide-react";
 import Link from "next/link";
-import { columns } from "@/components/desserts/columns";
+
+import { specialsColumns } from "@/components/desserts/specials-columns";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { db } from "@/lib/db";
@@ -14,8 +15,6 @@ export default async function SpecialsPage() {
 			name: true,
 			price: true,
 			imageUrl: true,
-			category: true,
-			leadTimeDays: true,
 			status: true,
 			createdAt: true,
 		},
@@ -36,7 +35,7 @@ export default async function SpecialsPage() {
 			<div className="rounded-md">
 				<div className="overflow-x-auto">
 					<DataTable
-						columns={columns}
+						columns={specialsColumns}
 						data={specialsList}
 						searchKey="name"
 						searchPlaceholder="Filter Specials..."

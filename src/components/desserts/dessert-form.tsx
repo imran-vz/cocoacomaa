@@ -48,7 +48,8 @@ const dessertSchema = z.object({
 	leadTimeDays: z.coerce
 		.number()
 		.min(1, "Lead time must be at least 1 day")
-		.max(30, "Lead time cannot exceed 30 days"),
+		.max(30, "Lead time cannot exceed 30 days")
+		.optional(),
 });
 
 type DessertFormValues = z.infer<typeof dessertSchema>;
@@ -66,6 +67,9 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 	);
 	const [uploading, setUploading] = useState(false);
 	const [grossAmount, setGrossAmount] = useState<number>(0);
+
+	// Check if we're dealing with specials
+	const isSpecial = initialData?.category === "special";
 
 	// Convert gross price to net price for editing
 	const getInitialData = () => {
@@ -189,6 +193,17 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 				}
 			}
 
+			// For specials, ensure category is set to "special" and set default leadTimeDays
+			const submitData = {
+				...data,
+				price: grossAmount.toString(), // Send gross amount instead of net
+				imageUrl,
+				...(isSpecial && {
+					category: "special" as const,
+					leadTimeDays: 0, // Default lead time for specials
+				}),
+			};
+
 			const response = await fetch(
 				mode === "create"
 					? "/api/desserts"
@@ -198,11 +213,7 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 					headers: {
 						"Content-Type": "application/json",
 					},
-					body: JSON.stringify({
-						...data,
-						price: grossAmount.toString(), // Send gross amount instead of net
-						imageUrl,
-					}),
+					body: JSON.stringify(submitData),
 				},
 			);
 
@@ -210,8 +221,17 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 				throw new Error("Failed to save dessert");
 			}
 
-			toast.success(mode === "create" ? "Dessert created" : "Dessert updated");
-			router.push("/admin/desserts");
+			toast.success(
+				mode === "create"
+					? isSpecial
+						? "Special created"
+						: "Dessert created"
+					: isSpecial
+						? "Special updated"
+						: "Dessert updated",
+			);
+			// Redirect to specials page if it's a special, otherwise desserts page
+			router.push(isSpecial ? "/admin/specials" : "/admin/desserts");
 			router.refresh();
 		} catch (error) {
 			console.error(error);
@@ -224,12 +244,22 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 			<Card className="max-w-2xl mx-auto">
 				<CardHeader>
 					<CardTitle>
-						{mode === "edit" ? "Edit Dessert" : "Add New Dessert"}
+						{mode === "edit"
+							? isSpecial
+								? "Edit Special"
+								: "Edit Dessert"
+							: isSpecial
+								? "Add New Special"
+								: "Add New Dessert"}
 					</CardTitle>
 					<CardDescription>
 						{mode === "edit"
-							? "Update the details of your dessert"
-							: "Create a new dessert item"}
+							? isSpecial
+								? "Update the details of your special"
+								: "Update the details of your dessert"
+							: isSpecial
+								? "Create a new special item"
+								: "Create a new dessert item"}
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
@@ -243,7 +273,14 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 										<FormItem>
 											<FormLabel>Name</FormLabel>
 											<FormControl>
-												<Input placeholder="Enter dessert name" {...field} />
+												<Input
+													placeholder={
+														isSpecial
+															? "Enter special name"
+															: "Enter dessert name"
+													}
+													{...field}
+												/>
 											</FormControl>
 											<FormMessage />
 										</FormItem>
@@ -284,7 +321,11 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 										<FormLabel>Description</FormLabel>
 										<FormControl>
 											<Textarea
-												placeholder="Enter dessert description"
+												placeholder={
+													isSpecial
+														? "Enter special description"
+														: "Enter dessert description"
+												}
 												className="min-h-[100px]"
 												{...field}
 											/>
@@ -295,7 +336,7 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 							/>
 
 							<div className="space-y-4">
-								<FormLabel>Dessert Image</FormLabel>
+								<FormLabel>{isSpecial ? "Special" : "Dessert"} Image</FormLabel>
 								<div className="flex flex-col space-y-4">
 									{imagePreview && (
 										<div className="relative w-full max-w-sm">
@@ -321,52 +362,58 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 								</div>
 							</div>
 
-							<div className="grid gap-4 md:grid-cols-2">
-								<FormField
-									control={form.control}
-									name="category"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>Category</FormLabel>
-											<Select
-												onValueChange={field.onChange}
-												defaultValue={field.value}
-											>
-												<FormControl>
-													<SelectTrigger>
-														<SelectValue placeholder="Select category" />
-													</SelectTrigger>
-												</FormControl>
-												<SelectContent>
-													<SelectItem value="cake">Cake</SelectItem>
-													<SelectItem value="dessert">Dessert</SelectItem>
-													<SelectItem value="special">Special</SelectItem>
-												</SelectContent>
-											</Select>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
+							<div
+								className={`grid gap-4 ${isSpecial ? "" : "md:grid-cols-2"}`}
+							>
+								{!isSpecial && (
+									<FormField
+										control={form.control}
+										name="category"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel>Category</FormLabel>
+												<Select
+													onValueChange={field.onChange}
+													defaultValue={field.value}
+												>
+													<FormControl>
+														<SelectTrigger>
+															<SelectValue placeholder="Select category" />
+														</SelectTrigger>
+													</FormControl>
+													<SelectContent>
+														<SelectItem value="cake">Cake</SelectItem>
+														<SelectItem value="dessert">Dessert</SelectItem>
+														<SelectItem value="special">Special</SelectItem>
+													</SelectContent>
+												</Select>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+								)}
 
-								<FormField
-									control={form.control}
-									name="leadTimeDays"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>Lead Time (Days)</FormLabel>
-											<FormControl>
-												<Input
-													type="number"
-													min="1"
-													max="30"
-													placeholder="Enter lead time in days"
-													{...field}
-												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
+								{!isSpecial && (
+									<FormField
+										control={form.control}
+										name="leadTimeDays"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel>Lead Time (Days)</FormLabel>
+												<FormControl>
+													<Input
+														type="number"
+														min="1"
+														max="30"
+														placeholder="Enter lead time in days"
+														{...field}
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+								)}
 							</div>
 
 							<FormField
@@ -406,8 +453,12 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 									{uploading
 										? "Uploading..."
 										: mode === "create"
-											? "Create Dessert"
-											: "Update Dessert"}
+											? isSpecial
+												? "Create Special"
+												: "Create Dessert"
+											: isSpecial
+												? "Update Special"
+												: "Update Dessert"}
 								</Button>
 							</div>
 						</form>

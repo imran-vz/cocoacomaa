@@ -204,6 +204,13 @@ export async function POST(request: NextRequest) {
 			amount: Math.round(grossAmount * 100), // Convert to paise
 			currency: "INR",
 			receipt: `workshop_${order.id}`,
+			notes: {
+				orderId: order.id.toString(),
+				userId: session.user.id.toString(),
+				workshopId: workshopId.toString(),
+				slots: actualSlots.toString(),
+				orderType: "workshop",
+			},
 		});
 
 		// Update order with Razorpay order ID

@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
 			orderId: order.id.toString(),
 			userId: order.userId.toString(),
 			pickupDatetime: order.pickupDateTime?.toISOString() || "",
+			orderType: order.orderType,
 		},
 	});
 

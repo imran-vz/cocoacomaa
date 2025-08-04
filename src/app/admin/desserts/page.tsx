@@ -1,3 +1,4 @@
+import { inArray } from "drizzle-orm";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 
@@ -5,6 +6,7 @@ import { columns } from "@/components/desserts/columns";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { db } from "@/lib/db";
+import { desserts } from "@/lib/db/schema";
 
 export default async function DessertsPage() {
 	const dessertsList = await db.query.desserts.findMany({
@@ -19,6 +21,7 @@ export default async function DessertsPage() {
 			status: true,
 			createdAt: true,
 		},
+		where: inArray(desserts.category, ["dessert", "cake"]),
 	});
 
 	return (

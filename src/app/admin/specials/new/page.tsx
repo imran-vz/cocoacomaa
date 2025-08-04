@@ -11,7 +11,7 @@ export default function NewSpecialPage() {
 				imageUrl: "",
 				status: "available",
 				category: "special",
-				leadTimeDays: 3,
+				leadTimeDays: 0,
 			}}
 		/>
 	);

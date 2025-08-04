@@ -469,6 +469,12 @@ export const workshopOrders = pgTable("workshop_orders", (d) => {
 			.notNull()
 			.default("pending"),
 		notes: d.text("notes"),
+		orderType: d
+			.varchar("order_type", {
+				enum: ["workshop"],
+			})
+			.notNull()
+			.default("workshop"),
 	};
 });
 

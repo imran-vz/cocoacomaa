@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 
+import LoginModal from "@/components/LoginModal";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -56,10 +57,8 @@ export default function SpecialsPage() {
 	const router = useRouter();
 	const { items, addItem, removeItem, updateQuantity, clearNonSpecials } =
 		useCart();
-	useSession({
-		required: true,
-		onUnauthenticated: () => router.push("/login"),
-	});
+
+	const { data: session, status } = useSession();
 
 	const { data: specials, isLoading: isLoadingSpecials } = useQuery({
 		queryKey: ["specials"],
@@ -70,6 +69,45 @@ export default function SpecialsPage() {
 		queryKey: ["specials-settings"],
 		queryFn: fetchSpecialsSettings,
 	});
+
+	// Show loading while checking authentication
+	if (status === "loading") {
+		return (
+			<div className="container mx-auto p-4 sm:p-6">
+				<div className="max-w-4xl mx-auto">
+					<div className="animate-pulse">
+						<div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+						<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+							{Array.from({ length: 6 }, (_, i) => (
+								<div
+									key={`loading-special-${Math.random()}-${i}`}
+									className="h-96 bg-gray-200 rounded-lg"
+								></div>
+							))}
+						</div>
+					</div>
+				</div>
+			</div>
+		);
+	}
+
+	// Show login modal if not authenticated
+	if (!session) {
+		return (
+			<div className="container mx-auto p-4 sm:p-6">
+				<div className="max-w-4xl mx-auto">
+					<h1 className="text-3xl font-bold mb-6">Specials</h1>
+					<Alert>
+						<AlertTitle>Authentication Required</AlertTitle>
+						<AlertDescription>
+							Please sign in to access our specials.
+						</AlertDescription>
+					</Alert>
+				</div>
+				<LoginModal open={true} onClose={() => {}} redirect="/specials" />
+			</div>
+		);
+	}
 
 	// If specials are not active, show message
 	if (!isLoadingSettings && !settings?.isActive) {
@@ -136,6 +174,11 @@ export default function SpecialsPage() {
 	};
 
 	const handleCheckout = () => {
+		if (!session?.user?.id) {
+			router.push("/login?redirect=/specials");
+			return;
+		}
+
 		if (items.length === 0) return;
 		router.push("/checkout");
 	};
