@@ -1,12 +1,10 @@
-import { and, desc, eq, isNotNull } from "drizzle-orm";
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import { Suspense } from "react";
 import { auth } from "@/auth";
-import { Icons } from "@/components/icons";
 import { DataTable } from "@/components/ui/data-table";
 import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
+import { and, desc, eq, isNotNull } from "drizzle-orm";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 import { columns } from "./columns";
 
 export const dynamic = "force-dynamic";
@@ -64,15 +62,7 @@ export default async function MyOrdersPage() {
 					</div>
 				</div>
 			) : (
-				<Suspense
-					fallback={
-						<div>
-							<Icons.spinner className="w-4 h-4 animate-spin" />
-						</div>
-					}
-				>
-					<DataTable columns={columns} data={userOrders} />
-				</Suspense>
+				<DataTable columns={columns} data={userOrders} />
 			)}
 		</div>
 	);
