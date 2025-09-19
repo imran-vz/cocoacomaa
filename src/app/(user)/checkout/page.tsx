@@ -1,6 +1,5 @@
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import { Suspense } from "react";
 
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -18,14 +17,12 @@ export default async function Page() {
 	});
 
 	return (
-		<Suspense fallback={<div>Loading...</div>}>
-			<CheckoutPage
-				user={{
-					email: user?.email ?? "",
-					phone: user?.phone ?? "",
-					name: user?.name ?? "",
-				}}
-			/>
-		</Suspense>
+		<CheckoutPage
+			user={{
+				email: user?.email ?? "",
+				phone: user?.phone ?? "",
+				name: user?.name ?? "",
+			}}
+		/>
 	);
 }
