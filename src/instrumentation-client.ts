@@ -4,16 +4,23 @@
 
 import * as Sentry from "@sentry/nextjs";
 
-Sentry.init({
-	dsn: "https://7cbf330db7b004ed891bd8db5e2b2d41@o4509786235928576.ingest.de.sentry.io/4509786237042768",
+// Only initialize Sentry in production
+if (process.env.NODE_ENV === "production") {
+	Sentry.init({
+		dsn: "https://7cbf330db7b004ed891bd8db5e2b2d41@o4509786235928576.ingest.de.sentry.io/4509786237042768",
 
-	// Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
-	tracesSampleRate: 1,
-	// Enable logs to be sent to Sentry
-	enableLogs: true,
+		// Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
+		tracesSampleRate: 1,
+		// Enable logs to be sent to Sentry
+		enableLogs: true,
 
-	// Setting this option to true will print useful information to the console while you're setting up Sentry.
-	debug: false,
-});
+		// Setting this option to true will print useful information to the console while you're setting up Sentry.
+		debug: false,
+	});
+}
 
-export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
+// Export router transition handler, no-op in development
+export const onRouterTransitionStart =
+	process.env.NODE_ENV === "production"
+		? Sentry.captureRouterTransitionStart
+		: () => {};

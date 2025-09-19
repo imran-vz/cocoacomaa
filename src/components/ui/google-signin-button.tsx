@@ -10,13 +10,11 @@ import { Button } from "@/components/ui/button";
 interface GoogleSignInButtonProps {
 	text?: string;
 	redirect?: string | null;
-	className?: string;
 }
 
 export function GoogleSignInButton({
 	text = "Continue with Google",
 	redirect,
-	className = "w-full",
 }: GoogleSignInButtonProps) {
 	const [isLoading, setIsLoading] = useState(false);
 
@@ -26,15 +24,7 @@ export function GoogleSignInButton({
 
 			await signIn("google", {
 				redirectTo: redirect || "/",
-				// callbackUrl:  || "/",
 			});
-
-			// // Redirect manually after successful sign-in
-			// if (redirect) {
-			// 	window.location.href = redirect;
-			// } else {
-			// 	window.location.href = "/";
-			// }
 		} catch (error) {
 			console.error("Google sign-in error:", error);
 			toast.error("Failed to sign in with Google");
@@ -47,7 +37,7 @@ export function GoogleSignInButton({
 		<Button
 			type="button"
 			variant="outline"
-			className={className}
+			className={"w-full"}
 			onClick={handleGoogleSignIn}
 			disabled={isLoading}
 		>

@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Calendar, Clock, Save, Settings } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,7 @@ export default function CakeOrderDaysSettingsPage() {
 	const queryClient = useQueryClient();
 	const [selectedDays, setSelectedDays] = useState<number[]>([]);
 	const [isActive, setIsActive] = useState(true);
+	const enableCakeOrderSystemId = useId();
 
 	// Fetch current settings
 	const { data: settingsData, isLoading } = useQuery({
@@ -195,20 +196,24 @@ export default function CakeOrderDaysSettingsPage() {
 					</CardHeader>
 					<CardContent className="space-y-6">
 						{/* Enable/Disable Toggle */}
-						<div className="flex items-center justify-between p-4 border rounded-lg">
+						<Label
+							htmlFor={enableCakeOrderSystemId}
+							className="flex items-center justify-between p-4 border rounded-lg"
+						>
 							<div>
-								<Label className="text-base font-medium">
+								<p className="text-base font-medium">
 									Enable Cake Order System
-								</Label>
+								</p>
 								<p className="text-sm text-muted-foreground">
 									Toggle to enable or disable the entire cake order system
 								</p>
 							</div>
 							<Checkbox
+								id={enableCakeOrderSystemId}
 								checked={isActive}
 								onCheckedChange={(checked) => setIsActive(checked === true)}
 							/>
-						</div>
+						</Label>
 
 						{/* Days Selection */}
 						<div className="space-y-4">
@@ -249,9 +254,6 @@ export default function CakeOrderDaysSettingsPage() {
 										>
 											{day.label}
 										</Label>
-										<span className="text-xs text-muted-foreground font-mono">
-											{day.short}
-										</span>
 									</div>
 								))}
 							</div>
