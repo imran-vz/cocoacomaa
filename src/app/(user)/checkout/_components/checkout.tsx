@@ -59,6 +59,7 @@ import type {
 	RazorpayOrderData,
 	RazorpayResponse,
 } from "@/types/razorpay";
+import { confirm } from "@/components/confirm-dialog";
 
 interface Dessert {
 	id: number;
@@ -447,9 +448,12 @@ export default function CheckoutPage({
 
 	// Handle address deletion with confirmation
 	const handleDeleteAddress = async (addressId: number) => {
-		const confirmed = window.confirm(
-			"Are you sure you want to delete this address?",
-		);
+		const confirmed = await confirm({
+			title: "Delete Address",
+			description:
+				"Are you sure you want to delete this address? This action cannot be undone.",
+		});
+
 		if (!confirmed) return;
 
 		try {
@@ -999,20 +1003,18 @@ export default function CheckoutPage({
 																				type="button"
 																				variant="ghost"
 																				size="sm"
-																				onClick={(e) => {
-																					e.preventDefault();
+																				onClick={() => {
 																					handleDeleteAddress(address.id);
 																				}}
 																				disabled={
 																					deleteAddressMutation.isPending
 																				}
-																				className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2"
 																				title="Delete address"
 																			>
 																				{deleteAddressMutation.isPending ? (
 																					<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600" />
 																				) : (
-																					<Trash2 className="h-4 w-4" />
+																					<Trash2 className="h-4 w-4 text-primary" />
 																				)}
 																			</Button>
 																		</div>
