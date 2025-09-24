@@ -1,25 +1,15 @@
 import { sub } from "date-fns";
 import { and, eq, gte, isNotNull, not, sql } from "drizzle-orm";
-import {
-	CheckCircle2,
-	Clock,
-	DollarSign,
-	Package,
-	Shield,
-	TrendingUp,
-	Users,
-	XCircle,
-} from "lucide-react";
+import { CheckCircle2, Clock, DollarSign, Package, XCircle } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/lib/db";
-import { desserts, orders, users } from "@/lib/db/schema";
-import { formatCurrency } from "@/lib/utils";
+import { orders } from "@/lib/db/schema";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminDashboard() {
+export default async function ManagerDashboard() {
 	// Base filter for valid orders (not deleted and have payment ID)
 	const validOrdersFilter = and(
 		eq(orders.isDeleted, false),
@@ -31,27 +21,6 @@ export default async function AdminDashboard() {
 		.select({ count: sql<number>`count(*)` })
 		.from(orders)
 		.where(validOrdersFilter)
-		.then((res) => res[0].count);
-
-	// Get total revenue (paid orders only)
-	const totalRevenuePromise = db
-		.select({ total: sql<number>`sum(CAST(${orders.total} AS DECIMAL))` })
-		.from(orders)
-		.where(validOrdersFilter)
-		.then((res) => Number(res[0].total) || 0);
-
-	// Get total desserts (available only)
-	const totalDessertsPromise = db
-		.select({ count: sql<number>`count(*)` })
-		.from(desserts)
-		.where(eq(desserts.status, "available"))
-		.then((res) => res[0].count);
-
-	// Get total customers (unchanged)
-	const totalCustomersPromise = db
-		.select({ count: sql<number>`count(*)` })
-		.from(users)
-		.where(eq(users.role, "customer"))
 		.then((res) => res[0].count);
 
 	// Get recent orders (last 7 days, valid orders only)
@@ -80,31 +49,25 @@ export default async function AdminDashboard() {
 		.where(and(validOrdersFilter, eq(orders.status, "completed")))
 		.then((res) => res[0].count);
 
+	// Get total order value (valid orders only)
+	const totalOrderValuePromise = db
+		.select({ total: sql<string>`COALESCE(SUM(total), 0)` })
+		.from(orders)
+		.where(validOrdersFilter)
+		.then((res) => res[0].total);
+
 	return (
 		<div className="container mx-auto p-4 sm:p-6">
-			<h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Dashboard</h1>
+			<h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">
+				Manager Dashboard
+			</h1>
 
-			{/* Main Stats Grid */}
-			<div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-				<Suspense fallback={<Loading />}>
-					<TotalRevenue totalRevenuePromise={totalRevenuePromise} />
-				</Suspense>
-
+			{/* Order Stats Grid */}
+			<div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
 				<Suspense fallback={<Loading />}>
 					<TotalOrders totalOrdersPromise={totalOrdersPromise} />
 				</Suspense>
 
-				<Suspense fallback={<Loading />}>
-					<TotalDesserts totalDessertsPromise={totalDessertsPromise} />
-				</Suspense>
-
-				<Suspense fallback={<Loading />}>
-					<TotalCustomers totalCustomersPromise={totalCustomersPromise} />
-				</Suspense>
-			</div>
-
-			{/* Secondary Stats Grid */}
-			<div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mt-4">
 				<Suspense fallback={<Loading />}>
 					<RecentOrders recentOrdersPromise={recentOrdersPromise} />
 				</Suspense>
@@ -116,13 +79,17 @@ export default async function AdminDashboard() {
 				<Suspense fallback={<Loading />}>
 					<CompletedOrders completedOrdersPromise={completedOrdersPromise} />
 				</Suspense>
+
+				<Suspense fallback={<Loading />}>
+					<TotalOrderValue totalOrderValuePromise={totalOrderValuePromise} />
+				</Suspense>
 			</div>
 
-			{/* Quick Actions Section */}
+			{/* Quick Actions Section - Read Only */}
 			<div className="mt-8">
 				<h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-				<div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-					<Link href="/admin/orders">
+				<div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+					<Link href="/manager/orders">
 						<Card className="hover:shadow-md transition-shadow cursor-pointer">
 							<CardContent className="p-4">
 								<div className="flex items-center space-x-4">
@@ -130,55 +97,7 @@ export default async function AdminDashboard() {
 									<div>
 										<h3 className="font-medium">View Orders</h3>
 										<p className="text-sm text-muted-foreground">
-											Manage all orders
-										</p>
-									</div>
-								</div>
-							</CardContent>
-						</Card>
-					</Link>
-
-					<Link href="/admin/desserts">
-						<Card className="hover:shadow-md transition-shadow cursor-pointer">
-							<CardContent className="p-4">
-								<div className="flex items-center space-x-4">
-									<TrendingUp className="h-6 w-6 text-primary" />
-									<div>
-										<h3 className="font-medium">Manage Desserts</h3>
-										<p className="text-sm text-muted-foreground">
-											Add or edit desserts
-										</p>
-									</div>
-								</div>
-							</CardContent>
-						</Card>
-					</Link>
-
-					<Link href="/admin/customers">
-						<Card className="hover:shadow-md transition-shadow cursor-pointer">
-							<CardContent className="p-4">
-								<div className="flex items-center space-x-4">
-									<Users className="h-6 w-6 text-primary" />
-									<div>
-										<h3 className="font-medium">View Customers</h3>
-										<p className="text-sm text-muted-foreground">
-											Manage customers
-										</p>
-									</div>
-								</div>
-							</CardContent>
-						</Card>
-					</Link>
-
-					<Link href="/admin/managers">
-						<Card className="hover:shadow-md transition-shadow cursor-pointer">
-							<CardContent className="p-4">
-								<div className="flex items-center space-x-4">
-									<Shield className="h-6 w-6 text-primary" />
-									<div>
-										<h3 className="font-medium">Manage Managers</h3>
-										<p className="text-sm text-muted-foreground">
-											Add, edit and delete managers
+											View all orders (read-only)
 										</p>
 									</div>
 								</div>
@@ -188,29 +107,6 @@ export default async function AdminDashboard() {
 				</div>
 			</div>
 		</div>
-	);
-}
-
-async function TotalRevenue({
-	totalRevenuePromise,
-}: {
-	totalRevenuePromise: Promise<number>;
-}) {
-	const totalRevenue = await totalRevenuePromise.catch(() => 0);
-
-	return (
-		<Card className="hover:shadow-md transition-shadow">
-			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-				<DollarSign className="h-4 w-4 text-muted-foreground" />
-			</CardHeader>
-			<CardContent>
-				<div className="text-xl sm:text-2xl font-bold">
-					{formatCurrency(totalRevenue)}
-				</div>
-				<p className="text-xs text-muted-foreground mt-1">From paid orders</p>
-			</CardContent>
-		</Card>
 	);
 }
 
@@ -231,52 +127,6 @@ async function TotalOrders({
 				<div className="text-xl sm:text-2xl font-bold">{totalOrders}</div>
 				<p className="text-xs text-muted-foreground mt-1">
 					Valid orders with payment
-				</p>
-			</CardContent>
-		</Card>
-	);
-}
-
-async function TotalDesserts({
-	totalDessertsPromise,
-}: {
-	totalDessertsPromise: Promise<number>;
-}) {
-	const totalDesserts = await totalDessertsPromise.catch(() => {
-		return 0;
-	});
-
-	return (
-		<Card className="hover:shadow-md transition-shadow">
-			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle className="text-sm font-medium">Total Desserts</CardTitle>
-				<TrendingUp className="h-4 w-4 text-muted-foreground" />
-			</CardHeader>
-			<CardContent>
-				<div className="text-xl sm:text-2xl font-bold">{totalDesserts}</div>
-				<p className="text-xs text-muted-foreground mt-1">Available desserts</p>
-			</CardContent>
-		</Card>
-	);
-}
-
-async function TotalCustomers({
-	totalCustomersPromise,
-}: {
-	totalCustomersPromise: Promise<number>;
-}) {
-	const totalCustomers = await totalCustomersPromise.catch(() => 0);
-
-	return (
-		<Card className="hover:shadow-md transition-shadow">
-			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle className="text-sm font-medium">Total Customers</CardTitle>
-				<Users className="h-4 w-4 text-muted-foreground" />
-			</CardHeader>
-			<CardContent>
-				<div className="text-xl sm:text-2xl font-bold">{totalCustomers}</div>
-				<p className="text-xs text-muted-foreground mt-1">
-					Registered customers
 				</p>
 			</CardContent>
 		</Card>
@@ -343,6 +193,34 @@ async function CompletedOrders({
 				<div className="text-xl sm:text-2xl font-bold">{completedOrders}</div>
 				<p className="text-xs text-muted-foreground mt-1">
 					Successfully delivered
+				</p>
+			</CardContent>
+		</Card>
+	);
+}
+
+async function TotalOrderValue({
+	totalOrderValuePromise,
+}: {
+	totalOrderValuePromise: Promise<string>;
+}) {
+	const totalOrderValue = await totalOrderValuePromise.catch(() => "0");
+	const formattedTotal = Number.parseFloat(totalOrderValue).toLocaleString("en-IN", {
+		style: "currency",
+		currency: "INR",
+		maximumFractionDigits: 0,
+	});
+
+	return (
+		<Card className="hover:shadow-md transition-shadow">
+			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+				<CardTitle className="text-sm font-medium">Total Order Value</CardTitle>
+				<DollarSign className="h-4 w-4 text-muted-foreground" />
+			</CardHeader>
+			<CardContent>
+				<div className="text-xl sm:text-2xl font-bold">{formattedTotal}</div>
+				<p className="text-xs text-muted-foreground mt-1">
+					Total revenue from all orders
 				</p>
 			</CardContent>
 		</Card>

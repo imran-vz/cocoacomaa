@@ -1,14 +1,14 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 
-export default async function AdminLayout({
+export default async function ManagerLayout({
 	children,
 }: {
 	children: React.ReactNode;
 }) {
 	const session = await auth();
 
-	if (!session || !["admin", "manager"].includes(session.user?.role || "")) {
+	if (!session || session.user?.role !== "manager") {
 		redirect("/");
 	}
 

@@ -32,7 +32,7 @@ export function DataTableToolbar<TData>({
 	const isFiltered = table.getState().columnFilters.length > 0;
 
 	return (
-		<div className="flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
+		<div className="flex flex-col sm:flex-row gap-2 sm:items-center justify-between py-2 pr-2">
 			<div className="flex flex-1 flex-col sm:flex-row sm:items-center gap-2">
 				{searchKey && (
 					<Input

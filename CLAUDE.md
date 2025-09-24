@@ -45,6 +45,9 @@ pnpm db:seed
 
 # Create admin user
 pnpm create-admin
+
+# Create manager user (read-only access)
+pnpm create-manager
 ```
 
 ### Email Development
@@ -80,6 +83,7 @@ pnpm test:status-email
 - `src/app/(user)/` - Customer-facing pages (checkout, orders, postal brownies)
 - `src/app/(legal)/` - Legal pages (terms, privacy, about)
 - `src/app/admin/` - Admin dashboard and management
+- `src/app/manager/` - Manager dashboard (read-only orders access)
 - `src/app/api/` - API routes for backend functionality
 
 #### Key Directories
@@ -102,7 +106,10 @@ The application uses Drizzle ORM with PostgreSQL. Key entities include:
 ### Authentication & Authorization
 
 - NextAuth.js v5 with custom providers
-- Role-based access (admin vs customer)
+- Role-based access (admin, manager, customer)
+  - Admin: Full read/write access to all areas
+  - Manager: Read-only access to orders only
+  - Customer: Access to their own orders and account
 - Protected routes with middleware
 
 ### Payment Integration
@@ -129,6 +136,7 @@ The application uses Drizzle ORM with PostgreSQL. Key entities include:
 2. **Code Quality**: Run `pnpm lint:fix` before committing
 3. **Testing Emails**: Use `pnpm email:dev` to preview email templates
 4. **Admin Access**: Create admin users with `pnpm create-admin` script
+5. **Manager Access**: Create manager users with `pnpm create-manager` script (read-only orders)
 
 ## Important Notes
 

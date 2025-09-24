@@ -423,26 +423,58 @@ export default async function AdminOrderDetailsPage({
 
 						{/* Business Contact - Only for postal brownies */}
 						{order.orderType === "postal-brownies" && (
-							<Card>
-								<CardHeader>
-									<CardTitle className="flex items-center gap-2">
-										<Phone className="h-5 w-5" />
-										Contact Us
-									</CardTitle>
-								</CardHeader>
-								<CardContent className="space-y-3">
-									<div className="flex items-center gap-2">
-										<Phone className="h-4 w-4 text-muted-foreground" />
-										<span className="text-sm flex-1">
-											{process.env.NEXT_PUBLIC_BUSINESS_PHONE}
-										</span>
-										<CopyPhoneButton />
-									</div>
-									<p className="text-xs text-muted-foreground">
-										Call us if you have any questions about your delivery
-									</p>
-								</CardContent>
-							</Card>
+							<>
+								<Card>
+									<CardHeader>
+										<CardTitle className="flex items-center gap-2">
+											<MapPin className="h-5 w-5" />
+											Pickup Location
+										</CardTitle>
+									</CardHeader>
+									<CardContent className="space-y-3">
+										<div className="flex items-start gap-2">
+											<MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
+											<div className="text-sm flex-1">
+												<p className="font-medium">Cocoa Comaa</p>
+												<p className="text-muted-foreground">
+													Akshaya Gold Apartment, <br /> Pipe Line Rd, VGS
+													Layout,
+													<br />
+													Ejipura, Bengaluru - 560047{" "}
+												</p>
+											</div>
+											<CopyAddressButton />
+										</div>
+										<div className="flex items-center gap-2">
+											<Phone className="h-4 w-4 text-muted-foreground" />
+											<span className="text-sm flex-1">
+												{process.env.NEXT_PUBLIC_BUSINESS_PHONE}
+											</span>
+											<CopyPhoneButton />
+										</div>
+									</CardContent>
+								</Card>
+								<Card>
+									<CardHeader>
+										<CardTitle className="flex items-center gap-2">
+											<Phone className="h-5 w-5" />
+											Contact Us
+										</CardTitle>
+									</CardHeader>
+									<CardContent className="space-y-3">
+										<div className="flex items-center gap-2">
+											<Phone className="h-4 w-4 text-muted-foreground" />
+											<span className="text-sm flex-1">
+												{process.env.NEXT_PUBLIC_BUSINESS_PHONE}
+											</span>
+											<CopyPhoneButton />
+										</div>
+										<p className="text-xs text-muted-foreground">
+											Call us if you have any questions about your delivery
+										</p>
+									</CardContent>
+								</Card>
+							</>
 						)}
 
 						{/* Payment Information */}

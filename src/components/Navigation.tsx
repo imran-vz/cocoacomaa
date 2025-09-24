@@ -20,6 +20,7 @@ export function Navigation() {
 	const session = useSession();
 
 	const isAdmin = session.data?.user?.role === "admin";
+	const isManager = session.data?.user?.role === "manager";
 
 	const handleLogout = async () => {
 		await signOut({ callbackUrl: "/" });
@@ -32,7 +33,7 @@ export function Navigation() {
 					{/* Logo */}
 					<div className="shrink-0 flex items-center">
 						<Link
-							href={isAdmin ? "/admin" : "/"}
+							href={isAdmin ? "/admin" : isManager ? "/manager" : "/"}
 							className="text-xl sm:text-2xl uppercase font-bold text-gray-800"
 						>
 							Cocoa Comaa
@@ -152,6 +153,37 @@ export function Navigation() {
 											</DropdownMenuItem>
 										</DropdownMenuGroup>
 										<DropdownMenuSeparator />
+										<DropdownMenuItem
+											onClick={handleLogout}
+											className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer"
+										>
+											<LogOut className="h-4 w-4 mr-2" />
+											Logout
+										</DropdownMenuItem>
+									</DropdownMenuContent>
+								</DropdownMenu>
+							</>
+						) : isManager ? (
+							<>
+								<Button variant="ghost" asChild className="hidden md:flex">
+									<Link href="/manager">Dashboard</Link>
+								</Button>
+								<DropdownMenu>
+									<DropdownMenuTrigger asChild>
+										<Button
+											variant="ghost"
+											className="relative h-8 w-8 rounded-full"
+										>
+											<Avatar className="h-8 w-8">
+												<AvatarImage
+													src={session.data.user.image || undefined}
+													alt={session.data.user.name || "Manager"}
+												/>
+												<AvatarFallback>MG</AvatarFallback>
+											</Avatar>
+										</Button>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent align="end" className="w-56">
 										<DropdownMenuItem
 											onClick={handleLogout}
 											className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer"

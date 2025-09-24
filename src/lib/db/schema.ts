@@ -192,7 +192,7 @@ export const users = pgTable("users", (d) => {
 		createdAt: d.timestamp("created_at").defaultNow().notNull(),
 		updatedAt: d.timestamp("updated_at").defaultNow().notNull(),
 		role: d
-			.varchar("role", { enum: ["customer", "admin"] })
+			.varchar("role", { enum: ["customer", "admin", "manager"] })
 			.notNull()
 			.default("customer"),
 	};
