@@ -175,7 +175,6 @@ export default function ManagerOrderDetailsClient({
 													</div>
 												</div>
 											))}
-
 								</div>
 							</CardContent>
 						</Card>

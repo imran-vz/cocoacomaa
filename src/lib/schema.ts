@@ -47,6 +47,22 @@ export const checkoutFormSchemaDB = z
 				},
 				{ message: "Please select a valid pickup date." },
 			)
+			.refine(
+				(val) => {
+					try {
+						const date = new Date(val);
+						const dayOfWeek = date.getDay();
+						// Reject Monday (1) and Tuesday (2) for cake orders
+						return dayOfWeek !== 1 && dayOfWeek !== 2;
+					} catch (_error) {
+						return true; // Let the first refine handle invalid dates
+					}
+				},
+				{
+					message:
+						"Pickup is not available on Mondays and Tuesdays. Please select Wednesday through Sunday.",
+				},
+			)
 			.optional(),
 		pickupTime: z
 			.string()

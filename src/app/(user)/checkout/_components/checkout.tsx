@@ -152,9 +152,21 @@ const createCheckoutFormSchema = (
 		pickupDate:
 			isPostalBrownies || hasSpecials
 				? z.date().optional()
-				: z.date({
-						required_error: "Please select a pickup date.",
-					}),
+				: z
+						.date({
+							required_error: "Please select a pickup date.",
+						})
+						.refine(
+							(date) => {
+								const dayOfWeek = date.getDay();
+								// Reject Monday (1) and Tuesday (2) for cake orders
+								return dayOfWeek !== 1 && dayOfWeek !== 2;
+							},
+							{
+								message:
+									"Pickup is not available on Mondays and Tuesdays. Please select Wednesday through Sunday.",
+							},
+						),
 		pickupTime:
 			isPostalBrownies || hasSpecials
 				? z.string().optional()
@@ -672,13 +684,14 @@ export default function CheckoutPage({
 				});
 
 				if (!orderResponse.ok) {
-					throw new Error("Failed to create order");
+					const errorData = await orderResponse.json();
+					throw new Error(errorData.error || "Failed to create order");
 				}
 
 				const newOrderData = await orderResponse.json();
 
 				if (!newOrderData.success) {
-					throw new Error("Failed to create order");
+					throw new Error(newOrderData.error || "Failed to create order");
 				}
 
 				orderData = newOrderData;
@@ -697,7 +710,11 @@ export default function CheckoutPage({
 			await handlePayment(data, orderId, orderData);
 		} catch (error) {
 			console.error("Error processing order:", error);
-			toast.error("Failed to process order. Please try again.");
+			const errorMessage =
+				error instanceof Error
+					? error.message
+					: "Failed to process order. Please try again.";
+			toast.error(errorMessage);
 			setIsProcessing(false);
 			setProcessingStep("");
 		}

@@ -1,6 +1,12 @@
 import { sub } from "date-fns";
 import { and, eq, gte, isNotNull, not, sql } from "drizzle-orm";
-import { CheckCircle2, Clock, DollarSign, Package, XCircle } from "lucide-react";
+import {
+	CheckCircle2,
+	Clock,
+	DollarSign,
+	Package,
+	XCircle,
+} from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -205,11 +211,14 @@ async function TotalOrderValue({
 	totalOrderValuePromise: Promise<string>;
 }) {
 	const totalOrderValue = await totalOrderValuePromise.catch(() => "0");
-	const formattedTotal = Number.parseFloat(totalOrderValue).toLocaleString("en-IN", {
-		style: "currency",
-		currency: "INR",
-		maximumFractionDigits: 0,
-	});
+	const formattedTotal = Number.parseFloat(totalOrderValue).toLocaleString(
+		"en-IN",
+		{
+			style: "currency",
+			currency: "INR",
+			maximumFractionDigits: 0,
+		},
+	);
 
 	return (
 		<Card className="hover:shadow-md transition-shadow">
