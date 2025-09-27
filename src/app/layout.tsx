@@ -15,7 +15,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-	title: "Cocoacomaa",
+	title: "Cocoa Comaa",
 	description: "Order custom desserts online",
 
 	alternates: {
@@ -31,11 +31,11 @@ export const metadata: Metadata = {
 		},
 	],
 
-	applicationName: "Cocoacomaa",
+	applicationName: "Cocoa Comaa",
 	creator: "Imran",
-	keywords: ["cocoacomaa", "brownie", "dessert", "order", "online"],
+	keywords: ["cocoa-comaa", "brownie", "dessert", "order", "online"],
 	openGraph: {
-		title: "Cocoacomaa",
+		title: "Cocoa Comaa",
 		description: "Order custom desserts online",
 	},
 };

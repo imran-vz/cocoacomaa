@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Cocoacomaa is a Next.js 15 e-commerce application for ordering custom desserts online. The application includes user authentication, dessert ordering, admin management, payment integration with Razorpay, and email notifications.
+Cocoa comaa is a Next.js 15 e-commerce application for ordering custom desserts online. The application includes user authentication, dessert ordering, admin management, payment integration with Razorpay, and email notifications.
 
 ## Development Commands
 
