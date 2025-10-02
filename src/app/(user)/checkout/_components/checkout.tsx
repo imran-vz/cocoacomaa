@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { format } from "date-fns";
-import { CalendarIcon, Clock, Package, Trash2 } from "lucide-react";
+import { CalendarIcon, Clock, Edit2, Package, Trash2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useId, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -61,6 +61,7 @@ import type {
 	RazorpayOrderData,
 	RazorpayResponse,
 } from "@/types/razorpay";
+import { PhoneEditDialog } from "./phone-edit-dialog";
 
 interface Dessert {
 	id: number;
@@ -134,6 +135,7 @@ const isDateDisabled = (date: Date, leadTimeDays: number = 3) => {
 const createCheckoutFormSchema = (
 	isPostalBrownies: boolean,
 	hasSpecials: boolean = false,
+	hasExistingPhone: boolean = false,
 ) => {
 	const baseSchema = z.object({
 		name: z.string().min(2, {
@@ -150,9 +152,9 @@ const createCheckoutFormSchema = (
 			.refine((phone) => validatePhoneNumber(phone, "IN").isValid, {
 				message: "Please enter a valid phone number.",
 			}),
-		confirmPhone: z
-			.string()
-			.min(10, { message: "Please confirm your phone number." }),
+		confirmPhone: hasExistingPhone
+			? z.string().optional()
+			: z.string().min(10, { message: "Please confirm your phone number." }),
 		// Pickup fields - only required for non-postal orders and non-specials
 		pickupDate:
 			isPostalBrownies || hasSpecials
@@ -200,11 +202,13 @@ const createCheckoutFormSchema = (
 		zip: z.string().optional(),
 	});
 
-	// Add refinement to check that phone numbers match
-	return baseSchema.refine((data) => data.phone === data.confirmPhone, {
-		message: "Phone numbers don't match",
-		path: ["confirmPhone"],
-	});
+	// Add refinement to check that phone numbers match (only when confirmPhone is required)
+	return hasExistingPhone
+		? baseSchema
+		: baseSchema.refine((data) => data.phone === data.confirmPhone, {
+				message: "Phone numbers don't match",
+				path: ["confirmPhone"],
+			});
 };
 
 // Address validation schema
@@ -244,6 +248,7 @@ export default function CheckoutPage({
 	const [isCreatingAddress, setIsCreatingAddress] = useState(false);
 	const [isPhoneFieldEnabled, setIsPhoneFieldEnabled] = useState(false);
 	const [originalPhone, setOriginalPhone] = useState("");
+	const [isPhoneEditDialogOpen, setIsPhoneEditDialogOpen] = useState(false);
 	const existingId = useId();
 	const newId = useId();
 	const { areOrdersAllowed: ordersAllowed, settings } = useCakeOrderSettings();
@@ -291,6 +296,7 @@ export default function CheckoutPage({
 	const checkoutFormSchema = createCheckoutFormSchema(
 		isPostalBrownies,
 		hasSpecials,
+		!isPhoneFieldEnabled,
 	);
 
 	const form = useForm<CheckoutFormValues>({
@@ -513,6 +519,20 @@ export default function CheckoutPage({
 			return await response.json();
 		} catch (error) {
 			console.error("Error updating phone number:", error);
+			throw error;
+		}
+	};
+
+	// Handle phone edit dialog save
+	const handlePhoneEditSave = async (newPhone: string) => {
+		try {
+			await updateUserPhone(newPhone);
+			form.setValue("phone", newPhone);
+			form.setValue("confirmPhone", newPhone);
+			setOriginalPhone(newPhone);
+			setIsPhoneFieldEnabled(false);
+		} catch (error) {
+			console.error("Error saving phone number:", error);
 			throw error;
 		}
 	};
@@ -856,60 +876,96 @@ export default function CheckoutPage({
 									)}
 								/>
 
-								<FormField
-									control={form.control}
-									name="phone"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel className="text-sm sm:text-base">
-												Phone Number
-											</FormLabel>
-											<FormControl>
-												<Input
-													type="tel"
-													placeholder="Enter your phone number"
-													{...field}
-													className="text-sm sm:text-base "
-													readOnly={!isPhoneFieldEnabled || isProcessing}
-													disabled={!isPhoneFieldEnabled || isProcessing}
-													tabIndex={
-														!isPhoneFieldEnabled || isProcessing ? -1 : 0
-													}
-												/>
-											</FormControl>
-											<FormMessage className="text-xs sm:text-sm" />
-										</FormItem>
-									)}
-								/>
+								{/* Phone fields - Show differently based on whether user has phone */}
+								{isPhoneFieldEnabled ? (
+									// First-time user or user with no phone - show both fields
+									<>
+										<FormField
+											control={form.control}
+											name="phone"
+											render={({ field }) => (
+												<FormItem>
+													<FormLabel className="text-sm sm:text-base">
+														Phone Number
+													</FormLabel>
+													<FormControl>
+														<Input
+															type="tel"
+															placeholder="Enter your phone number"
+															{...field}
+															className="text-sm sm:text-base"
+															readOnly={isProcessing}
+															disabled={isProcessing}
+														/>
+													</FormControl>
+													<FormMessage className="text-xs sm:text-sm" />
+												</FormItem>
+											)}
+										/>
 
-								<FormField
-									control={form.control}
-									name="confirmPhone"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel className="text-sm sm:text-base">
-												Confirm Phone Number
-											</FormLabel>
-											<FormControl>
-												<Input
-													type="tel"
-													placeholder="Re-enter your phone number"
-													{...field}
-													className="text-sm sm:text-base "
-													readOnly={!isPhoneFieldEnabled || isProcessing}
-													disabled={!isPhoneFieldEnabled || isProcessing}
-													tabIndex={
-														!isPhoneFieldEnabled || isProcessing ? -1 : 0
-													}
-												/>
-											</FormControl>
-											<FormDescription className="text-xs sm:text-sm">
-												Please re-enter your phone number to confirm
-											</FormDescription>
-											<FormMessage className="text-xs sm:text-sm" />
-										</FormItem>
-									)}
-								/>
+										<FormField
+											control={form.control}
+											name="confirmPhone"
+											render={({ field }) => (
+												<FormItem>
+													<FormLabel className="text-sm sm:text-base">
+														Confirm Phone Number
+													</FormLabel>
+													<FormControl>
+														<Input
+															type="tel"
+															placeholder="Re-enter your phone number"
+															{...field}
+															className="text-sm sm:text-base"
+															readOnly={isProcessing}
+															disabled={isProcessing}
+														/>
+													</FormControl>
+													<FormDescription className="text-xs sm:text-sm">
+														Please re-enter your phone number to confirm
+													</FormDescription>
+													<FormMessage className="text-xs sm:text-sm" />
+												</FormItem>
+											)}
+										/>
+									</>
+								) : (
+									// Repeat user with phone - show phone with edit button
+									<FormField
+										control={form.control}
+										name="phone"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel className="text-sm sm:text-base">
+													Phone Number
+												</FormLabel>
+												<div className="flex gap-2">
+													<FormControl>
+														<Input
+															type="tel"
+															{...field}
+															className="text-sm sm:text-base"
+															readOnly
+															disabled
+															tabIndex={-1}
+														/>
+													</FormControl>
+													<Button
+														type="button"
+														variant="outline"
+														size="icon"
+														onClick={() => setIsPhoneEditDialogOpen(true)}
+														disabled={isProcessing}
+														title="Edit phone number"
+													>
+														<Edit2 className="h-4 w-4" />
+													</Button>
+												</div>
+												<FormMessage className="text-xs sm:text-sm" />
+											</FormItem>
+										)}
+									/>
+								)}
 
 								{!hasSpecials && (
 									<FormField
@@ -1621,6 +1677,14 @@ export default function CheckoutPage({
 					</CardContent>
 				</Card>
 			</div>
+
+			{/* Phone Edit Dialog */}
+			<PhoneEditDialog
+				isOpen={isPhoneEditDialogOpen}
+				onClose={() => setIsPhoneEditDialogOpen(false)}
+				currentPhone={form.getValues("phone")}
+				onSave={handlePhoneEditSave}
+			/>
 		</div>
 	);
 }
