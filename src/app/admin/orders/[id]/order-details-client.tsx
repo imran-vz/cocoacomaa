@@ -1,7 +1,5 @@
 "use client";
 
-import { TZDateMini } from "@date-fns/tz";
-import { format } from "date-fns";
 import {
 	Calendar,
 	Clock,
@@ -24,6 +22,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { formatDateTime, formatDateWithDay, formatTime } from "@/lib/format-timestamp";
 import { formatCurrency } from "@/lib/utils";
 import BackButton from "./back-button";
 import NavButton from "./nav-button";
@@ -132,11 +131,7 @@ export default function OrderDetailsClient({
 
 								<div className="text-sm text-muted-foreground">
 									<p>
-										Order placed on{" "}
-										{format(
-											new TZDateMini(order.createdAt, "Asia/Kolkata"),
-											"PPP 'at' p",
-										)}
+										Order placed on {formatDateTime(order.createdAt)}
 									</p>
 									{order.razorpayPaymentId && (
 										<p>Payment ID: {order.razorpayPaymentId}</p>
@@ -304,19 +299,13 @@ export default function OrderDetailsClient({
 									<div className="flex items-center gap-2">
 										<Calendar className="h-4 w-4 text-muted-foreground" />
 										<span className="text-sm">
-											{format(
-												new TZDateMini(order.pickupDateTime, "Asia/Kolkata"),
-												"EEEE, MMMM d, yyyy",
-											)}
+											{formatDateWithDay(order.pickupDateTime)}
 										</span>
 									</div>
 									<div className="flex items-center gap-2">
 										<Clock className="h-4 w-4 text-muted-foreground" />
 										<span className="text-sm">
-											{format(
-												new TZDateMini(order.pickupDateTime, "Asia/Kolkata"),
-												"h:mm a",
-											)}
+											{formatTime(order.pickupDateTime)}
 										</span>
 									</div>
 								</CardContent>

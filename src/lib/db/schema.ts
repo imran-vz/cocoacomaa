@@ -185,6 +185,7 @@ export const users = pgTable("users", (d) => {
 		name: d.text("name"),
 		email: d.text("email").notNull().unique(),
 		phone: d.text("phone"),
+		phoneVerified: d.boolean("phone_verified").notNull().default(false),
 		password: d.text("password"),
 		// NextAuth required fields
 		emailVerified: d.timestamp("emailVerified", { mode: "date" }),

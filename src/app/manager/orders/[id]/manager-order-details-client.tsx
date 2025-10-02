@@ -1,9 +1,8 @@
 "use client";
 
-import { TZDateMini } from "@date-fns/tz";
-import { format } from "date-fns";
 import {
 	Calendar,
+	CheckCircle,
 	Clock,
 	CreditCard,
 	Mail,
@@ -11,7 +10,11 @@ import {
 	Package,
 	Phone,
 	User,
+	XCircle,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
 
 import CopyAddressButton from "@/app/(user)/order/[id]/copy-address-button";
 import CopyPhoneButton from "@/app/(user)/order/[id]/copy-phone-button";
@@ -21,8 +24,9 @@ import {
 	getStatusColor,
 } from "@/app/(user)/order/[id]/utils";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { formatDateTime, formatDateWithDay, formatTime } from "@/lib/format-timestamp";
 import ManagerBackButton from "./manager-back-button";
 import ManagerNavButton from "./manager-nav-button";
 
@@ -47,14 +51,16 @@ type OrderData = {
 		} | null;
 	}>;
 	user: {
+		id: string;
 		name: string | null;
 		email: string;
 		phone: string | null;
+		phoneVerified: boolean;
 	};
 };
 
 interface ManagerOrderDetailsClientProps {
-	initialOrder: OrderData;
+	order: OrderData;
 }
 
 // Helper function to check if order contains special desserts
@@ -71,9 +77,47 @@ function hasSpecialDesserts(
 }
 
 export default function ManagerOrderDetailsClient({
-	initialOrder,
+	order: initialOrder,
 }: ManagerOrderDetailsClientProps) {
 	const order = initialOrder;
+	const router = useRouter();
+	const [isUpdatingPhone, setIsUpdatingPhone] = useState(false);
+
+	const togglePhoneVerification = async () => {
+		if (!order.user.phone) return;
+
+		setIsUpdatingPhone(true);
+		try {
+			const response = await fetch(
+				`/api/admin/customers/${order.user.id}/verify-phone`,
+				{
+					method: "PATCH",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						phoneVerified: !order.user.phoneVerified,
+					}),
+				},
+			);
+
+			if (!response.ok) {
+				throw new Error("Failed to update phone verification status");
+			}
+
+			toast.success(
+				order.user.phoneVerified
+					? "Phone marked as unverified"
+					: "Phone marked as verified",
+			);
+			router.refresh();
+		} catch (error) {
+			console.error(error);
+			toast.error("Failed to update verification status");
+		} finally {
+			setIsUpdatingPhone(false);
+		}
+	};
 
 	return (
 		<div className="container mx-auto py-4 sm:py-6 lg:py-8 px-4">
@@ -122,11 +166,7 @@ export default function ManagerOrderDetailsClient({
 
 								<div className="text-sm text-muted-foreground">
 									<p>
-										Order placed on{" "}
-										{format(
-											new TZDateMini(order.createdAt, "Asia/Kolkata"),
-											"PPP 'at' p",
-										)}
+										Order placed on {formatDateTime(order.createdAt)}
 									</p>
 									{order.razorpayPaymentId && (
 										<p>Payment ID: {order.razorpayPaymentId}</p>
@@ -229,6 +269,26 @@ export default function ManagerOrderDetailsClient({
 									<span className="text-sm">
 										{order.user.phone || "Not provided"}
 									</span>
+									{order.user.phone && (
+										<Button
+											size="sm"
+											variant="ghost"
+											onClick={togglePhoneVerification}
+											disabled={isUpdatingPhone}
+											className="h-7 px-2 ml-2"
+											title={
+												order.user.phoneVerified
+													? "Mark as unverified"
+													: "Mark as verified (called customer)"
+											}
+										>
+											{order.user.phoneVerified ? (
+												<CheckCircle className="h-4 w-4 text-green-600" />
+											) : (
+												<XCircle className="h-4 w-4 text-muted-foreground" />
+											)}
+										</Button>
+									)}
 								</div>
 							</CardContent>
 						</Card>
@@ -251,19 +311,13 @@ export default function ManagerOrderDetailsClient({
 									<div className="flex items-center gap-2">
 										<Calendar className="h-4 w-4 text-muted-foreground" />
 										<span className="text-sm">
-											{format(
-												new TZDateMini(order.pickupDateTime, "Asia/Kolkata"),
-												"EEEE, MMMM d, yyyy",
-											)}
+											{formatDateWithDay(order.pickupDateTime)}
 										</span>
 									</div>
 									<div className="flex items-center gap-2">
 										<Clock className="h-4 w-4 text-muted-foreground" />
 										<span className="text-sm">
-											{format(
-												new TZDateMini(order.pickupDateTime, "Asia/Kolkata"),
-												"h:mm a",
-											)}
+											{formatTime(order.pickupDateTime)}
 										</span>
 									</div>
 								</CardContent>

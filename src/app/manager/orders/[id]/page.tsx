@@ -48,9 +48,11 @@ export default async function ManagerOrderDetailsPage({
 			},
 			user: {
 				columns: {
+					id: true,
 					name: true,
 					email: true,
 					phone: true,
+					phoneVerified: true,
 				},
 			},
 		},
@@ -79,5 +81,5 @@ export default async function ManagerOrderDetailsPage({
 		);
 	}
 
-	return <ManagerOrderDetailsClient initialOrder={order} />;
+	return <ManagerOrderDetailsClient order={order} />;
 }

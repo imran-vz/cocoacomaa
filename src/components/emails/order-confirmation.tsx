@@ -1,4 +1,3 @@
-import { TZDateMini } from "@date-fns/tz";
 import {
 	Body,
 	Column,
@@ -14,9 +13,9 @@ import {
 	Tailwind,
 	Text,
 } from "@react-email/components";
-import { format } from "date-fns";
 // biome-ignore lint/correctness/noUnusedImports: React is used for email components
 import * as React from "react";
+import { formatDateTime } from "@/lib/format-timestamp";
 
 interface OrderItem {
 	itemName: string;
@@ -60,16 +59,10 @@ export default function OrderConfirmationEmail({
 	orderDetails,
 }: OrderConfirmationEmailProps) {
 	const customerName = orderDetails.user.name || "Customer";
-	const orderDate = format(
-		new TZDateMini(orderDetails.createdAt, "Asia/Kolkata"),
-		"PPP 'at' p",
-	);
+	const orderDate = formatDateTime(orderDetails.createdAt);
 
 	const pickupInfo = orderDetails.pickupDateTime
-		? format(
-				new TZDateMini(orderDetails.pickupDateTime, "Asia/Kolkata"),
-				"PPP 'at' p",
-			)
+		? formatDateTime(orderDetails.pickupDateTime)
 		: null;
 
 	const isPostalOrder = orderDetails.orderType === "postal-brownies";

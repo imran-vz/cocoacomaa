@@ -1,7 +1,6 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import { format } from "date-fns";
 import {
 	Calendar,
 	Mail,
@@ -13,6 +12,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
+import { formatLocalShortDate } from "@/lib/format-timestamp";
 import { formatCurrency } from "@/lib/utils";
 
 export const columns: ColumnDef<{
@@ -188,7 +188,7 @@ export const columns: ColumnDef<{
 			return (
 				<div className="flex w-[120px] items-center">
 					<span className="text-sm text-muted-foreground">
-						{lastOrderDate ? format(lastOrderDate, "MMM d, yyyy") : "Never"}
+						{lastOrderDate ? formatLocalShortDate(lastOrderDate) : "Never"}
 					</span>
 				</div>
 			);

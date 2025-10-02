@@ -1,10 +1,21 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import { format } from "date-fns";
-import { Calendar, Mail, Phone, User } from "lucide-react";
+import {
+	Calendar,
+	CheckCircle,
+	Mail,
+	Phone,
+	User,
+	XCircle,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
+import { formatLocalShortDate } from "@/lib/format-timestamp";
 import { formatCurrency } from "@/lib/utils";
 
 export const columns: ColumnDef<{
@@ -12,6 +23,7 @@ export const columns: ColumnDef<{
 	name: string | null;
 	email: string;
 	phone: string | null;
+	phoneVerified: boolean;
 	role: string;
 	createdAt: Date;
 	orderCount: number;
@@ -54,12 +66,69 @@ export const columns: ColumnDef<{
 		header: "Phone",
 		cell: ({ row }) => {
 			const phone = row.getValue("phone") as string | null;
+			const phoneVerified = row.original.phoneVerified;
+			const userId = row.original.id;
+			const router = useRouter();
+			const [isUpdating, setIsUpdating] = useState(false);
+
+			const togglePhoneVerification = async () => {
+				if (!phone) return;
+
+				setIsUpdating(true);
+				try {
+					const response = await fetch(
+						`/api/admin/customers/${userId}/verify-phone`,
+						{
+							method: "PATCH",
+							headers: {
+								"Content-Type": "application/json",
+							},
+							body: JSON.stringify({
+								phoneVerified: !phoneVerified,
+							}),
+						},
+					);
+
+					if (!response.ok) {
+						throw new Error("Failed to update phone verification status");
+					}
+
+					toast.success(
+						phoneVerified
+							? "Phone marked as unverified"
+							: "Phone marked as verified",
+					);
+					router.refresh();
+				} catch (error) {
+					console.error(error);
+					toast.error("Failed to update verification status");
+				} finally {
+					setIsUpdating(false);
+				}
+			};
+
 			return (
 				<div className="flex items-center space-x-2">
 					<Phone className="h-4 w-4 text-muted-foreground" />
 					<span className="max-w-[150px] truncate">
 						{phone || "Not provided"}
 					</span>
+					{phone && (
+						<Button
+							size="sm"
+							variant="ghost"
+							onClick={togglePhoneVerification}
+							disabled={isUpdating}
+							className="h-7 px-2"
+							title={phoneVerified ? "Mark as unverified" : "Mark as verified"}
+						>
+							{phoneVerified ? (
+								<CheckCircle className="h-4 w-4 text-green-600" />
+							) : (
+								<XCircle className="h-4 w-4 text-muted-foreground" />
+							)}
+						</Button>
+					)}
 				</div>
 			);
 		},
@@ -131,7 +200,7 @@ export const columns: ColumnDef<{
 			return (
 				<div className="flex w-[120px] items-center">
 					<span className="text-sm text-muted-foreground">
-						{lastOrderDate ? format(lastOrderDate, "MMM d, yyyy") : "Never"}
+						{lastOrderDate ? formatLocalShortDate(lastOrderDate) : "Never"}
 					</span>
 				</div>
 			);

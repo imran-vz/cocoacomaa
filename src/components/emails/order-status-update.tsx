@@ -1,4 +1,3 @@
-import { TZDateMini } from "@date-fns/tz";
 import {
 	Body,
 	Container,
@@ -12,9 +11,9 @@ import {
 	Tailwind,
 	Text,
 } from "@react-email/components";
-import { format } from "date-fns";
 // biome-ignore lint/correctness/noUnusedImports: React is used for email components
 import * as React from "react";
+import { formatDateTime } from "@/lib/format-timestamp";
 
 interface OrderStatusUpdateEmailProps {
 	orderDetails: {
@@ -140,10 +139,7 @@ export default function OrderStatusUpdateEmail({
 	const isPostalOrder = orderDetails.orderType === "postal-brownies";
 
 	const pickupInfo = orderDetails.pickupDateTime
-		? format(
-				new TZDateMini(orderDetails.pickupDateTime, "Asia/Kolkata"),
-				"PPP 'at' p",
-			)
+		? formatDateTime(orderDetails.pickupDateTime)
 		: null;
 
 	return (

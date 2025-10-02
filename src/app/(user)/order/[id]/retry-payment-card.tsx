@@ -1,12 +1,16 @@
 "use client";
 
-import { format } from "date-fns";
 import { AlertTriangle, CreditCard } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePostalOrderSettings } from "@/hooks/use-postal-order-settings";
+import {
+	formatLocalShortDate,
+	formatLongDate,
+	formatYearMonth,
+} from "@/lib/format-timestamp";
 import { formatCurrency } from "@/lib/utils";
 import type {
 	RazorpayOptions,
@@ -34,7 +38,7 @@ export default function RetryPaymentCard({
 	const [processingStep, setProcessingStep] = useState("");
 
 	// Get current month for postal order settings check
-	const currentMonth = format(new Date(), "yyyy-MM");
+	const currentMonth = formatYearMonth(new Date());
 	const {
 		settings,
 		getEarliestAvailableSlot,
@@ -231,9 +235,9 @@ export default function RetryPaymentCard({
 						{originalSlot ? (
 							<p className="mb-2">
 								This order was placed during the "{originalSlot.name}" slot (
-								{format(new Date(originalSlot.orderStartDate), "MMM d")} -{" "}
-								{format(new Date(originalSlot.orderEndDate), "MMM d")}), but
-								payment must be completed within the same ordering window.
+								{formatLocalShortDate(new Date(originalSlot.orderStartDate))} -{" "}
+								{formatLocalShortDate(new Date(originalSlot.orderEndDate))}),
+								but payment must be completed within the same ordering window.
 							</p>
 						) : (
 							<p className="mb-2">
@@ -246,7 +250,7 @@ export default function RetryPaymentCard({
 							<p>
 								You can place a new order when the next slot opens on{" "}
 								<span className="font-semibold">
-									{format(new Date(nextSlot.orderStartDate), "MMMM d, yyyy")}
+									{formatLongDate(new Date(nextSlot.orderStartDate))}
 								</span>
 								.
 							</p>

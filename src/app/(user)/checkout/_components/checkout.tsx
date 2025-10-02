@@ -53,6 +53,8 @@ import {
 	calculateDeliveryCost,
 	isBengaluruAddress,
 } from "@/lib/delivery-pricing";
+import { formatLocalDate, formatYearMonth } from "@/lib/format-timestamp";
+import { validatePhoneNumber } from "@/lib/phone-validation";
 import { formatCurrency } from "@/lib/utils";
 import type {
 	RazorpayOptions,
@@ -145,9 +147,12 @@ const createCheckoutFormSchema = (
 			.min(10, {
 				message: "Phone number must be at least 10 digits.",
 			})
-			.regex(/^[0-9+\-\s()]+$/, {
+			.refine((phone) => validatePhoneNumber(phone, "IN").isValid, {
 				message: "Please enter a valid phone number.",
 			}),
+		confirmPhone: z
+			.string()
+			.min(10, { message: "Please confirm your phone number." }),
 		// Pickup fields - only required for non-postal orders and non-specials
 		pickupDate:
 			isPostalBrownies || hasSpecials
@@ -195,7 +200,11 @@ const createCheckoutFormSchema = (
 		zip: z.string().optional(),
 	});
 
-	return baseSchema;
+	// Add refinement to check that phone numbers match
+	return baseSchema.refine((data) => data.phone === data.confirmPhone, {
+		message: "Phone numbers don't match",
+		path: ["confirmPhone"],
+	});
 };
 
 // Address validation schema
@@ -261,7 +270,7 @@ export default function CheckoutPage({
 	}, [desserts, items]);
 
 	// Get current month for postal order settings
-	const currentMonth = format(new Date(), "yyyy-MM"); // YYYY-MM format
+	const currentMonth = formatYearMonth(new Date());
 	const { getCurrentActiveSlot } = usePostalOrderSettings(currentMonth);
 
 	// React Query hooks for address management
@@ -290,6 +299,7 @@ export default function CheckoutPage({
 			name: name ?? "",
 			email: email ?? "",
 			phone: phone ?? "",
+			confirmPhone: phone ?? "",
 			pickupTime: "",
 			notes: "",
 			orderType: isPostalBrownies ? "postal-brownies" : "cake-orders",
@@ -393,7 +403,11 @@ export default function CheckoutPage({
 		const isEmpty = !phone || phone.trim() === "";
 		setIsPhoneFieldEnabled(isEmpty);
 		setOriginalPhone(phone || "");
-	}, [phone]);
+		// Also set confirmPhone when initializing
+		if (!isEmpty) {
+			form.setValue("confirmPhone", phone);
+		}
+	}, [phone, form]);
 
 	// Set default address mode when addresses are loaded
 	useEffect(() => {
@@ -868,6 +882,35 @@ export default function CheckoutPage({
 									)}
 								/>
 
+								<FormField
+									control={form.control}
+									name="confirmPhone"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel className="text-sm sm:text-base">
+												Confirm Phone Number
+											</FormLabel>
+											<FormControl>
+												<Input
+													type="tel"
+													placeholder="Re-enter your phone number"
+													{...field}
+													className="text-sm sm:text-base "
+													readOnly={!isPhoneFieldEnabled || isProcessing}
+													disabled={!isPhoneFieldEnabled || isProcessing}
+													tabIndex={
+														!isPhoneFieldEnabled || isProcessing ? -1 : 0
+													}
+												/>
+											</FormControl>
+											<FormDescription className="text-xs sm:text-sm">
+												Please re-enter your phone number to confirm
+											</FormDescription>
+											<FormMessage className="text-xs sm:text-sm" />
+										</FormItem>
+									)}
+								/>
+
 								{!hasSpecials && (
 									<FormField
 										control={form.control}
@@ -1215,7 +1258,7 @@ export default function CheckoutPage({
 																	>
 																		<span className="truncate">
 																			{field.value
-																				? format(field.value, "PPP")
+																				? formatLocalDate(field.value)
 																				: "Pick a date"}
 																		</span>
 																		<CalendarIcon className="h-4 w-4 opacity-50 shrink-0 ml-2" />
@@ -1390,7 +1433,7 @@ export default function CheckoutPage({
 										Fixed Pickup:{" "}
 									</span>
 									<span className="text-purple-700">
-										{format(new Date(specialsSettings.pickupDate), "PPP")} at{" "}
+										{formatLocalDate(new Date(specialsSettings.pickupDate))} at{" "}
 										{specialsSettings.pickupStartTime} -{" "}
 										{specialsSettings.pickupEndTime}
 									</span>
@@ -1486,7 +1529,8 @@ export default function CheckoutPage({
 										</div>
 										{form.watch("pickupDate") && (
 											<p className="text-xs sm:text-sm text-muted-foreground">
-												Date: {format(form.watch("pickupDate") as Date, "PPP")}
+												Date:{" "}
+												{formatLocalDate(form.watch("pickupDate") as Date)}
 											</p>
 										)}
 										{form.watch("pickupTime") && (

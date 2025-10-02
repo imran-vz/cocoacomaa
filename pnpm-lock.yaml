@@ -113,6 +113,9 @@ importers:
       drizzle-orm:
         specifier: ^0.44.5
         version: 0.44.5(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(@vercel/postgres@0.10.0)(postgres@3.4.7)
+      google-libphonenumber:
+        specifier: ^3.2.43
+        version: 3.2.43
       jspdf:
         specifier: ^3.0.2
         version: 3.0.2
@@ -180,6 +183,9 @@ importers:
       '@types/canvas-confetti':
         specifier: ^1.9.0
         version: 1.9.0
+      '@types/google-libphonenumber':
+        specifier: ^7.4.30
+        version: 7.4.30
       '@types/node':
         specifier: ^22.18.6
         version: 22.18.6
@@ -2119,6 +2125,9 @@ packages:
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
 
+  '@types/google-libphonenumber@7.4.30':
+    resolution: {integrity: sha512-Td1X1ayRxePEm6/jPHUBs2tT6TzW1lrVB6ZX7ViPGellyzO/0xMNi+wx5nH6jEitjznq276VGIqjK5qAju0XVw==}
+
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
@@ -2839,6 +2848,10 @@ packages:
   glob@9.3.5:
     resolution: {integrity: sha512-e1LleDykUz2Iu+MTYdkSsuWX8lvAjAcs0Xef0lNIu0S2wOAzuTxCJtcd9S3cijlwYF18EsU3rzb8jPVobxDh9Q==}
     engines: {node: '>=16 || 14 >=14.17'}
+
+  google-libphonenumber@3.2.43:
+    resolution: {integrity: sha512-TbIX/UC3BFRJwCxbBeCPwuRC4Qws9Jz/CECmfTM1t9RFoI3X6eRThurv6AYr9wSrt640IA9KFIHuAD/vlyjqRw==}
+    engines: {node: '>=0.10'}
 
   gopd@1.2.0:
     resolution: {integrity: sha512-ZUKRh6/kUFoAiTAtTYPZJ3hw9wNxx+BIBOijnlG9PnrJsCcSjs1wyyD6vJpaYtgnzDrKYRSqf3OO6Rfa93xsRg==}
@@ -5688,6 +5701,8 @@ snapshots:
 
   '@types/estree@1.0.8': {}
 
+  '@types/google-libphonenumber@7.4.30': {}
+
   '@types/json-schema@7.0.15': {}
 
   '@types/mysql@2.15.27':
@@ -6373,6 +6388,8 @@ snapshots:
       minimatch: 8.0.4
       minipass: 4.2.8
       path-scurry: 1.11.1
+
+  google-libphonenumber@3.2.43: {}
 
   gopd@1.2.0: {}
 

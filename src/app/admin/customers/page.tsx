@@ -16,6 +16,7 @@ export default async function CustomersPage() {
 			name: users.name,
 			email: users.email,
 			phone: users.phone,
+			phoneVerified: users.phoneVerified,
 			role: users.role,
 			createdAt: users.createdAt,
 			orderCount: sql<number>`COALESCE(COUNT(${orders.id}), 0)`,
@@ -37,6 +38,7 @@ export default async function CustomersPage() {
 			users.name,
 			users.email,
 			users.phone,
+			users.phoneVerified,
 			users.role,
 			users.createdAt,
 		)

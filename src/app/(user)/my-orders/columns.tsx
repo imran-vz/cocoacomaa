@@ -1,11 +1,11 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import { format } from "date-fns";
 import { EyeIcon, LinkIcon } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { formatDateTime, formatLocalDate, formatLocalTime } from "@/lib/format-timestamp";
 import { formatCurrency } from "@/lib/utils";
 
 // Helper function to check if order contains special desserts
@@ -72,7 +72,7 @@ export const columns: ColumnDef<{
 		id: "createdAt",
 		accessorKey: "createdAt",
 		header: "Placed On",
-		cell: ({ row }) => format(row.original.createdAt, "PPP p"),
+		cell: ({ row }) => formatDateTime(row.original.createdAt),
 	},
 	{
 		id: "pickupDateTime",
@@ -90,12 +90,12 @@ export const columns: ColumnDef<{
 				return (
 					<div className="flex flex-col">
 						<span className={isSpecial ? "text-purple-700 font-medium" : ""}>
-							{format(row.original.pickupDateTime, "PPP")}
+							{formatLocalDate(row.original.pickupDateTime)}
 						</span>
 						<span
 							className={`text-xs ${isSpecial ? "text-purple-600" : "text-muted-foreground"}`}
 						>
-							{format(row.original.pickupDateTime, "p")}
+							{formatLocalTime(row.original.pickupDateTime)}
 						</span>
 					</div>
 				);
