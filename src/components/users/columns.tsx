@@ -175,7 +175,7 @@ export const columns: ColumnDef<{
 			return (
 				<div className="flex items-center space-x-2">
 					<Calendar className="h-4 w-4 text-muted-foreground" />
-					<span className="text-sm">{format(createdAt, "MMM d, yyyy")}</span>
+					<span className="text-sm">{formatLocalShortDate(createdAt)}</span>
 				</div>
 			);
 		},

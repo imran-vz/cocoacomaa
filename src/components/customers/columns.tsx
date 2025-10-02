@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import { formatLocalShortDate } from "@/lib/format-timestamp";
-import { formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 
 export const columns: ColumnDef<{
 	id: string;
@@ -110,7 +110,12 @@ export const columns: ColumnDef<{
 			return (
 				<div className="flex items-center space-x-2">
 					<Phone className="h-4 w-4 text-muted-foreground" />
-					<span className="max-w-[150px] truncate">
+					<span
+						className={cn(
+							"max-w-[150px] truncate",
+							phone ? "font-mono" : "text-muted-foreground",
+						)}
+					>
 						{phone || "Not provided"}
 					</span>
 					{phone && (
@@ -119,7 +124,7 @@ export const columns: ColumnDef<{
 							variant="ghost"
 							onClick={togglePhoneVerification}
 							disabled={isUpdating}
-							className="h-7 px-2"
+							className="h-7 px-2 shadow-none bg-transparent"
 							title={phoneVerified ? "Mark as unverified" : "Mark as verified"}
 						>
 							{phoneVerified ? (
@@ -127,6 +132,9 @@ export const columns: ColumnDef<{
 							) : (
 								<XCircle className="h-4 w-4 text-muted-foreground" />
 							)}
+							<span className="sr-only">
+								{phoneVerified ? "Mark as unverified" : "Mark as verified"}
+							</span>
 						</Button>
 					)}
 				</div>
@@ -187,7 +195,7 @@ export const columns: ColumnDef<{
 			return (
 				<div className="flex items-center space-x-2">
 					<Calendar className="h-4 w-4 text-muted-foreground" />
-					<span className="text-sm">{format(createdAt, "MMM d, yyyy")}</span>
+					<span className="text-sm">{formatLocalShortDate(createdAt)}</span>
 				</div>
 			);
 		},

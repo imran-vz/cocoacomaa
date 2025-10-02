@@ -1,7 +1,6 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import { format } from "date-fns";
 import { Calendar, Mail, MoreHorizontal, Phone, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
@@ -13,6 +12,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { formatLocalShortDate } from "@/lib/format-timestamp";
 import { DeleteManagerDialog } from "./delete-manager-dialog";
 import { EditManagerDialog } from "./edit-manager-dialog";
 import { ResetPasswordDialog } from "./reset-password-dialog";
@@ -81,7 +81,7 @@ export const columns: ColumnDef<{
 			return (
 				<div className="flex items-center space-x-2">
 					<Calendar className="h-4 w-4 text-muted-foreground" />
-					<span className="text-sm">{format(createdAt, "MMM d, yyyy")}</span>
+					<span className="text-sm">{formatLocalShortDate(createdAt)}</span>
 				</div>
 			);
 		},

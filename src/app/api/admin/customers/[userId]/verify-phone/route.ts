@@ -6,18 +6,21 @@ import { users } from "@/lib/db/schema";
 
 export async function PATCH(
 	request: Request,
-	{ params }: { params: { userId: string } },
+	{ params }: { params: Promise<{ userId: string }> },
 ) {
 	try {
 		const session = await auth();
 
 		// Check if user is admin or manager
-		if (!session?.user || (session.user.role !== "admin" && session.user.role !== "manager")) {
+		if (
+			!session?.user ||
+			(session.user.role !== "admin" && session.user.role !== "manager")
+		) {
 			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 		}
 
 		const { phoneVerified } = await request.json();
-		const { userId } = params;
+		const { userId } = await params;
 
 		// Update user's phone verification status
 		await db
