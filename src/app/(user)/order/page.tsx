@@ -31,7 +31,7 @@ interface Dessert {
 	enabled: boolean;
 }
 
-const LoginModal = lazyLoading(() => import("@/components/LoginModal"), {
+const LoginModal = lazyLoading(() => import("@/components/login-modal"), {
 	ssr: false,
 });
 

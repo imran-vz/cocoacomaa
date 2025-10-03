@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Toaster } from "sonner";
 
-import { Footer } from "@/components/Footer";
+import { Footer } from "@/components/footer";
 import { Navigation } from "@/components/navigation";
 import BrowserCompatibilityBanner from "@/components/ui/browser-compatibility-banner";
 import UrlCleaner from "@/components/ui/url-cleaner";

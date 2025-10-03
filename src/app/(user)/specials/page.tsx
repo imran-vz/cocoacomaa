@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 
-import LoginModal from "@/components/LoginModal";
+import LoginModal from "@/components/login-modal";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -215,7 +215,8 @@ export default function SpecialsPage() {
 										<CalendarDays className="h-4 w-4 text-muted-foreground" />
 										<span className="font-medium">Pickup Dates:</span>
 										<Badge variant="outline">
-											{formatDate(new Date(settings.pickupStartDate))} - {formatDate(new Date(settings.pickupEndDate))}
+											{formatDate(new Date(settings.pickupStartDate))} -{" "}
+											{formatDate(new Date(settings.pickupEndDate))}
 										</Badge>
 									</div>
 									<div className="flex items-center gap-2">
