@@ -10,21 +10,36 @@ import {
 	users,
 } from "@/lib/db/schema";
 
-const updateSpecialsSettingsSchema = z.object({
-	isActive: z.boolean(),
-	pickupDate: z.string().refine((date) => {
-		const parsedDate = new Date(date);
-		return !Number.isNaN(parsedDate.getTime());
-	}, "Invalid date format"),
-	pickupStartTime: z
-		.string()
-		.regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:MM)"),
-	pickupEndTime: z
-		.string()
-		.regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:MM)"),
-	description: z.string().optional(),
-	id: z.number(),
-});
+const updateSpecialsSettingsSchema = z
+	.object({
+		isActive: z.boolean(),
+		pickupStartDate: z.string().refine((date) => {
+			const parsedDate = new Date(date);
+			return !Number.isNaN(parsedDate.getTime());
+		}, "Invalid date format"),
+		pickupEndDate: z.string().refine((date) => {
+			const parsedDate = new Date(date);
+			return !Number.isNaN(parsedDate.getTime());
+		}, "Invalid date format"),
+		pickupStartTime: z
+			.string()
+			.regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:MM)"),
+		pickupEndTime: z
+			.string()
+			.regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:MM)"),
+		description: z.string().optional(),
+		id: z.number(),
+	})
+	.refine(
+		(data) => {
+			const startDate = new Date(data.pickupStartDate);
+			const endDate = new Date(data.pickupEndDate);
+			return startDate <= endDate;
+		},
+		{
+			message: "Pickup end date must be on or after start date",
+		},
+	);
 
 // GET - Fetch current specials settings
 export async function GET() {
@@ -38,9 +53,12 @@ export async function GET() {
 		const defaultSettings = {
 			id: 0,
 			isActive: false,
-			pickupDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+			pickupStartDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
 				.toISOString()
 				.split("T")[0], // 7 days from now
+			pickupEndDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+				.toISOString()
+				.split("T")[0], // 14 days from now
 			pickupStartTime: "10:00",
 			pickupEndTime: "18:00",
 			description: "",
@@ -100,7 +118,8 @@ export async function PUT(request: NextRequest) {
 
 		const {
 			isActive,
-			pickupDate,
+			pickupStartDate,
+			pickupEndDate,
 			pickupStartTime,
 			pickupEndTime,
 			description,
@@ -124,7 +143,8 @@ export async function PUT(request: NextRequest) {
 				.insert(specialsSettings)
 				.values({
 					isActive,
-					pickupDate,
+					pickupStartDate,
+					pickupEndDate,
 					pickupStartTime,
 					pickupEndTime,
 					description,
@@ -138,7 +158,8 @@ export async function PUT(request: NextRequest) {
 				.set({
 					updatedAt: new Date(),
 					isActive,
-					pickupDate,
+					pickupStartDate,
+					pickupEndDate,
 					pickupStartTime,
 					pickupEndTime,
 					description,

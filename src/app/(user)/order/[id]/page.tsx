@@ -16,7 +16,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
-import { formatDateTime, formatDateWithDay, formatTime } from "@/lib/format-timestamp";
+import {
+	formatDateTime,
+	formatDateWithDay,
+	formatTime,
+} from "@/lib/format-timestamp";
 import { formatCurrency } from "@/lib/utils";
 import BackButton from "./back-button";
 import CopyAddressButton from "./copy-address-button";
@@ -163,9 +167,7 @@ export default async function AdminOrderDetailsPage({
 								</div>
 
 								<div className="text-sm text-muted-foreground">
-									<p>
-										Order placed on {formatDateTime(order.createdAt)}
-									</p>
+									<p>Order placed on {formatDateTime(order.createdAt)}</p>
 									{order.razorpayPaymentId && (
 										<p>Payment ID: {order.razorpayPaymentId}</p>
 									)}

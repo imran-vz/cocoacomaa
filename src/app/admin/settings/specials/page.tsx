@@ -1,8 +1,11 @@
 "use client";
 
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
 	Card,
 	CardContent,
@@ -12,22 +15,29 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useSpecialsSettings } from "@/hooks/use-specials-settings";
-import { formatDate } from "@/lib/utils";
 
 export default function SpecialsSettingsPage() {
 	const { settings, isLoading, updateSettings, isUpdating } =
 		useSpecialsSettings();
 	const [isActive, setIsActive] = useState(false);
-	const [pickupDate, setPickupDate] = useState("");
+	const [pickupDateRange, setPickupDateRange] = useState<{
+		from: Date | undefined;
+		to: Date | undefined;
+	}>({ from: undefined, to: undefined });
 	const [pickupStartTime, setPickupStartTime] = useState("10:00");
 	const [pickupEndTime, setPickupEndTime] = useState("18:00");
 	const [description, setDescription] = useState("");
 
 	const activeId = useId();
-	const dateId = useId();
+	const dateRangeId = useId();
 	const startTimeId = useId();
 	const endTimeId = useId();
 	const descriptionId = useId();
@@ -36,7 +46,14 @@ export default function SpecialsSettingsPage() {
 	useEffect(() => {
 		if (settings) {
 			setIsActive(settings.isActive);
-			setPickupDate(settings.pickupDate);
+			setPickupDateRange({
+				from: settings.pickupStartDate
+					? new Date(settings.pickupStartDate)
+					: undefined,
+				to: settings.pickupEndDate
+					? new Date(settings.pickupEndDate)
+					: undefined,
+			});
 			setPickupStartTime(settings.pickupStartTime);
 			setPickupEndTime(settings.pickupEndTime);
 			setDescription(settings.description || "");
@@ -44,11 +61,12 @@ export default function SpecialsSettingsPage() {
 	}, [settings]);
 
 	const handleSave = () => {
-		if (!settings) return;
+		if (!settings || !pickupDateRange.from || !pickupDateRange.to) return;
 
 		updateSettings({
 			isActive,
-			pickupDate,
+			pickupStartDate: pickupDateRange.from.toISOString().split("T")[0],
+			pickupEndDate: pickupDateRange.to.toISOString().split("T")[0],
 			pickupStartTime,
 			pickupEndTime,
 			description,
@@ -56,7 +74,11 @@ export default function SpecialsSettingsPage() {
 		});
 	};
 
-	const isFormValid = pickupDate && pickupStartTime && pickupEndTime;
+	const isFormValid =
+		pickupDateRange.from &&
+		pickupDateRange.to &&
+		pickupStartTime &&
+		pickupEndTime;
 
 	if (isLoading) {
 		return (
@@ -105,16 +127,53 @@ export default function SpecialsSettingsPage() {
 						</div>
 
 						<div className="space-y-2">
-							<Label htmlFor={dateId}>Pickup Date</Label>
-							<Input
-								id={dateId}
-								type="date"
-								value={pickupDate}
-								onChange={(e) => setPickupDate(e.target.value)}
-								min={new Date().toISOString().split("T")[0]}
-							/>
+							<Label htmlFor={dateRangeId}>Pickup Date Range</Label>
+							<Popover>
+								<PopoverTrigger asChild>
+									<Button
+										id={dateRangeId}
+										variant="outline"
+										className={`w-full justify-start text-left font-normal ${
+											!pickupDateRange.from && "text-muted-foreground"
+										}`}
+									>
+										<CalendarIcon className="mr-2 h-4 w-4" />
+										{pickupDateRange.from ? (
+											pickupDateRange.to ? (
+												<>
+													{format(pickupDateRange.from, "LLL dd, y")} -{" "}
+													{format(pickupDateRange.to, "LLL dd, y")}
+												</>
+											) : (
+												format(pickupDateRange.from, "LLL dd, y")
+											)
+										) : (
+											"Pick a date range"
+										)}
+									</Button>
+								</PopoverTrigger>
+								<PopoverContent className="w-auto p-0" align="start">
+									<Calendar
+										mode="range"
+										defaultMonth={pickupDateRange.from}
+										selected={pickupDateRange}
+										onSelect={(range) =>
+											setPickupDateRange({
+												from: range?.from ?? undefined,
+												to: range?.to ?? undefined,
+											})
+										}
+										disabled={(date) =>
+											date < new Date(new Date().setHours(0, 0, 0, 0))
+										}
+										numberOfMonths={1}
+										autoFocus
+									/>
+								</PopoverContent>
+							</Popover>
 							<p className="text-sm text-muted-foreground">
-								Set the fixed pickup date for all specials orders
+								Set the date range when customers can pickup their specials
+								orders
 							</p>
 						</div>
 
@@ -173,9 +232,16 @@ export default function SpecialsSettingsPage() {
 								</span>
 							</div>
 							<div className="flex justify-between">
-								<span className="text-muted-foreground">Pickup Date:</span>
+								<span className="text-muted-foreground">
+									Pickup Date Range:
+								</span>
 								<span>
-									{pickupDate ? formatDate(new Date(pickupDate)) : "Not set"}
+									{pickupDateRange.from && pickupDateRange.to
+										? `${format(pickupDateRange.from, "MMM d")} - ${format(
+												pickupDateRange.to,
+												"MMM d",
+											)}`
+										: "Not set"}
 								</span>
 							</div>
 							<div className="flex justify-between">

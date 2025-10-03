@@ -213,9 +213,9 @@ export default function SpecialsPage() {
 								<div className="space-y-2">
 									<div className="flex items-center gap-2">
 										<CalendarDays className="h-4 w-4 text-muted-foreground" />
-										<span className="font-medium">Pickup Date:</span>
+										<span className="font-medium">Pickup Dates:</span>
 										<Badge variant="outline">
-											{formatDate(new Date(settings.pickupDate))}
+											{formatDate(new Date(settings.pickupStartDate))} - {formatDate(new Date(settings.pickupEndDate))}
 										</Badge>
 									</div>
 									<div className="flex items-center gap-2">

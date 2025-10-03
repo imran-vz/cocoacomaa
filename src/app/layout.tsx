@@ -4,7 +4,7 @@ import { Inter } from "next/font/google";
 import { Toaster } from "sonner";
 
 import { Footer } from "@/components/Footer";
-import { Navigation } from "@/components/Navigation";
+import { Navigation } from "@/components/navigation";
 import BrowserCompatibilityBanner from "@/components/ui/browser-compatibility-banner";
 import UrlCleaner from "@/components/ui/url-cleaner";
 import { CartProvider } from "@/lib/cart-context";
@@ -20,16 +20,9 @@ export const metadata: Metadata = {
 
 	alternates: {
 		canonical: "https://cocoacomaa.com",
-		languages: {
-			en: "https://cocoacomaa.com",
-		},
+		languages: { en: "https://cocoacomaa.com" },
 	},
-	authors: [
-		{
-			name: "Imran",
-			url: "https://imran.codes",
-		},
-	],
+	authors: [{ name: "Imran", url: "https://imran.codes" }],
 
 	applicationName: "Cocoa Comaa",
 	creator: "Imran",

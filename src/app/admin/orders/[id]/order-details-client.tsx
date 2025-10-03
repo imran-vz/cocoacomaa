@@ -22,7 +22,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { formatDateTime, formatDateWithDay, formatTime } from "@/lib/format-timestamp";
+import {
+	formatDateTime,
+	formatDateWithDay,
+	formatTime,
+} from "@/lib/format-timestamp";
 import { formatCurrency } from "@/lib/utils";
 import BackButton from "./back-button";
 import NavButton from "./nav-button";
@@ -130,9 +134,7 @@ export default function OrderDetailsClient({
 								</div>
 
 								<div className="text-sm text-muted-foreground">
-									<p>
-										Order placed on {formatDateTime(order.createdAt)}
-									</p>
+									<p>Order placed on {formatDateTime(order.createdAt)}</p>
 									{order.razorpayPaymentId && (
 										<p>Payment ID: {order.razorpayPaymentId}</p>
 									)}

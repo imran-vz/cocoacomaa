@@ -10,6 +10,7 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
+
 import { confirm } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -155,25 +156,27 @@ const createCheckoutFormSchema = (
 		confirmPhone: hasExistingPhone
 			? z.string().optional()
 			: z.string().min(10, { message: "Please confirm your phone number." }),
-		// Pickup fields - only required for non-postal orders and non-specials
-		pickupDate:
-			isPostalBrownies || hasSpecials
-				? z.date().optional()
-				: z
-						.date({
-							required_error: "Please select a pickup date.",
-						})
-						.refine(
-							(date) => {
-								const dayOfWeek = date.getDay();
-								// Reject Monday (1) and Tuesday (2) for cake orders
-								return dayOfWeek !== 1 && dayOfWeek !== 2;
-							},
-							{
-								message:
-									"Pickup is not available on Mondays and Tuesdays. Please select Wednesday through Sunday.",
-							},
-						),
+		// Pickup fields - only required for non-postal orders
+		pickupDate: isPostalBrownies
+			? z.date().optional()
+			: z
+					.date({
+						required_error: "Please select a pickup date.",
+					})
+					.refine(
+						(date) => {
+							// For specials, no day-of-week restrictions
+							if (hasSpecials) return true;
+
+							const dayOfWeek = date.getDay();
+							// Reject Monday (1) and Tuesday (2) for cake orders
+							return dayOfWeek !== 1 && dayOfWeek !== 2;
+						},
+						{
+							message:
+								"Pickup is not available on Mondays and Tuesdays. Please select Wednesday through Sunday.",
+						},
+					),
 		pickupTime:
 			isPostalBrownies || hasSpecials
 				? z.string().optional()
@@ -1278,6 +1281,94 @@ export default function CheckoutPage({
 									</div>
 								)}
 
+								{/* Pickup Date Selection for Specials Orders */}
+								{!isPostalBrownies && hasSpecials && specialsSettings && (
+									<div className="space-y-3 sm:space-y-4 lg:space-y-6">
+										<div className="border-t pt-3 sm:pt-4 lg:pt-6">
+											<h3 className="text-sm sm:text-base lg:text-lg font-semibold mb-2 sm:mb-3 lg:mb-4 flex items-center gap-2">
+												<CalendarIcon className="h-4 w-4 sm:h-4 sm:w-4 lg:h-5 lg:w-5 shrink-0" />
+												<span>Pickup Date Selection</span>
+											</h3>
+											<p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 leading-relaxed">
+												Select your preferred pickup date from the available
+												range. Pickup time: {specialsSettings.pickupStartTime} -{" "}
+												{specialsSettings.pickupEndTime}
+											</p>
+										</div>
+										<div className="space-y-3 sm:space-y-4 lg:space-y-6">
+											<FormField
+												control={form.control}
+												name="pickupDate"
+												render={({ field }) => (
+													<FormItem className="flex flex-col">
+														<FormLabel className="text-sm sm:text-base font-medium">
+															Pickup Date (Available:{" "}
+															{formatLocalDate(
+																new Date(specialsSettings.pickupStartDate),
+															)}{" "}
+															to{" "}
+															{formatLocalDate(
+																new Date(specialsSettings.pickupEndDate),
+															)}
+															)
+														</FormLabel>
+														<Popover>
+															<PopoverTrigger asChild>
+																<FormControl>
+																	<Button
+																		variant="outline"
+																		className={`w-full h-10 sm:h-11 px-3 py-2 text-left font-normal text-sm sm:text-base justify-between ${
+																			!field.value && "text-muted-foreground"
+																		}`}
+																	>
+																		<span className="truncate">
+																			{field.value
+																				? formatLocalDate(field.value)
+																				: "Select a pickup date"}
+																		</span>
+																		<CalendarIcon className="h-4 w-4 opacity-50 shrink-0 ml-2" />
+																	</Button>
+																</FormControl>
+															</PopoverTrigger>
+															<PopoverContent
+																className="w-auto p-0 z-50"
+																align="start"
+																side="bottom"
+																sideOffset={4}
+															>
+																<Calendar
+																	mode="single"
+																	selected={field.value}
+																	onSelect={field.onChange}
+																	disabled={(date) => {
+																		const startDate = new Date(
+																			specialsSettings.pickupStartDate,
+																		);
+																		const endDate = new Date(
+																			specialsSettings.pickupEndDate,
+																		);
+																		startDate.setHours(0, 0, 0, 0);
+																		endDate.setHours(23, 59, 59, 999);
+																		const compareDate = new Date(date);
+																		compareDate.setHours(12, 0, 0, 0);
+																		return (
+																			compareDate < startDate ||
+																			compareDate > endDate
+																		);
+																	}}
+																	initialFocus
+																	className="rounded-md border-0"
+																/>
+															</PopoverContent>
+														</Popover>
+														<FormMessage className="text-xs sm:text-sm" />
+													</FormItem>
+												)}
+											/>
+										</div>
+									</div>
+								)}
+
 								{/* Pickup Date and Time - Only for non-postal orders */}
 								{!isPostalBrownies && !hasSpecials && (
 									<div className="space-y-3 sm:space-y-4 lg:space-y-6">
@@ -1486,11 +1577,15 @@ export default function CheckoutPage({
 								<CalendarIcon className="h-4 w-4 text-purple-600" />
 								<div className="text-sm">
 									<span className="font-medium text-purple-800">
-										Fixed Pickup:{" "}
+										Pickup Available:{" "}
 									</span>
 									<span className="text-purple-700">
-										{formatLocalDate(new Date(specialsSettings.pickupDate))} at{" "}
-										{specialsSettings.pickupStartTime} -{" "}
+										{formatLocalDate(
+											new Date(specialsSettings.pickupStartDate),
+										)}{" "}
+										to{" "}
+										{formatLocalDate(new Date(specialsSettings.pickupEndDate))}{" "}
+										at {specialsSettings.pickupStartTime} -{" "}
 										{specialsSettings.pickupEndTime}
 									</span>
 								</div>
@@ -1571,6 +1666,23 @@ export default function CheckoutPage({
 									<span>{formatCurrency(finalTotal)}</span>
 								</div>
 							</div>
+
+							{/* Pickup Info Display - For specials orders */}
+							{!isPostalBrownies && hasSpecials && form.watch("pickupDate") && (
+								<div className="border-t pt-3 sm:pt-4">
+									<div className="flex items-center gap-2 mb-2">
+										<Clock className="h-4 w-4 text-muted-foreground" />
+										<span className="text-sm sm:text-base font-medium">
+											Selected Pickup Date
+										</span>
+									</div>
+									<p className="text-sm sm:text-base text-muted-foreground">
+										{formatLocalDate(form.watch("pickupDate") as Date)} at{" "}
+										{specialsSettings?.pickupStartTime} -{" "}
+										{specialsSettings?.pickupEndTime}
+									</p>
+								</div>
+							)}
 
 							{/* Pickup Info Display - Only for non-postal orders and non-specials */}
 							{!isPostalBrownies &&

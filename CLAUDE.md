@@ -154,3 +154,5 @@ The application uses Drizzle ORM with PostgreSQL. Key entities include:
 - Biome is used for code formatting with tab indentation and double quotes
 - Lead time for dessert orders is configurable per product (default 3 days)
 - Order types include both cake-orders and postal-brownies with different fulfillment flows
+- Handle timestamp formatting using src/lib/format-timestamp.ts
+- Prefer RSC for data fetching; use React Query for client-side fetching

@@ -366,7 +366,8 @@ export const specialsSettings = pgTable("specials_settings", (d) => {
 	return {
 		id: d.integer("id").primaryKey().generatedAlwaysAsIdentity(),
 		isActive: d.boolean("is_active").notNull().default(true),
-		pickupDate: d.date("pickup_date").notNull(), // Programmable pickup date
+		pickupStartDate: d.date("pickup_start_date").notNull(), // Start of pickup date range
+		pickupEndDate: d.date("pickup_end_date").notNull(), // End of pickup date range
 		pickupStartTime: d
 			.varchar("pickup_start_time", { length: 5 })
 			.notNull()

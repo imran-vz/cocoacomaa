@@ -5,7 +5,8 @@ import type { SpecialsSettings } from "@/lib/db/schema";
 
 interface UpdateSpecialsSettingsData {
 	isActive: boolean;
-	pickupDate: string;
+	pickupStartDate: string;
+	pickupEndDate: string;
 	pickupStartTime: string;
 	pickupEndTime: string;
 	description?: string;

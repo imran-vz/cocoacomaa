@@ -1,7 +1,8 @@
 "use client";
 
-import { LogOut, Settings, ShoppingBag, Users } from "lucide-react";
+import { LogOut, ShoppingBag, Users } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -9,22 +10,26 @@ import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
-	DropdownMenuGroup,
 	DropdownMenuItem,
-	DropdownMenuLabel,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
 export function Navigation() {
 	const session = useSession();
-
+	const pathname = usePathname();
+	const isAdminPage = pathname.startsWith("/admin");
+	const isManagerPage = pathname.startsWith("/manager");
 	const isAdmin = session.data?.user?.role === "admin";
 	const isManager = session.data?.user?.role === "manager";
 
 	const handleLogout = async () => {
 		await signOut({ callbackUrl: "/" });
 	};
+
+	if (isAdminPage || isManagerPage) {
+		return null;
+	}
 
 	return (
 		<nav className="bg-white shadow-md border-b sticky top-0 z-50">
@@ -33,168 +38,27 @@ export function Navigation() {
 					{/* Logo */}
 					<div className="shrink-0 flex items-center">
 						<Link
-							href={isAdmin ? "/admin" : isManager ? "/manager" : "/"}
+							href={"/"}
 							className="text-xl sm:text-2xl uppercase font-bold text-gray-800"
 						>
 							Cocoa Comaa
 						</Link>
 					</div>
 
+					<div className="ml-auto mr-4">
+						{isAdmin ? (
+							<Button asChild variant="secondary">
+								<Link href="/admin">Dashboard</Link>
+							</Button>
+						) : isManager ? (
+							<Button asChild variant="secondary">
+								<Link href="/manager">Dashboard</Link>
+							</Button>
+						) : null}
+					</div>
 					{/* Navigation */}
 					<div className="flex items-center space-x-4">
-						{isAdmin ? (
-							<>
-								<Button variant="ghost" asChild className="hidden md:flex">
-									<Link href="/admin">Dashboard</Link>
-								</Button>
-								<DropdownMenu>
-									<DropdownMenuTrigger asChild>
-										<Button
-											variant="ghost"
-											className="relative h-8 w-8 rounded-full"
-										>
-											<Avatar className="h-8 w-8">
-												<AvatarFallback>AD</AvatarFallback>
-											</Avatar>
-										</Button>
-									</DropdownMenuTrigger>
-									<DropdownMenuContent align="end" className="w-56">
-										<DropdownMenuGroup>
-											<DropdownMenuLabel>Manage</DropdownMenuLabel>
-											<DropdownMenuItem asChild>
-												<Link
-													href="/admin/orders"
-													className="flex items-center gap-2"
-												>
-													<ShoppingBag className="h-4 w-4" />
-													Orders
-												</Link>
-											</DropdownMenuItem>
-											<DropdownMenuItem asChild>
-												<Link
-													href="/admin/workshop-orders"
-													className="flex items-center gap-2"
-												>
-													<ShoppingBag className="h-4 w-4" />
-													Workshop Orders
-												</Link>
-											</DropdownMenuItem>
-										</DropdownMenuGroup>
-										<DropdownMenuSeparator />
-										<DropdownMenuGroup>
-											<DropdownMenuLabel>Products</DropdownMenuLabel>
-
-											<DropdownMenuItem asChild>
-												<Link
-													href="/admin/desserts"
-													className="flex items-center gap-2"
-												>
-													<Settings className="h-4 w-4" />
-													Desserts
-												</Link>
-											</DropdownMenuItem>
-											<DropdownMenuItem asChild>
-												<Link
-													href="/admin/postal-brownies"
-													className="flex items-center gap-2"
-												>
-													<Settings className="h-4 w-4" />
-													Postal Brownies
-												</Link>
-											</DropdownMenuItem>
-											<DropdownMenuItem asChild>
-												<Link
-													href="/admin/specials"
-													className="flex items-center gap-2"
-												>
-													<Settings className="h-4 w-4" />
-													Specials
-												</Link>
-											</DropdownMenuItem>
-											<DropdownMenuItem asChild>
-												<Link
-													href="/admin/workshops"
-													className="flex items-center gap-2"
-												>
-													<Users className="h-4 w-4" />
-													Workshops
-												</Link>
-											</DropdownMenuItem>
-										</DropdownMenuGroup>
-										<DropdownMenuSeparator />
-										<DropdownMenuGroup>
-											<DropdownMenuLabel>Settings</DropdownMenuLabel>
-											<DropdownMenuItem asChild>
-												<Link
-													href="/admin/settings/order-days"
-													className="flex items-center gap-2"
-												>
-													<Settings className="h-4 w-4" />
-													Cake Order Settings
-												</Link>
-											</DropdownMenuItem>
-											<DropdownMenuItem asChild>
-												<Link
-													href="/admin/settings/postal-orders"
-													className="flex items-center gap-2"
-												>
-													<Settings className="h-4 w-4" />
-													Postal Order Settings
-												</Link>
-											</DropdownMenuItem>
-											<DropdownMenuItem asChild>
-												<Link
-													href="/admin/settings/specials"
-													className="flex items-center gap-2"
-												>
-													<Settings className="h-4 w-4" />
-													Specials Settings
-												</Link>
-											</DropdownMenuItem>
-										</DropdownMenuGroup>
-										<DropdownMenuSeparator />
-										<DropdownMenuItem
-											onClick={handleLogout}
-											className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer"
-										>
-											<LogOut className="h-4 w-4 mr-2" />
-											Logout
-										</DropdownMenuItem>
-									</DropdownMenuContent>
-								</DropdownMenu>
-							</>
-						) : isManager ? (
-							<>
-								<Button variant="ghost" asChild className="hidden md:flex">
-									<Link href="/manager">Dashboard</Link>
-								</Button>
-								<DropdownMenu>
-									<DropdownMenuTrigger asChild>
-										<Button
-											variant="ghost"
-											className="relative h-8 w-8 rounded-full"
-										>
-											<Avatar className="h-8 w-8">
-												<AvatarImage
-													src={session.data?.user?.image || undefined}
-													alt={session.data?.user?.name || "Manager"}
-												/>
-												<AvatarFallback>MG</AvatarFallback>
-											</Avatar>
-										</Button>
-									</DropdownMenuTrigger>
-									<DropdownMenuContent align="end" className="w-56">
-										<DropdownMenuItem
-											onClick={handleLogout}
-											className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer"
-										>
-											<LogOut className="h-4 w-4 mr-2" />
-											Logout
-										</DropdownMenuItem>
-									</DropdownMenuContent>
-								</DropdownMenu>
-							</>
-						) : !session.data?.user?.id ? (
+						{!session.data?.user?.id ? (
 							<Button variant="ghost" asChild>
 								<Link href="/login">Login</Link>
 							</Button>

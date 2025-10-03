@@ -5,7 +5,11 @@ import { EyeIcon, LinkIcon } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatDateTime, formatLocalDate, formatLocalTime } from "@/lib/format-timestamp";
+import {
+	formatDateTime,
+	formatLocalDate,
+	formatLocalTime,
+} from "@/lib/format-timestamp";
 import { formatCurrency } from "@/lib/utils";
 
 // Helper function to check if order contains special desserts

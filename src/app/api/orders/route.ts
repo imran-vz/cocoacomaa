@@ -43,15 +43,16 @@ export async function POST(request: NextRequest) {
 		let pickupDateObj: Date | null = null;
 
 		if (hasSpecials) {
-			// For special orders, use the programmed pickup date/time from settings
+			// For special orders, use the customer-selected pickup date with the programmed time
 			const currentSpecialsSettings = await db.query.specialsSettings.findFirst(
 				{
 					orderBy: (specialsSettings, { desc }) => [desc(specialsSettings.id)],
 				},
 			);
 
-			if (currentSpecialsSettings?.isActive) {
-				pickupDateObj = new Date(currentSpecialsSettings.pickupDate);
+			if (currentSpecialsSettings?.isActive && pickupDate) {
+				// Use customer-selected date within the allowed range
+				pickupDateObj = new Date(pickupDate);
 				// Use the start time for the pickup date/time
 				const [hours, minutes] =
 					currentSpecialsSettings.pickupStartTime.split(":");
