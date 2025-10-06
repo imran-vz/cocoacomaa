@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { Minus, Plus, ShoppingCart } from "lucide-react";
+import { Egg, EggOff, Minus, Plus, ShoppingCart } from "lucide-react";
 import lazyLoading from "next/dynamic";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -30,6 +30,7 @@ interface Dessert {
 	category: "cake" | "dessert" | "special";
 	leadTimeDays: number;
 	enabled: boolean;
+	containsEgg: boolean;
 }
 
 const LoginModal = lazyLoading(() => import("@/components/login-modal"), {
@@ -323,10 +324,13 @@ export default function OrderPage() {
 						<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
 							{filteredDesserts?.map((dessert) => {
 								const quantity = getItemQuantity(dessert.id);
+								const eggBadgeVariant = dessert.containsEgg
+									? "destructive"
+									: "success";
 								return (
 									<Card
 										key={dessert.id}
-										className="overflow-hidden flex flex-col justify-between"
+										className="overflow-hidden flex flex-col justify-between pt-0"
 									>
 										{dessert.imageUrl && (
 											<div className="relative aspect-video w-full">
@@ -339,7 +343,7 @@ export default function OrderPage() {
 												/>
 											</div>
 										)}
-										<CardHeader className="pb-3 sm:pb-4">
+										<CardHeader className="pb-3 sm:pb-4 flex-1">
 											<div className="flex justify-between items-start gap-2">
 												<CardTitle className="text-lg sm:text-xl leading-tight">
 													{dessert.name}
@@ -351,7 +355,7 @@ export default function OrderPage() {
 													{formatCurrency(Number(dessert.price))}
 												</Badge>
 											</div>
-											<div className="flex gap-2 mt-2">
+											<div className="flex flex-wrap gap-2 mt-2">
 												<Badge
 													variant={
 														dessert.category === "cake" ? "default" : "outline"
@@ -359,6 +363,22 @@ export default function OrderPage() {
 													className="text-xs"
 												>
 													{dessert.category === "cake" ? "Cake" : "Dessert"}
+												</Badge>
+												<Badge
+													variant={eggBadgeVariant}
+													className="text-xs gap-1"
+												>
+													{dessert.containsEgg ? (
+														<>
+															<Egg className="h-3 w-3" />
+															Contains Egg
+														</>
+													) : (
+														<>
+															<EggOff className="h-3 w-3" />
+															Eggless
+														</>
+													)}
 												</Badge>
 												<Badge variant="outline" className="text-xs">
 													{dessert.leadTimeDays} day

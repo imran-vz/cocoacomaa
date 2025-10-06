@@ -46,6 +46,7 @@ export async function POST(request: Request) {
 			status,
 			category,
 			leadTimeDays,
+			containsEgg,
 		} = body;
 
 		if (!name || !description || !price || !category) {
@@ -73,6 +74,7 @@ export async function POST(request: Request) {
 				imageUrl,
 				status: status || "available",
 				category,
+				containsEgg: Boolean(containsEgg),
 				leadTimeDays: Number(leadTimeDays),
 			})
 			.returning();

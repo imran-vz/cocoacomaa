@@ -1,6 +1,7 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
+import { Egg, EggOff } from "lucide-react";
 import Image from "next/image";
 
 import { DessertActions } from "@/components/dessert-actions";
@@ -16,6 +17,7 @@ export type Dessert = {
 	leadTimeDays: number;
 	status: "available" | "unavailable";
 	createdAt: Date;
+	containsEgg: boolean;
 };
 
 export const columns: ColumnDef<Dessert>[] = [
@@ -61,6 +63,28 @@ export const columns: ColumnDef<Dessert>[] = [
 			return (
 				<Badge variant={category === "cake" ? "default" : "secondary"}>
 					{category === "cake" ? "Cake" : "Dessert"}
+				</Badge>
+			);
+		},
+	},
+	{
+		accessorKey: "containsEgg",
+		header: "Egg Content",
+		cell: ({ row }) => {
+			const containsEgg = row.getValue("containsEgg") as boolean;
+			return (
+				<Badge variant={containsEgg ? "destructive" : "success"}>
+					{containsEgg ? (
+						<>
+							<Egg className="h-3 w-3" />
+							Contains Egg
+						</>
+					) : (
+						<>
+							<EggOff className="h-3 w-3" />
+							Eggless
+						</>
+					)}
 				</Badge>
 			);
 		},

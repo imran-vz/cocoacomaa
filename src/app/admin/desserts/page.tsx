@@ -20,6 +20,7 @@ export default async function DessertsPage() {
 			leadTimeDays: true,
 			status: true,
 			createdAt: true,
+			containsEgg: true,
 		},
 		where: and(
 			inArray(desserts.category, ["dessert", "cake"]),

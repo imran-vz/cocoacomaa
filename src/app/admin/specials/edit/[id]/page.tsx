@@ -42,6 +42,7 @@ export default async function EditSpecialPage({
 				imageUrl: special.imageUrl || "",
 				status: special.status,
 				category: special.category,
+				containsEgg: special.containsEgg,
 				leadTimeDays: special.leadTimeDays || 2,
 			}}
 		/>

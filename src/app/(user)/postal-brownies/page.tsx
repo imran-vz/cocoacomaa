@@ -343,7 +343,7 @@ export default function PostalBrowniesPage() {
 																		field.value === combo.id.toString()
 																			? "ring-2 ring-primary shadow-lg bg-primary/5"
 																			: "hover:shadow-md"
-																	} h-full flex flex-col`}
+																	} h-full flex flex-col pt-0`}
 																>
 																	{combo.imageUrl && (
 																		<div className="relative aspect-[4/3] sm:aspect-video w-full">

@@ -71,6 +71,7 @@ interface Dessert {
 	category: "cake" | "dessert";
 	leadTimeDays: number;
 	status: "available" | "unavailable";
+	containsEgg: boolean;
 }
 
 declare global {

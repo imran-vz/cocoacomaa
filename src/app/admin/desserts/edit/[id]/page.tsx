@@ -27,6 +27,7 @@ export default async function EditDessertPage({
 			imageUrl: true,
 			status: true,
 			category: true,
+			containsEgg: true,
 			leadTimeDays: true,
 		},
 	});
@@ -45,6 +46,7 @@ export default async function EditDessertPage({
 				imageUrl: dessert.imageUrl || "",
 				status: dessert.status,
 				category: dessert.category,
+				containsEgg: dessert.containsEgg,
 				leadTimeDays: dessert.leadTimeDays,
 			}}
 		/>

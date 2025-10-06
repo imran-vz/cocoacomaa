@@ -18,6 +18,7 @@ export default async function SpecialsPage() {
 			imageUrl: true,
 			status: true,
 			createdAt: true,
+			containsEgg: true,
 		},
 	});
 

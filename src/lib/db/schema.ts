@@ -17,6 +17,7 @@ export const desserts = pgTable("desserts", (d) => {
 			.varchar("category", { enum: ["cake", "dessert", "special"] })
 			.notNull()
 			.default("dessert"),
+		containsEgg: d.boolean("contains_egg").notNull().default(true),
 		leadTimeDays: d.integer("lead_time_days").notNull().default(3), // Lead time in days
 		createdAt: d
 			.timestamp("created_at")

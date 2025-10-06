@@ -1,6 +1,7 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
+import { Egg, EggOff } from "lucide-react";
 import Image from "next/image";
 
 import { SpecialActions } from "@/components/special-actions";
@@ -14,6 +15,7 @@ export type Special = {
 	imageUrl: string | null;
 	status: "available" | "unavailable";
 	createdAt: Date;
+	containsEgg: boolean;
 };
 
 export const specialsColumns: ColumnDef<Special>[] = [
@@ -49,6 +51,28 @@ export const specialsColumns: ColumnDef<Special>[] = [
 		cell: ({ row }) => {
 			const price = row.getValue("price") as string;
 			return formatCurrency(Number(price));
+		},
+	},
+	{
+		accessorKey: "containsEgg",
+		header: "Egg Content",
+		cell: ({ row }) => {
+			const containsEgg = row.getValue("containsEgg") as boolean;
+			return (
+				<Badge variant={containsEgg ? "destructive" : "success"}>
+					{containsEgg ? (
+						<>
+							<Egg className="h-3 w-3" />
+							Contains Egg
+						</>
+					) : (
+						<>
+							<EggOff className="h-3 w-3" />
+							Eggless
+						</>
+					)}
+				</Badge>
+			);
 		},
 	},
 	{

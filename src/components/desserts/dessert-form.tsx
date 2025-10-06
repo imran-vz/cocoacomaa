@@ -31,6 +31,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
 	calculateGrossAmount,
@@ -45,6 +46,7 @@ const dessertSchema = z.object({
 	imageUrl: z.string().optional(),
 	status: z.enum(["available", "unavailable"]),
 	category: z.enum(["cake", "dessert", "special"]),
+	containsEgg: z.boolean(),
 	leadTimeDays: z.coerce
 		.number()
 		.min(1, "Lead time must be at least 1 day")
@@ -81,6 +83,7 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 				imageUrl: "",
 				status: "available" as const,
 				category: "dessert" as const,
+				containsEgg: false,
 				leadTimeDays: 3,
 			};
 		}
@@ -97,6 +100,7 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 
 		return {
 			...initialData,
+			containsEgg: initialData.containsEgg ?? false,
 			price: netPrice,
 		};
 	};
@@ -415,6 +419,37 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 									/>
 								</div>
 							)}
+
+							<FormField
+								control={form.control}
+								name="containsEgg"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>Egg Content</FormLabel>
+										<div className="flex items-center justify-between rounded-md border p-3">
+											<div className="space-y-1">
+												<p className="text-sm font-medium leading-none">
+													{field.value ? "Contains egg" : "Eggless"}
+												</p>
+												<p className="text-xs text-muted-foreground">
+													Toggle on if this item includes egg ingredients.
+												</p>
+											</div>
+											<FormControl>
+												<Switch
+													name={field.name}
+													ref={field.ref}
+													checked={field.value}
+													onChange={(event) => {
+														field.onChange(event.target.checked);
+													}}
+												/>
+											</FormControl>
+										</div>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
 
 							<FormField
 								control={form.control}

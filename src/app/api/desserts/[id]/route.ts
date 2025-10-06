@@ -48,6 +48,7 @@ export async function PATCH(
 			status,
 			category,
 			leadTimeDays,
+			containsEgg,
 		} = body;
 
 		// Note: price received here is already the gross amount (including payment processing fees)
@@ -61,6 +62,7 @@ export async function PATCH(
 				imageUrl,
 				status,
 				category,
+				containsEgg: Boolean(containsEgg),
 				leadTimeDays: Number(leadTimeDays),
 				updatedAt: new Date(),
 			})
