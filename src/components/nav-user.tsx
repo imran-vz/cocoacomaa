@@ -1,7 +1,8 @@
 "use client";
 
-import { LogOutIcon, MoreVerticalIcon } from "lucide-react";
+import { LogOutIcon, Monitor, Moon, MoreVerticalIcon, Sun } from "lucide-react";
 import { signOut } from "next-auth/react";
+import { useTheme } from "next-themes";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -10,6 +11,9 @@ import {
 	DropdownMenuItem,
 	DropdownMenuLabel,
 	DropdownMenuSeparator,
+	DropdownMenuSub,
+	DropdownMenuSubContent,
+	DropdownMenuSubTrigger,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -29,6 +33,7 @@ export function NavUser({
 	};
 }) {
 	const { isMobile } = useSidebar();
+	const { theme, setTheme } = useTheme();
 
 	const handleLogout = async () => {
 		await signOut({ callbackUrl: "/" });
@@ -76,6 +81,46 @@ export function NavUser({
 								</div>
 							</div>
 						</DropdownMenuLabel>
+						<DropdownMenuSeparator />
+						<DropdownMenuSub>
+							<DropdownMenuSubTrigger>
+								<Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+								<Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+								<span className="ml-2">Theme</span>
+							</DropdownMenuSubTrigger>
+							<DropdownMenuSubContent>
+								<DropdownMenuItem
+									onClick={() => setTheme("light")}
+									className="flex items-center gap-2"
+								>
+									<Sun className="h-4 w-4" />
+									<span>Light</span>
+									{theme === "light" && (
+										<span className="ml-auto text-xs">✓</span>
+									)}
+								</DropdownMenuItem>
+								<DropdownMenuItem
+									onClick={() => setTheme("dark")}
+									className="flex items-center gap-2"
+								>
+									<Moon className="h-4 w-4" />
+									<span>Dark</span>
+									{theme === "dark" && (
+										<span className="ml-auto text-xs">✓</span>
+									)}
+								</DropdownMenuItem>
+								<DropdownMenuItem
+									onClick={() => setTheme("system")}
+									className="flex items-center gap-2"
+								>
+									<Monitor className="h-4 w-4" />
+									<span>System</span>
+									{theme === "system" && (
+										<span className="ml-auto text-xs">✓</span>
+									)}
+								</DropdownMenuItem>
+							</DropdownMenuSubContent>
+						</DropdownMenuSub>
 						<DropdownMenuSeparator />
 						<DropdownMenuItem onClick={handleLogout}>
 							<LogOutIcon />
