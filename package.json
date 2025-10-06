@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "prepare": "husky",
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
@@ -88,6 +89,7 @@
     "@types/react-dom": "^19.1.9",
     "dotenv": "^16.6.1",
     "drizzle-kit": "^0.31.4",
+    "husky": "^9.1.7",
     "postcss": "^8.5.6",
     "react-email": "^4.2.11",
     "tailwindcss": "^4.1.13",
