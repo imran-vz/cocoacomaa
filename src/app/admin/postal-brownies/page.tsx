@@ -19,6 +19,7 @@ export default async function AdminPostalBrowniesPage() {
 			createdAt: true,
 			items: true,
 			status: true,
+			containsEgg: true,
 		},
 	});
 
@@ -104,6 +105,14 @@ export default async function AdminPostalBrowniesPage() {
 										options: [
 											{ label: "Available", value: "available" },
 											{ label: "Unavailable", value: "unavailable" },
+										],
+									},
+									{
+										id: "containsEgg",
+										title: "Egg Content",
+										options: [
+											{ label: "Contains Egg", value: "true" },
+											{ label: "Eggless", value: "false" },
 										],
 									},
 								]}

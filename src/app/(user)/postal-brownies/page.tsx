@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { format } from "date-fns";
-import { Package } from "lucide-react";
+import { Egg, EggOff, Package } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -13,9 +13,9 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import NonVegIcon from "@/components/icon/non-veg";
 import LoginModal from "@/components/login-modal";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -52,6 +52,7 @@ interface PostalCombo {
 	status: string;
 	createdAt: Date;
 	updatedAt: Date;
+	containsEgg: boolean;
 }
 
 async function fetchPostalCombos() {
@@ -95,6 +96,16 @@ export default function PostalBrowniesPage() {
 	const selectedCombo = postalCombos.find(
 		(combo) => combo.id.toString() === selectedComboId,
 	);
+	const selectedComboContainsEgg = selectedCombo
+		? Boolean(selectedCombo.containsEgg)
+		: false;
+	const selectedComboEggBadgeVariant = selectedComboContainsEgg
+		? "destructive"
+		: "success";
+	const selectedComboEggBadgeLabel = selectedComboContainsEgg
+		? "Contains Egg"
+		: "Eggless";
+	const SelectedComboEggIcon = selectedComboContainsEgg ? Egg : EggOff;
 
 	// Get the earliest available slot for displaying availability message
 	const earliestSlot = getEarliestAvailableSlot();
@@ -325,75 +336,102 @@ export default function PostalBrowniesPage() {
 														</p>
 													</div>
 												) : (
-													postalCombos.map((combo) => (
-														<FormItem key={combo.id} className="space-y-0">
-															<FormControl>
-																<RadioGroupItem
-																	value={combo.id.toString()}
-																	id={combo.id.toString()}
-																	className="sr-only"
-																/>
-															</FormControl>
-															<Label
-																htmlFor={combo.id.toString()}
-																className="cursor-pointer block w-full"
-															>
-																<Card
-																	className={cn(
-																		"transition-all duration-200 hover:shadow-lg active:scale-[0.98] h-full flex flex-col ",
-																		combo.imageUrl ? "pt-0" : "",
-																		field.value === combo.id.toString()
-																			? "ring-2 ring-primary shadow-lg bg-primary/5"
-																			: "hover:shadow-md",
-																	)}
+													postalCombos.map((combo) => {
+														const containsEgg = Boolean(combo.containsEgg);
+														const eggBadgeVariant = containsEgg
+															? "destructive"
+															: "success";
+														const eggBadgeLabel = containsEgg
+															? "Contains Egg"
+															: "Eggless";
+														const EggIcon = containsEgg ? Egg : EggOff;
+
+														return (
+															<FormItem key={combo.id} className="space-y-0">
+																<FormControl>
+																	<RadioGroupItem
+																		value={combo.id.toString()}
+																		id={combo.id.toString()}
+																		className="sr-only"
+																	/>
+																</FormControl>
+																<Label
+																	htmlFor={combo.id.toString()}
+																	className="cursor-pointer block w-full"
 																>
-																	{combo.imageUrl && (
-																		<div className="relative aspect-[4/3] sm:aspect-video w-full">
-																			<Image
-																				src={combo.imageUrl}
-																				alt={combo.name}
-																				fill
-																				className="object-cover rounded-t-lg"
-																				sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-																			/>
-																		</div>
-																	)}
-																	<CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
-																		<div className="flex flex-col sm:flex-row justify-between items-start gap-2">
-																			<CardTitle className="text-base sm:text-lg leading-tight flex-1 inline-flex items-center gap-2">
-																				{combo.name}{" "}
-																				<NonVegIcon className="w-4 h-4" />
-																			</CardTitle>
-																			<div className="bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs sm:text-sm font-medium shrink-0">
-																				{formatCurrency(Number(combo.price))}
+																	<Card
+																		className={cn(
+																			"transition-all duration-200 hover:shadow-lg active:scale-[0.98] h-full flex flex-col ",
+																			combo.imageUrl ? "pt-0" : "",
+																			field.value === combo.id.toString()
+																				? "ring-2 ring-primary shadow-lg bg-primary/5"
+																				: "hover:shadow-md",
+																		)}
+																	>
+																		{combo.imageUrl && (
+																			<div className="relative aspect-[4/3] sm:aspect-video w-full">
+																				<Image
+																					src={combo.imageUrl}
+																					alt={combo.name}
+																					fill
+																					className="object-cover rounded-t-lg"
+																					sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+																				/>
 																			</div>
-																		</div>
-																	</CardHeader>
-																	<CardContent className="pt-0 px-3 sm:px-6 pb-3 sm:pb-6 flex-1 flex flex-col">
-																		<p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 leading-relaxed">
-																			{combo.description}
-																		</p>
-																		<div className="space-y-2 mt-auto">
-																			<h4 className="font-medium text-xs sm:text-sm">
-																				Includes:
-																			</h4>
-																			<ul className="space-y-1">
-																				{combo.items.map((item: string) => (
-																					<li
-																						key={item}
-																						className="text-xs text-muted-foreground flex items-center"
+																		)}
+																		<CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
+																			<div className="flex flex-col justify-between items-start gap-2">
+																				<CardTitle className="text-base sm:text-lg leading-tight flex-1">
+																					{combo.name}
+																				</CardTitle>
+																				<div className="flex items-center justify-between w-full gap-2">
+																					<div>
+																						<Badge
+																							variant={eggBadgeVariant}
+																							className="gap-1 shrink-0 "
+																						>
+																							<EggIcon className="h-3 w-3" />
+																							{eggBadgeLabel}
+																						</Badge>
+																					</div>
+
+																					<Badge
+																						variant={"default"}
+																						className="gap-1 shrink-0"
 																					>
-																						<span className="w-1 h-1 bg-primary rounded-full mr-2 flex-shrink-0" />
-																						{item}
-																					</li>
-																				))}
-																			</ul>
-																		</div>
-																	</CardContent>
-																</Card>
-															</Label>
-														</FormItem>
-													))
+																						{formatCurrency(
+																							Number(combo.price),
+																						)}
+																					</Badge>
+																				</div>
+																			</div>
+																		</CardHeader>
+																		<CardContent className="pt-0 px-3 sm:px-6 pb-3 sm:pb-6 flex-1 flex flex-col">
+																			<p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 leading-relaxed">
+																				{combo.description}
+																			</p>
+																			<div className="space-y-2 mt-auto">
+																				<h4 className="font-medium text-xs sm:text-sm">
+																					Includes:
+																				</h4>
+																				<ul className="space-y-1">
+																					{combo.items.map((item: string) => (
+																						<li
+																							key={item}
+																							className="text-xs text-muted-foreground flex items-center"
+																						>
+																							<span className="w-1 h-1 bg-primary rounded-full mr-2 flex-shrink-0" />
+																							{item}
+																						</li>
+																					))}
+																				</ul>
+																			</div>
+																		</CardContent>
+																	</Card>
+																</Label>
+															</FormItem>
+														);
+													})
 												)}
 											</RadioGroup>
 										</FormControl>
@@ -408,10 +446,17 @@ export default function PostalBrowniesPage() {
 									<Card className="bg-muted/50">
 										<CardContent className="pt-4 sm:pt-6 pb-4 sm:pb-6 px-4 sm:px-6">
 											<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
-												<div className="flex-1">
+												<div className="flex-1 space-y-2">
 													<h3 className="font-semibold text-sm sm:text-base">
 														{selectedCombo.name}
 													</h3>
+													<Badge
+														variant={selectedComboEggBadgeVariant}
+														className="gap-1 w-fit"
+													>
+														<SelectedComboEggIcon className="h-3 w-3" />
+														{selectedComboEggBadgeLabel}
+													</Badge>
 													<p className="text-xs sm:text-sm text-muted-foreground">
 														Ready to add to cart
 													</p>

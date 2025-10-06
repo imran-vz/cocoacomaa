@@ -28,6 +28,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
 	calculateGrossAmount,
@@ -44,6 +45,7 @@ const postalComboSchema = z.object({
 		.array(z.string().min(1, "Item cannot be empty"))
 		.min(1, { message: "At least one item is required" }),
 	status: z.enum(["available", "unavailable"]),
+	containsEgg: z.boolean(),
 });
 
 type PostalComboFormData = z.infer<typeof postalComboSchema>;
@@ -57,6 +59,7 @@ interface PostalComboFormProps {
 		imageUrl: string | null;
 		items: string[];
 		status: "available" | "unavailable";
+		containsEgg: boolean;
 	};
 	isEdit?: boolean;
 }
@@ -124,6 +127,7 @@ export default function PostalComboForm({
 			imageUrl: initialData?.imageUrl || "",
 			items: initialData?.items ?? [],
 			status: initialData?.status || "available",
+			containsEgg: initialData?.containsEgg ?? false,
 		},
 	});
 
@@ -478,6 +482,38 @@ export default function PostalComboForm({
 						))}
 					</div>
 				</div>
+
+				{/* Egg Content */}
+				<FormField
+					control={form.control}
+					name="containsEgg"
+					render={({ field }) => (
+						<FormItem>
+							<FormLabel>Egg Content</FormLabel>
+							<div className="flex items-center justify-between rounded-md border p-3">
+								<div className="space-y-1">
+									<p className="text-sm font-medium leading-none">
+										{field.value ? "Contains egg" : "Eggless"}
+									</p>
+									<p className="text-xs text-muted-foreground">
+										Toggle on if this combo includes egg-based items.
+									</p>
+								</div>
+								<FormControl>
+									<Switch
+										name={field.name}
+										ref={field.ref}
+										checked={field.value}
+										onChange={(event) => {
+											field.onChange(event.target.checked);
+										}}
+									/>
+								</FormControl>
+							</div>
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
 
 				{/* Status */}
 				<FormField

@@ -162,6 +162,7 @@ export const postalCombos = pgTable("postal_combos", (d) => {
 			})
 			.notNull()
 			.default("available"),
+		containsEgg: d.boolean("contains_egg").notNull().default(false),
 		isDeleted: d.boolean("is_deleted").notNull().default(false),
 		createdAt: d
 			.timestamp("created_at")

@@ -46,7 +46,7 @@ export default function PostalBrowniesLoading() {
 										{ length: 6 },
 										(_, i) => `skeleton-${Date.now()}-${i}`,
 									).map((skeletonId) => (
-										<Card key={skeletonId} className="h-full">
+										<Card key={skeletonId} className="h-full pt-0">
 											<div className="aspect-video bg-gray-200 animate-pulse rounded-t-lg" />
 											<CardHeader className="pb-2">
 												<div className="h-4 bg-gray-200 rounded animate-pulse mb-2" />

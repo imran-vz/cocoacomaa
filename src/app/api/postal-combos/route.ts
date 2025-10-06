@@ -16,6 +16,7 @@ const createPostalComboSchema = z.object({
 		.array(z.string())
 		.min(1, { message: "At least one item is required" }),
 	status: z.enum(["available", "unavailable"]).default("available"),
+	containsEgg: z.boolean().default(false),
 });
 
 // GET - Fetch all postal combos
@@ -61,7 +62,8 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		const { name, description, price, imageUrl, items, status } = data;
+		const { name, description, price, imageUrl, items, status, containsEgg } =
+			data;
 
 		await db.insert(postalCombos).values({
 			name,
@@ -70,6 +72,7 @@ export async function POST(request: NextRequest) {
 			imageUrl: imageUrl || null,
 			items,
 			status,
+			containsEgg: Boolean(containsEgg),
 		});
 
 		return NextResponse.json({ success: true });

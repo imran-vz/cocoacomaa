@@ -16,6 +16,7 @@ const updatePostalComboSchema = z.object({
 		.array(z.string())
 		.min(1, { message: "At least one item is required" }),
 	status: z.enum(["available", "unavailable"]),
+	containsEgg: z.boolean().default(false),
 });
 
 // GET - Fetch single postal combo
@@ -93,7 +94,8 @@ export async function PUT(
 			);
 		}
 
-		const { name, description, price, imageUrl, items, status } = data;
+		const { name, description, price, imageUrl, items, status, containsEgg } =
+			data;
 
 		const [updatedPostalCombo] = await db
 			.update(postalCombos)
@@ -104,6 +106,7 @@ export async function PUT(
 				imageUrl: imageUrl || null,
 				items,
 				status,
+				containsEgg: Boolean(containsEgg),
 				updatedAt: new Date(),
 			})
 			.where(

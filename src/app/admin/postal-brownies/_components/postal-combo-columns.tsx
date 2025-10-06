@@ -2,7 +2,7 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { Edit, Image as ImageIcon } from "lucide-react";
+import { Edit, Egg, EggOff, Image as ImageIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -21,6 +21,7 @@ export type PostalCombo = {
 	createdAt: Date;
 	items: string[];
 	status: "available" | "unavailable";
+	containsEgg: boolean;
 };
 
 export const postalComboColumns: ColumnDef<PostalCombo>[] = [
@@ -76,6 +77,27 @@ export const postalComboColumns: ColumnDef<PostalCombo>[] = [
 		cell: ({ row }) => {
 			const price = row.getValue("price") as string;
 			return <div className="font-mono">{formatCurrency(Number(price))}</div>;
+		},
+	},
+	{
+		accessorKey: "containsEgg",
+		header: "Egg Content",
+		cell: ({ row }) => {
+			const containsEgg = row.getValue("containsEgg") as boolean;
+			const Icon = containsEgg ? Egg : EggOff;
+			return (
+				<Badge
+					variant={containsEgg ? "destructive" : "success"}
+					className="gap-1"
+				>
+					<Icon className="h-3 w-3" />
+					{containsEgg ? "Contains Egg" : "Eggless"}
+				</Badge>
+			);
+		},
+		enableSorting: false,
+		filterFn: (row, id, value) => {
+			return value.includes(String(row.getValue(id)));
 		},
 	},
 	{
