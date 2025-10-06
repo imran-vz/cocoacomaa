@@ -9,15 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import type { Dessert } from "@/lib/db/schema";
 import { formatCurrency } from "@/lib/utils";
 
-type DessertMod = Omit<
-	Dessert,
-	"createdAt" | "updatedAt" | "isDeleted" | "description"
->;
-export const columns: ColumnDef<DessertMod>[] = [
-	{
-		accessorKey: "name",
-		header: "Name",
-	},
+export const columns: ColumnDef<
+	Omit<Dessert, "createdAt" | "updatedAt" | "isDeleted" | "description">
+>[] = [
+	{ accessorKey: "name", header: "Name" },
 	{
 		accessorKey: "imageUrl",
 		header: "Image",

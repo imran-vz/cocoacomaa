@@ -9,7 +9,17 @@ import { Badge } from "@/components/ui/badge";
 import type { Dessert } from "@/lib/db/schema";
 import { formatCurrency } from "@/lib/utils";
 
-export const specialsColumns: ColumnDef<Dessert>[] = [
+export const specialsColumns: ColumnDef<
+	Omit<
+		Dessert,
+		| "createdAt"
+		| "updatedAt"
+		| "isDeleted"
+		| "description"
+		| "leadTimeDays"
+		| "category"
+	>
+>[] = [
 	{
 		accessorKey: "name",
 		header: "Name",
