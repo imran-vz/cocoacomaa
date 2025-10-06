@@ -136,6 +136,10 @@ export function PhoneEditDialog({
 											placeholder="Re-enter your phone number"
 											{...field}
 											disabled={isSubmitting}
+											onPaste={(e) => {
+												e.preventDefault();
+												return false;
+											}}
 										/>
 									</FormControl>
 									<FormDescription>

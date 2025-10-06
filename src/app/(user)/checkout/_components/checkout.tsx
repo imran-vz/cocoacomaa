@@ -923,6 +923,10 @@ export default function CheckoutPage({
 															className="text-sm sm:text-base"
 															readOnly={isProcessing}
 															disabled={isProcessing}
+															onPaste={(e) => {
+																e.preventDefault();
+																return false;
+															}}
 														/>
 													</FormControl>
 													<FormDescription className="text-xs sm:text-sm">
