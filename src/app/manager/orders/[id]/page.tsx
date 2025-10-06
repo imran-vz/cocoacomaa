@@ -61,7 +61,7 @@ export default async function ManagerOrderDetailsPage({
 	if (!order) {
 		return (
 			<div className="container mx-auto py-4 sm:py-6 lg:py-8 px-4">
-				<div className="max-w-4xl mx-auto">
+				<div className="max-w-6xl mx-auto">
 					<Card>
 						<CardContent className="py-8 text-center">
 							<AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />

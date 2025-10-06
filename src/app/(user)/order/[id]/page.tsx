@@ -101,15 +101,14 @@ export default async function AdminOrderDetailsPage({
 	if (!order) {
 		return (
 			<div className="container mx-auto py-4 sm:py-6 lg:py-8 px-4">
-				<div className="max-w-4xl mx-auto">
+				<div className="max-w-6xl mx-auto">
 					<Card>
 						<CardContent className="py-8 text-center">
 							<AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
 							<h2 className="text-xl font-bold mb-2">Order Not Found</h2>
 							<p className="text-muted-foreground mb-6">
-								{
-									"The order you're looking for doesn't exist or has been removed."
-								}
+								The order you&apos;re looking for doesn&apos;t exist or has been
+								removed.
 							</p>
 							<div className="flex flex-col sm:flex-row gap-3 justify-center">
 								<NavButton />
@@ -123,7 +122,7 @@ export default async function AdminOrderDetailsPage({
 
 	return (
 		<div className="container mx-auto py-4 sm:py-6 lg:py-8 px-4">
-			<div className="max-w-4xl mx-auto">
+			<div className="max-w-6xl mx-auto">
 				{/* Header */}
 				<div className="flex items-center gap-4 mb-6">
 					<BackButton />

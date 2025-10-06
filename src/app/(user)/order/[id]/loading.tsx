@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function OrderDetailsLoading() {
 	return (
 		<div className="container mx-auto py-4 sm:py-6 lg:py-8 px-4">
-			<div className="max-w-4xl mx-auto">
+			<div className="max-w-6xl mx-auto">
 				{/* Header */}
 				<div className="flex items-center gap-4 mb-6">
 					<Button variant="outline" size="icon" className="shrink-0" disabled>

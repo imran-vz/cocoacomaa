@@ -121,7 +121,7 @@ export default function CakeOrderDaysSettingsPage() {
 	if (isLoading) {
 		return (
 			<div className="container mx-auto py-6 px-4">
-				<div className="max-w-4xl mx-auto">
+				<div className="max-w-6xl mx-auto">
 					<div className="h-8 w-64 bg-gray-200 rounded animate-pulse mb-6" />
 					<Card>
 						<CardHeader>
@@ -145,7 +145,7 @@ export default function CakeOrderDaysSettingsPage() {
 
 	return (
 		<div className="container mx-auto py-6 px-4">
-			<div className="max-w-4xl mx-auto">
+			<div className="max-w-6xl mx-auto">
 				{/* Header */}
 				<div className="flex items-center gap-3 mb-6">
 					<Settings className="h-6 w-6" />
