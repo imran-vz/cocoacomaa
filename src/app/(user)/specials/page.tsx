@@ -2,7 +2,15 @@
 
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { CalendarDays, Clock, Minus, Plus, ShoppingCart } from "lucide-react";
+import {
+	CalendarDays,
+	Clock,
+	Egg,
+	EggOff,
+	Minus,
+	Plus,
+	ShoppingCart,
+} from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -28,6 +36,7 @@ interface Special {
 	category: "special";
 	leadTimeDays: number;
 	status: "available" | "unavailable";
+	containsEgg: boolean;
 }
 
 const fetchSpecials = async () => {
@@ -244,11 +253,18 @@ export default function SpecialsPage() {
 					<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
 						{availableSpecials.map((special) => {
 							const quantity = getItemQuantity(special.id);
+							const eggBadgeVariant = special.containsEgg
+								? "destructive"
+								: "success";
+							const eggBadgeLabel = special.containsEgg
+								? "Contains Egg"
+								: "Eggless";
+							const EggIcon = special.containsEgg ? Egg : EggOff;
 
 							return (
 								<Card
 									key={special.id}
-									className="overflow-hidden group hover:shadow-lg transition-shadow"
+									className="overflow-hidden group hover:shadow-lg transition-shadow pt-0"
 								>
 									{special.imageUrl && (
 										<div className="relative h-48 overflow-hidden">
@@ -261,16 +277,19 @@ export default function SpecialsPage() {
 										</div>
 									)}
 									<CardHeader>
-										<div className="flex justify-between items-start">
+										<div className="flex items-start justify-between gap-3 flex-col">
 											<CardTitle className="text-lg">{special.name}</CardTitle>
-											<Badge className="bg-purple-100 text-purple-800 hover:bg-purple-200">
-												Special
-											</Badge>
+											<div className="flex flex-wrap gap-2">
+												<Badge variant={eggBadgeVariant} className="gap-1">
+													<EggIcon className="h-3 w-3" />
+													{eggBadgeLabel}
+												</Badge>
+											</div>
 										</div>
 									</CardHeader>
-									<CardContent className="space-y-4">
+									<CardContent className="gap-y-4 flex flex-col flex-1">
 										{special.description && (
-											<p className="text-sm text-muted-foreground">
+											<p className="text-sm text-muted-foreground flex-1">
 												{special.description}
 											</p>
 										)}
