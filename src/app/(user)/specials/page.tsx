@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCart } from "@/lib/cart-context";
 import type { SpecialsSettings } from "@/lib/db/schema";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { cn, formatCurrency, formatDate } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -264,7 +264,10 @@ export default function SpecialsPage() {
 							return (
 								<Card
 									key={special.id}
-									className="overflow-hidden group hover:shadow-lg transition-shadow pt-0"
+									className={cn(
+										"overflow-hidden group hover:shadow-lg transition-shadow ",
+										special.imageUrl ? "pt-0" : "",
+									)}
 								>
 									{special.imageUrl && (
 										<div className="relative h-48 overflow-hidden">

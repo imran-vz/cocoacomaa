@@ -30,7 +30,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { usePostalOrderSettings } from "@/hooks/use-postal-order-settings";
 import { useCart } from "@/lib/cart-context";
-import { formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 
 const brownieComboSchema = z.object({
 	selectedCombo: z
@@ -339,11 +339,13 @@ export default function PostalBrowniesPage() {
 																className="cursor-pointer block w-full"
 															>
 																<Card
-																	className={`transition-all duration-200 hover:shadow-lg active:scale-[0.98] ${
+																	className={cn(
+																		"transition-all duration-200 hover:shadow-lg active:scale-[0.98] h-full flex flex-col ",
+																		combo.imageUrl ? "pt-0" : "",
 																		field.value === combo.id.toString()
 																			? "ring-2 ring-primary shadow-lg bg-primary/5"
-																			: "hover:shadow-md"
-																	} h-full flex flex-col pt-0`}
+																			: "hover:shadow-md",
+																	)}
 																>
 																	{combo.imageUrl && (
 																		<div className="relative aspect-[4/3] sm:aspect-video w-full">

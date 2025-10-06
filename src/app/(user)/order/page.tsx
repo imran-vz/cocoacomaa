@@ -17,7 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import OrderRestrictionBanner from "@/components/ui/order-restriction-banner";
 import { useCakeOrderSettings } from "@/hooks/use-order-settings";
 import { useCart } from "@/lib/cart-context";
-import { formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -330,7 +330,10 @@ export default function OrderPage() {
 								return (
 									<Card
 										key={dessert.id}
-										className="overflow-hidden flex flex-col justify-between pt-0"
+										className={cn(
+											"overflow-hidden flex flex-col justify-between ",
+											dessert.imageUrl ? "pt-0" : "",
+										)}
 									>
 										{dessert.imageUrl && (
 											<div className="relative aspect-video w-full">
