@@ -453,9 +453,7 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 													ref={field.ref}
 													checked={field.value}
 													disabled={isSubmitting || uploading}
-													onChange={(event) => {
-														field.onChange(event.target.checked);
-													}}
+													onCheckedChange={field.onChange}
 												/>
 											</FormControl>
 										</div>

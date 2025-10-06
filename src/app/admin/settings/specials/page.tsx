@@ -122,7 +122,7 @@ export default function SpecialsSettingsPage() {
 							<Switch
 								id={activeId}
 								checked={isActive}
-								onChange={(e) => setIsActive(e.target.checked)}
+								onCheckedChange={field.onChange}
 							/>
 						</div>
 

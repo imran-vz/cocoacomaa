@@ -504,9 +504,7 @@ export default function PostalComboForm({
 										name={field.name}
 										ref={field.ref}
 										checked={field.value}
-										onChange={(event) => {
-											field.onChange(event.target.checked);
-										}}
+										onCheckedChange={field.onChange}
 									/>
 								</FormControl>
 							</div>
