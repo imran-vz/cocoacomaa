@@ -42,7 +42,7 @@ export default async function EditSpecialPage({
 				imageUrl: special.imageUrl || "",
 				status: special.status,
 				category: special.category,
-				leadTimeDays: special.leadTimeDays,
+				leadTimeDays: special.leadTimeDays || 2,
 			}}
 		/>
 	);
