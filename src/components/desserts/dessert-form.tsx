@@ -68,6 +68,7 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 		initialData?.imageUrl || "",
 	);
 	const [uploading, setUploading] = useState(false);
+	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [grossAmount, setGrossAmount] = useState<number>(0);
 
 	// Check if we're dealing with specials
@@ -184,6 +185,9 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 	};
 
 	async function onSubmit(data: DessertFormValues) {
+		if (isSubmitting) return;
+
+		setIsSubmitting(true);
 		try {
 			console.log("data", data);
 			let imageUrl = data.imageUrl;
@@ -196,6 +200,7 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 				} else {
 					toast.error("Failed to upload image");
 					// If upload failed, don't proceed
+					setIsSubmitting(false);
 					return;
 				}
 			}
@@ -243,6 +248,7 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 		} catch (error) {
 			console.error(error);
 			toast.error("Something went wrong");
+			setIsSubmitting(false);
 		}
 	}
 
@@ -286,6 +292,7 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 															? "Enter special name"
 															: "Enter dessert name"
 													}
+													disabled={isSubmitting || uploading}
 													{...field}
 												/>
 											</FormControl>
@@ -305,6 +312,7 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 													type="number"
 													step="0.01"
 													placeholder="Enter net price"
+													disabled={isSubmitting || uploading}
 													{...field}
 												/>
 											</FormControl>
@@ -334,6 +342,7 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 														: "Enter dessert description"
 												}
 												className="min-h-[100px]"
+												disabled={isSubmitting || uploading}
 												{...field}
 											/>
 										</FormControl>
@@ -361,6 +370,7 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 											accept="image/*"
 											onChange={handleFileSelect}
 											className="cursor-pointer"
+											disabled={isSubmitting || uploading}
 										/>
 										<p className="text-sm text-muted-foreground">
 											Maximum file size: 5MB. Supported formats: JPG, PNG, WebP
@@ -381,6 +391,7 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 												<Select
 													onValueChange={field.onChange}
 													defaultValue={field.value}
+													disabled={isSubmitting || uploading}
 												>
 													<FormControl>
 														<SelectTrigger>
@@ -410,6 +421,7 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 														min="1"
 														max="30"
 														placeholder="Enter lead time in days"
+														disabled={isSubmitting || uploading}
 														{...field}
 													/>
 												</FormControl>
@@ -440,6 +452,7 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 													name={field.name}
 													ref={field.ref}
 													checked={field.value}
+													disabled={isSubmitting || uploading}
 													onChange={(event) => {
 														field.onChange(event.target.checked);
 													}}
@@ -460,6 +473,7 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 										<Select
 											onValueChange={field.onChange}
 											defaultValue={field.value}
+											disabled={isSubmitting || uploading}
 										>
 											<FormControl>
 												<SelectTrigger>
@@ -481,12 +495,13 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 									type="button"
 									variant="outline"
 									onClick={() => router.back()}
+									disabled={isSubmitting || uploading}
 								>
 									Cancel
 								</Button>
 								<Button
 									type="submit"
-									disabled={uploading}
+									disabled={isSubmitting || uploading}
 									onClick={() =>
 										console.log({
 											errors: form.formState.errors,
@@ -496,13 +511,21 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 								>
 									{uploading
 										? "Uploading..."
-										: mode === "create"
-											? isSpecial
-												? "Create Special"
-												: "Create Dessert"
-											: isSpecial
-												? "Update Special"
-												: "Update Dessert"}
+										: isSubmitting
+											? mode === "create"
+												? isSpecial
+													? "Creating Special..."
+													: "Creating Dessert..."
+												: isSpecial
+													? "Updating Special..."
+													: "Updating Dessert..."
+											: mode === "create"
+												? isSpecial
+													? "Create Special"
+													: "Create Dessert"
+												: isSpecial
+													? "Update Special"
+													: "Update Dessert"}
 								</Button>
 							</div>
 						</form>

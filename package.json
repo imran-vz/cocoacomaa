@@ -92,6 +92,7 @@
     "husky": "^9.1.7",
     "postcss": "^8.5.6",
     "react-email": "^4.2.11",
+    "shadcn": "^3.4.0",
     "tailwindcss": "^4.1.13",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2"

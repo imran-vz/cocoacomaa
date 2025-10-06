@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, ShoppingBag, Users } from "lucide-react";
+import { Home, LogOut, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
@@ -14,23 +14,14 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Skeleton } from "./ui/skeleton";
 
-export function Navigation() {
+export function ManagerNavigation() {
 	const session = useSession();
 	const pathname = usePathname();
-	const isAdminPage = pathname.startsWith("/admin");
-	const isManagerPage = pathname.startsWith("/manager");
-	const isAdmin = session.data?.user?.role === "admin";
-	const isManager = session.data?.user?.role === "manager";
 
 	const handleLogout = async () => {
 		await signOut({ callbackUrl: "/" });
 	};
-
-	if (isAdminPage || isManagerPage) {
-		return null;
-	}
 
 	return (
 		<nav className="bg-background shadow-md border-b sticky top-0 z-50">
@@ -39,36 +30,42 @@ export function Navigation() {
 					{/* Logo */}
 					<div className="shrink-0 flex items-center">
 						<Link
-							href={"/"}
+							href={"/manager"}
 							className="text-xl sm:text-2xl uppercase font-bold text-foreground"
 						>
-							Cocoa Comaa
+							Manager Portal
 						</Link>
 					</div>
 
-					<div className="ml-auto mr-4 flex items-center gap-2">
-						{session.status === "loading" ? (
-							<Skeleton className="h-8 w-24" />
-						) : isAdmin ? (
-							<Button asChild variant="secondary">
-								<Link href="/admin">Dashboard</Link>
-							</Button>
-						) : isManager ? (
-							<Button asChild variant="secondary">
-								<Link href="/manager">Dashboard</Link>
-							</Button>
-						) : null}
-						<ThemeToggle />
+					{/* Navigation Links */}
+					<div className="hidden md:flex items-center gap-4">
+						<Button
+							variant={pathname === "/manager" ? "default" : "ghost"}
+							asChild
+						>
+							<Link href="/manager" className="flex items-center gap-2">
+								<Home className="h-4 w-4" />
+								Dashboard
+							</Link>
+						</Button>
+						<Button
+							variant={
+								pathname.startsWith("/manager/orders") ? "default" : "ghost"
+							}
+							asChild
+						>
+							<Link href="/manager/orders" className="flex items-center gap-2">
+								<ShoppingBag className="h-4 w-4" />
+								Orders
+							</Link>
+						</Button>
 					</div>
-					{/* Navigation */}
-					<div className="flex items-center space-x-4">
-						{session.status === "loading" ? (
-							<Skeleton className="h-8 w-8" />
-						) : !session.data?.user?.id ? (
-							<Button variant="ghost" asChild>
-								<Link href="/login">Login</Link>
-							</Button>
-						) : (
+
+					{/* Right side */}
+					<div className="flex items-center gap-2">
+						<ThemeToggle />
+
+						{session.data?.user?.id && (
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
 									<Button
@@ -88,36 +85,41 @@ export function Navigation() {
 															.join("")
 															.toUpperCase()
 															.slice(0, 2)
-													: "U"}
+													: "M"}
 											</AvatarFallback>
 										</Avatar>
 									</Button>
 								</DropdownMenuTrigger>
-
 								<DropdownMenuContent align="end" className="w-56">
-									{isManager || isAdmin ? null : (
-										<>
-											<DropdownMenuItem asChild>
-												<Link
-													href="/my-orders"
-													className="flex items-center gap-2"
-												>
-													<ShoppingBag className="h-4 w-4" />
-													My Orders
-												</Link>
-											</DropdownMenuItem>
-											<DropdownMenuItem asChild>
-												<Link
-													href="/my-workshops"
-													className="flex items-center gap-2"
-												>
-													<Users className="h-4 w-4" />
-													My Workshops
-												</Link>
-											</DropdownMenuItem>
-											<DropdownMenuSeparator />
-										</>
-									)}
+									<div className="flex items-center justify-start gap-2 p-2">
+										<div className="flex flex-col space-y-1 leading-none">
+											{session.data.user.name && (
+												<p className="font-medium">{session.data.user.name}</p>
+											)}
+											{session.data.user.email && (
+												<p className="w-[200px] truncate text-sm text-muted-foreground">
+													{session.data.user.email}
+												</p>
+											)}
+										</div>
+									</div>
+									<DropdownMenuSeparator />
+									<DropdownMenuItem asChild className="md:hidden">
+										<Link href="/manager" className="flex items-center gap-2">
+											<Home className="h-4 w-4" />
+											Dashboard
+										</Link>
+									</DropdownMenuItem>
+									<DropdownMenuItem asChild className="md:hidden">
+										<Link
+											href="/manager/orders"
+											className="flex items-center gap-2"
+										>
+											<ShoppingBag className="h-4 w-4" />
+											Orders
+										</Link>
+									</DropdownMenuItem>
+									<DropdownMenuSeparator className="md:hidden" />
 									<DropdownMenuItem
 										onClick={handleLogout}
 										className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer"

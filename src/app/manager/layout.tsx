@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { ManagerNavigation } from "@/components/manager-navigation";
 
 export default async function ManagerLayout({
 	children,
@@ -12,5 +13,10 @@ export default async function ManagerLayout({
 		redirect("/");
 	}
 
-	return <>{children}</>;
+	return (
+		<>
+			<ManagerNavigation />
+			{children}
+		</>
+	);
 }

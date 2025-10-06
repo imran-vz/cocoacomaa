@@ -12,7 +12,7 @@ import { Providers } from "./providers";
 
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
 	title: "Cocoa Comaa",

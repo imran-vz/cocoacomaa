@@ -1,8 +1,15 @@
 {
-    "mcpServers": {
-        "sentry": {
-            "type": "http",
-            "url": "https://mcp.sentry.dev/mcp/cocoa-comaa/javascript-nextjs"
-        }
+  "mcpServers": {
+    "sentry": {
+      "type": "http",
+      "url": "https://mcp.sentry.dev/mcp/cocoa-comaa/javascript-nextjs"
+    },
+    "shadcn": {
+      "command": "npx",
+      "args": [
+        "shadcn@latest",
+        "mcp"
+      ]
     }
+  }
 }

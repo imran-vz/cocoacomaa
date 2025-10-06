@@ -121,7 +121,7 @@ export default function OrderClientPage({
 
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
 				<div className="order-1 lg:order-2 lg:col-span-1">
-					<div className="h-0 lg:h-[66px]" />
+					<div className="h-0 lg:h-[123px]" />
 					<Card className="lg:sticky lg:top-20">
 						<CardHeader className="pb-3 sm:pb-4">
 							<CardTitle className="flex items-center text-lg sm:text-xl">
