@@ -12,6 +12,7 @@ export default function NewSpecialPage() {
 				status: "available",
 				category: "special",
 				leadTimeDays: 2,
+				containsEgg: true,
 			}}
 		/>
 	);
