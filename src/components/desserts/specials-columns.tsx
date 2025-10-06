@@ -6,19 +6,10 @@ import Image from "next/image";
 
 import { SpecialActions } from "@/components/special-actions";
 import { Badge } from "@/components/ui/badge";
+import type { Dessert } from "@/lib/db/schema";
 import { formatCurrency } from "@/lib/utils";
 
-export type Special = {
-	id: number;
-	name: string;
-	price: string;
-	imageUrl: string | null;
-	status: "available" | "unavailable";
-	createdAt: Date;
-	containsEgg: boolean;
-};
-
-export const specialsColumns: ColumnDef<Special>[] = [
+export const specialsColumns: ColumnDef<Dessert>[] = [
 	{
 		accessorKey: "name",
 		header: "Name",

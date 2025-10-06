@@ -7,14 +7,11 @@ import { format } from "date-fns";
 import { Egg, EggOff, Package } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import LoginModal from "@/components/login-modal";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,7 +28,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { usePostalOrderSettings } from "@/hooks/use-postal-order-settings";
 import { useCart } from "@/lib/cart-context";
 import { cn, formatCurrency } from "@/lib/utils";
-import PostalBrowniesLoading from "../loading";
 
 const brownieComboSchema = z.object({
 	selectedCombo: z
@@ -75,7 +71,6 @@ export default function PostalBrowniesClient({
 	postalCombosList: PostalCombo[];
 }) {
 	const router = useRouter();
-	const { data: session, status } = useSession();
 	const { clearCart, addItem } = useCart();
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const checkoutSectionRef = useRef<HTMLDivElement>(null);
@@ -131,11 +126,6 @@ export default function PostalBrowniesClient({
 	}, [selectedComboId]);
 
 	const handleAddToCart = async (data: BrownieComboFormValues) => {
-		if (!session) {
-			router.push("/login?redirect=/postal-brownies");
-			return;
-		}
-
 		if (!arePostalOrdersAllowed) {
 			toast.error(
 				"Postal brownie orders are not currently being accepted for this month",
@@ -171,32 +161,6 @@ export default function PostalBrowniesClient({
 			setIsSubmitting(false);
 		}
 	};
-
-	if (status === "loading") {
-		return <PostalBrowniesLoading />;
-	}
-
-	// Show login modal if not authenticated
-	if (!session) {
-		return (
-			<div className="container mx-auto p-4 sm:p-6">
-				<div className="max-w-4xl mx-auto">
-					<h1 className="text-3xl font-bold mb-6">Specials</h1>
-					<Alert>
-						<AlertTitle>Authentication Required</AlertTitle>
-						<AlertDescription>
-							Please sign in to access our specials.
-						</AlertDescription>
-					</Alert>
-				</div>
-				<LoginModal
-					open={true}
-					onClose={() => {}}
-					redirect="/postal-brownies"
-				/>
-			</div>
-		);
-	}
 
 	return (
 		<div className="min-h-screen bg-background">

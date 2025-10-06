@@ -1,29 +1,16 @@
-import { and, asc, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { desserts } from "@/lib/db/schema";
+import { fetchDesserts } from "@/lib/db/dessert";
+import { type Dessert, desserts } from "@/lib/db/schema";
 
 export async function GET(request: Request) {
 	try {
 		const { searchParams } = new URL(request.url);
 		const category = searchParams.get("category");
 
-		const whereConditions = [
-			eq(desserts.status, "available"),
-			eq(desserts.isDeleted, false),
-		];
-
-		if (category) {
-			whereConditions.push(
-				eq(desserts.category, category as "cake" | "dessert" | "special"),
-			);
-		}
-
-		const availableDesserts = await db
-			.select()
-			.from(desserts)
-			.where(and(...whereConditions))
-			.orderBy(asc(desserts.price));
+		const availableDesserts = await fetchDesserts(
+			category ? [category as Dessert["category"]] : ["dessert", "cake"],
+		);
 
 		return NextResponse.json(availableDesserts);
 	} catch (error) {

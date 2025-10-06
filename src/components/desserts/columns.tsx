@@ -6,19 +6,8 @@ import Image from "next/image";
 
 import { DessertActions } from "@/components/dessert-actions";
 import { Badge } from "@/components/ui/badge";
+import type { Dessert } from "@/lib/db/schema";
 import { formatCurrency } from "@/lib/utils";
-
-export type Dessert = {
-	id: number;
-	name: string;
-	price: string;
-	imageUrl: string | null;
-	category: "cake" | "dessert" | "special";
-	leadTimeDays: number;
-	status: "available" | "unavailable";
-	createdAt: Date;
-	containsEgg: boolean;
-};
 
 export const columns: ColumnDef<Dessert>[] = [
 	{
