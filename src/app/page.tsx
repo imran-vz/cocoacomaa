@@ -55,6 +55,14 @@ export default function Home() {
 						>
 							<Link href="/workshops">Workshops</Link>
 						</Button>
+						<Button
+							asChild
+							size="lg"
+							variant="outline"
+							className="bg-transparent text-white"
+						>
+							<Link href="/specials">Specials</Link>
+						</Button>
 					</div>
 				</div>
 			</main>
