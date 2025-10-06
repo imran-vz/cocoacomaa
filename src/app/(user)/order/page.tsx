@@ -10,6 +10,7 @@ import { useSession } from "next-auth/react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,8 +50,7 @@ const fetchDesserts = async () => {
 export default function OrderPage() {
 	const router = useRouter();
 	const { items, addItem, removeItem, updateQuantity, total } = useCart();
-	const { data: session } = useSession();
-	const [showLogin, setShowLogin] = useState(false);
+	const { data: session, status } = useSession();
 	const [selectedCategory, setSelectedCategory] = useState<
 		"all" | "cake" | "dessert"
 	>("all");
@@ -116,15 +116,10 @@ export default function OrderPage() {
 			return;
 		}
 
-		if (!session) {
-			setShowLogin(true);
-			return;
-		}
-
 		router.push("/checkout");
 	};
 
-	if (isLoading) {
+	if (isLoading || status === "loading") {
 		return (
 			<div className="container min-h-[calc(100svh-10rem)] mx-auto py-4 sm:py-6 lg:py-8 px-4">
 				<div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
@@ -162,10 +157,26 @@ export default function OrderPage() {
 		);
 	}
 
+	// Show login modal if not authenticated
+	if (!session) {
+		return (
+			<div className="container mx-auto p-4 sm:p-6">
+				<div className="max-w-4xl mx-auto">
+					<h1 className="text-3xl font-bold mb-6">Specials</h1>
+					<Alert>
+						<AlertTitle>Authentication Required</AlertTitle>
+						<AlertDescription>
+							Please sign in to access our specials.
+						</AlertDescription>
+					</Alert>
+				</div>
+				<LoginModal open={true} onClose={() => {}} redirect="/order" />
+			</div>
+		);
+	}
+
 	return (
 		<div className="container mx-auto py-4 sm:py-6 lg:py-8 px-4">
-			<LoginModal open={showLogin} onClose={() => setShowLogin(false)} />
-
 			<h1 className="text-2xl sm:text-3xl sm:hidden font-bold mb-4 sm:mb-6 lg:mb-8">
 				Our Desserts
 			</h1>
