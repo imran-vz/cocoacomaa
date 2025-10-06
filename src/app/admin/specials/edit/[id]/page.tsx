@@ -20,7 +20,11 @@ export default async function EditSpecialPage({
 
 	const special = await db.query.desserts.findFirst({
 		where: (desserts, { eq, and }) =>
-			and(eq(desserts.id, specialId), eq(desserts.category, "special")),
+			and(
+				eq(desserts.id, specialId),
+				eq(desserts.category, "special"),
+				eq(desserts.isDeleted, false),
+			),
 	});
 
 	if (!special) {

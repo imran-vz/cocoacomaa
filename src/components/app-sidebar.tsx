@@ -141,12 +141,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	};
 
 	// Select data based on user role
-	const data = isAdmin ? adminData : isManager ? managerData : null;
-
-	// Don't render sidebar if no appropriate role
-	if (!data) {
-		return null;
-	}
+	const data = isAdmin ? adminData : isManager ? managerData : managerData;
 
 	return (
 		<Sidebar collapsible="offcanvas" {...props}>

@@ -8,7 +8,10 @@ export async function GET(request: Request) {
 		const { searchParams } = new URL(request.url);
 		const category = searchParams.get("category");
 
-		const whereConditions = [eq(desserts.status, "available")];
+		const whereConditions = [
+			eq(desserts.status, "available"),
+			eq(desserts.isDeleted, false),
+		];
 
 		if (category) {
 			whereConditions.push(
@@ -45,12 +48,16 @@ export async function POST(request: Request) {
 			leadTimeDays,
 		} = body;
 
-		if (!name || !description || !price || !category || !leadTimeDays) {
+		if (!name || !description || !price || !category) {
 			return NextResponse.json(
-				{
-					error:
-						"Name, description, price, category, and lead time are required",
-				},
+				{ error: "Name, description, price, and category are required" },
+				{ status: 400 },
+			);
+		}
+
+		if (category !== "special" && !leadTimeDays) {
+			return NextResponse.json(
+				{ error: "Lead time is required for non-special items" },
 				{ status: 400 },
 			);
 		}

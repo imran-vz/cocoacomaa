@@ -40,11 +40,11 @@ export default async function AdminDashboard() {
 		.where(validOrdersFilter)
 		.then((res) => Number(res[0].total) || 0);
 
-	// Get total desserts (available only)
+	// Get total desserts (available and not deleted)
 	const totalDessertsPromise = db
 		.select({ count: sql<number>`count(*)` })
 		.from(desserts)
-		.where(eq(desserts.status, "available"))
+		.where(and(eq(desserts.status, "available"), eq(desserts.isDeleted, false)))
 		.then((res) => res[0].count);
 
 	// Get total customers (unchanged)

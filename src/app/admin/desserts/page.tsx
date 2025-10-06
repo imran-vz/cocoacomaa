@@ -1,4 +1,4 @@
-import { inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 
@@ -21,7 +21,10 @@ export default async function DessertsPage() {
 			status: true,
 			createdAt: true,
 		},
-		where: inArray(desserts.category, ["dessert", "cake"]),
+		where: and(
+			inArray(desserts.category, ["dessert", "cake"]),
+			eq(desserts.isDeleted, false),
+		),
 	});
 
 	return (

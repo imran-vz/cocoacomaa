@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { DessertForm } from "@/components/desserts/dessert-form";
 import { db } from "@/lib/db";
@@ -15,7 +15,10 @@ export default async function EditDessertPage({
 }: EditDessertPageProps) {
 	const { id } = await params;
 	const dessert = await db.query.desserts.findFirst({
-		where: eq(desserts.id, Number.parseInt(id, 10)),
+		where: and(
+			eq(desserts.id, Number.parseInt(id, 10)),
+			eq(desserts.isDeleted, false),
+		),
 		columns: {
 			id: true,
 			name: true,

@@ -8,7 +8,8 @@ import { db } from "@/lib/db";
 
 export default async function SpecialsPage() {
 	const specialsList = await db.query.desserts.findMany({
-		where: (desserts, { eq }) => eq(desserts.category, "special"),
+		where: (desserts, { eq, and }) =>
+			and(eq(desserts.category, "special"), eq(desserts.isDeleted, false)),
 		orderBy: (desserts, { desc }) => [desc(desserts.createdAt)],
 		columns: {
 			id: true,

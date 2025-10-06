@@ -108,6 +108,7 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 
 	// Calculate gross amount when price changes
 	const watchPrice = form.watch("price");
+
 	useEffect(() => {
 		const netPrice = parseFloat(watchPrice);
 		if (!Number.isNaN(netPrice) && netPrice > 0) {
@@ -180,6 +181,7 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 
 	async function onSubmit(data: DessertFormValues) {
 		try {
+			console.log("data", data);
 			let imageUrl = data.imageUrl;
 
 			// Upload new image if selected
@@ -188,6 +190,7 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 				if (uploadedUrl) {
 					imageUrl = uploadedUrl;
 				} else {
+					toast.error("Failed to upload image");
 					// If upload failed, don't proceed
 					return;
 				}
@@ -362,10 +365,9 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 								</div>
 							</div>
 
-							<div
-								className={`grid gap-4 ${isSpecial ? "" : "md:grid-cols-2"}`}
-							>
-								{!isSpecial && (
+							{/* Category and Lead Time */}
+							{!isSpecial && (
+								<div className={`grid gap-4 md:grid-cols-2`}>
 									<FormField
 										control={form.control}
 										name="category"
@@ -391,9 +393,7 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 											</FormItem>
 										)}
 									/>
-								)}
 
-								{!isSpecial && (
 									<FormField
 										control={form.control}
 										name="leadTimeDays"
@@ -413,8 +413,8 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 											</FormItem>
 										)}
 									/>
-								)}
-							</div>
+								</div>
+							)}
 
 							<FormField
 								control={form.control}
@@ -449,7 +449,16 @@ export function DessertForm({ mode, initialData }: DessertFormProps) {
 								>
 									Cancel
 								</Button>
-								<Button type="submit" disabled={uploading}>
+								<Button
+									type="submit"
+									disabled={uploading}
+									onClick={() =>
+										console.log({
+											errors: form.formState.errors,
+											values: form.getValues(),
+										})
+									}
+								>
 									{uploading
 										? "Uploading..."
 										: mode === "create"

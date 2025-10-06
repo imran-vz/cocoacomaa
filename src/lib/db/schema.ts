@@ -26,6 +26,7 @@ export const desserts = pgTable("desserts", (d) => {
 			.timestamp("updated_at")
 			.default(sql`CURRENT_TIMESTAMP`)
 			.notNull(),
+		isDeleted: d.boolean("is_deleted").notNull().default(false),
 	};
 });
 

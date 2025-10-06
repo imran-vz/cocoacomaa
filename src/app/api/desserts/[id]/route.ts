@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 import { db } from "@/lib/db";
@@ -12,7 +12,12 @@ export async function GET(
 		const dessert = await db
 			.select()
 			.from(desserts)
-			.where(eq(desserts.id, Number.parseInt((await params).id, 10)))
+			.where(
+				and(
+					eq(desserts.id, Number.parseInt((await params).id, 10)),
+					eq(desserts.isDeleted, false),
+				),
+			)
 			.limit(1);
 
 		if (!dessert.length) {
@@ -59,7 +64,12 @@ export async function PATCH(
 				leadTimeDays: Number(leadTimeDays),
 				updatedAt: new Date(),
 			})
-			.where(eq(desserts.id, Number.parseInt((await params).id, 10)))
+			.where(
+				and(
+					eq(desserts.id, Number.parseInt((await params).id, 10)),
+					eq(desserts.isDeleted, false),
+				),
+			)
 			.returning();
 
 		if (!updatedDessert.length) {
@@ -82,7 +92,8 @@ export async function DELETE(
 ) {
 	try {
 		const deletedDessert = await db
-			.delete(desserts)
+			.update(desserts)
+			.set({ isDeleted: true, updatedAt: new Date() })
 			.where(eq(desserts.id, Number.parseInt((await params).id, 10)))
 			.returning();
 

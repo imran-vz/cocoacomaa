@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { confirm } from "./confirm-dialog";
 
 interface SpecialActionsProps {
 	id: number;
@@ -9,10 +10,13 @@ interface SpecialActionsProps {
 
 export function SpecialActions({ id }: SpecialActionsProps) {
 	const handleDelete = async () => {
-		if (confirm("Are you sure you want to delete this special?")) {
-			await fetch(`/api/desserts/${id}`, {
-				method: "DELETE",
-			});
+		if (
+			await confirm({
+				title: "Delete Special",
+				description: "Are you sure you want to delete this special?",
+			})
+		) {
+			await fetch(`/api/desserts/${id}`, { method: "DELETE" });
 			window.location.reload();
 		}
 	};
