@@ -14,12 +14,14 @@ import {
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useCart } from "@/lib/cart-context";
 import type { Dessert, SpecialsSettings } from "@/lib/db/schema";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
@@ -61,6 +63,9 @@ export default function SpecialsClientPage({
 		useCart();
 
 	const { data: session } = useSession();
+	const [eggFilter, setEggFilter] = useState<
+		("all" | "eggless" | "contains-egg") | (string & {})
+	>("all");
 
 	const { data: specials } = useQuery({
 		queryKey: ["specials"],
@@ -129,7 +134,16 @@ export default function SpecialsClientPage({
 	};
 
 	const availableSpecials =
-		specials?.filter((special) => special.status === "available") || [];
+		specials?.filter((special) => {
+			// First filter by availability
+			if (special.status !== "available") return false;
+
+			// Then filter by egg content based on selected filter
+			if (eggFilter === "eggless" && special.containsEgg) return false;
+			if (eggFilter === "contains-egg" && !special.containsEgg) return false;
+
+			return true;
+		}) || [];
 
 	return (
 		<div className="container mx-auto p-4 sm:p-6">
@@ -175,14 +189,52 @@ export default function SpecialsClientPage({
 							</CardContent>
 						</Card>
 					)}
+
+					{/* Egg Filter */}
+					<div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
+						<div className="flex items-center gap-2">
+							<span className="text-sm font-medium text-muted-foreground">
+								Filter by:
+							</span>
+							<ToggleGroup
+								type="single"
+								value={eggFilter}
+								onValueChange={setEggFilter}
+								className="justify-start"
+							>
+								<ToggleGroupItem value="all" aria-label="Show all specials">
+									<span className="text-sm">All Specials</span>
+								</ToggleGroupItem>
+								<ToggleGroupItem
+									value="eggless"
+									aria-label="Show eggless specials only"
+								>
+									<EggOff className="h-4 w-4 mr-1" />
+									<span className="text-sm">Eggless</span>
+								</ToggleGroupItem>
+								<ToggleGroupItem
+									value="contains-egg"
+									aria-label="Show specials containing egg"
+								>
+									<Egg className="h-4 w-4 mr-1" />
+									<span className="text-sm">Contains Egg</span>
+								</ToggleGroupItem>
+							</ToggleGroup>
+						</div>
+						<p className="text-sm text-muted-foreground">
+							Showing {availableSpecials.length}{" "}
+							{availableSpecials.length === 1 ? "special" : "specials"}
+						</p>
+					</div>
 				</div>
 
 				{availableSpecials.length === 0 ? (
 					<Alert>
-						<AlertTitle>No Specials Available</AlertTitle>
+						<AlertTitle>No Specials Found</AlertTitle>
 						<AlertDescription>
-							There are currently no specials available. Please check back
-							later!
+							{eggFilter !== "all"
+								? `No ${eggFilter === "eggless" ? "eggless" : "egg-containing"} specials are currently available. Try changing your filter or check back later!`
+								: "There are currently no specials available. Please check back later!"}
 						</AlertDescription>
 					</Alert>
 				) : (
