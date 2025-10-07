@@ -12,8 +12,6 @@ import {
 	ShoppingCart,
 } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -58,11 +56,8 @@ export default function SpecialsClientPage({
 	initialSpecials: Dessert[];
 	initialSettings?: SpecialsSettings | null;
 }) {
-	const router = useRouter();
 	const { items, addItem, removeItem, updateQuantity, clearNonSpecials } =
 		useCart();
-
-	const { data: session } = useSession();
 	const [eggFilter, setEggFilter] = useState<
 		("all" | "eggless" | "contains-egg") | (string & {})
 	>("all");
@@ -121,16 +116,6 @@ export default function SpecialsClientPage({
 		} else {
 			updateQuantity(specialId, newQuantity);
 		}
-	};
-
-	const handleCheckout = () => {
-		if (!session?.user?.id) {
-			router.push("/login?redirect=/specials");
-			return;
-		}
-
-		if (items.length === 0) return;
-		router.push("/checkout");
 	};
 
 	const availableSpecials =
@@ -330,33 +315,6 @@ export default function SpecialsClientPage({
 								</Card>
 							);
 						})}
-					</div>
-				)}
-
-				{/* Cart Summary */}
-				{items.length > 0 && (
-					<div className="fixed bottom-6 right-6 z-50">
-						<Card className="shadow-lg">
-							<CardContent className="p-4">
-								<div className="flex items-center gap-4">
-									<div>
-										<p className="font-medium">
-											{items.reduce((sum, item) => sum + item.quantity, 0)}{" "}
-											items
-										</p>
-										<p className="text-sm text-muted-foreground">
-											{formatCurrency(
-												items.reduce(
-													(sum, item) => sum + item.price * item.quantity,
-													0,
-												),
-											)}
-										</p>
-									</div>
-									<Button onClick={handleCheckout}>Checkout</Button>
-								</div>
-							</CardContent>
-						</Card>
 					</div>
 				)}
 			</div>

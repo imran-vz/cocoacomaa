@@ -2,8 +2,10 @@
 
 import { LogOut, ShoppingBag, Users } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
+import { toast } from "sonner";
+import { CartPopover } from "@/components/cart-popover";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -14,18 +16,44 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useCakeOrderSettings } from "@/hooks/use-order-settings";
 import { Skeleton } from "./ui/skeleton";
 
 export function Navigation() {
 	const session = useSession();
+	const router = useRouter();
 	const pathname = usePathname();
 	const isAdminPage = pathname.startsWith("/admin");
 	const isManagerPage = pathname.startsWith("/manager");
 	const isAdmin = session.data?.user?.role === "admin";
 	const isManager = session.data?.user?.role === "manager";
+	const isOrderPage = pathname === "/order";
+	const isSpecialsPage = pathname === "/specials";
+	const showCart = isOrderPage || isSpecialsPage;
+	const { areOrdersAllowed: ordersAllowed, settings } = useCakeOrderSettings();
 
 	const handleLogout = async () => {
 		await signOut({ callbackUrl: "/" });
+	};
+
+	const handleCheckout = () => {
+		if (isOrderPage) {
+			if (!ordersAllowed) {
+				const isSystemDisabled = !settings?.isActive;
+				if (isSystemDisabled) {
+					toast.error("Cake order system is currently disabled");
+				} else {
+					toast.error("Cake orders are only accepted on allowed days");
+				}
+				return;
+			}
+		} else if (isSpecialsPage) {
+			if (!session.data?.user?.id) {
+				router.push("/login?redirect=/specials");
+				return;
+			}
+		}
+		router.push("/checkout");
 	};
 
 	if (isAdminPage || isManagerPage) {
@@ -58,6 +86,17 @@ export function Navigation() {
 								<Link href="/manager">Dashboard</Link>
 							</Button>
 						) : null}
+						{showCart && (
+							<CartPopover
+								onCheckout={handleCheckout}
+								disabled={isOrderPage && !ordersAllowed}
+								checkoutLabel={
+									isOrderPage && !ordersAllowed
+										? "Cake Orders Unavailable"
+										: "Proceed to Checkout"
+								}
+							/>
+						)}
 						<ThemeToggle />
 					</div>
 					{/* Navigation */}
