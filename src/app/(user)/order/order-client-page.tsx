@@ -136,127 +136,127 @@ export default function OrderClientPage({
 					</Card>
 				) : (
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-							{filteredDesserts?.map((dessert) => {
-								const quantity = getItemQuantity(dessert.id);
-								const eggBadgeVariant = dessert.containsEgg
-									? "destructive"
-									: "success";
-								return (
-									<Card
-										key={dessert.id}
-										className={cn(
-											"overflow-hidden flex flex-col justify-between ",
-											dessert.imageUrl ? "pt-0" : "",
-										)}
-									>
-										{dessert.imageUrl && (
-											<div className="relative aspect-video w-full">
-												<Image
-													src={dessert.imageUrl}
-													alt={dessert.name}
-													fill
-													className="object-cover"
-													sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-												/>
-											</div>
-										)}
-										<CardHeader className="pb-3 sm:pb-4 flex-1">
-											<div className="flex justify-between items-start gap-2">
-												<CardTitle className="text-lg sm:text-xl leading-tight">
-													{dessert.name}
-												</CardTitle>
-												<Badge
-													variant="secondary"
-													className="shrink-0 text-xs sm:text-sm"
-												>
-													{formatCurrency(Number(dessert.price))}
-												</Badge>
-											</div>
-											<div className="flex flex-wrap gap-2 mt-2">
-												<Badge
-													variant={
-														dessert.category === "cake" ? "default" : "outline"
-													}
-													className="text-xs"
-												>
-													{dessert.category === "cake" ? "Cake" : "Dessert"}
-												</Badge>
-												<Badge
-													variant={eggBadgeVariant}
-													className="text-xs gap-1"
-												>
-													{dessert.containsEgg ? (
-														<>
-															<Egg className="h-3 w-3" />
-															Contains Egg
-														</>
-													) : (
-														<>
-															<EggOff className="h-3 w-3" />
-															Eggless
-														</>
-													)}
-												</Badge>
-												<Badge variant="outline" className="text-xs">
-													{dessert.leadTimeDays} day
-													{dessert.leadTimeDays > 1 ? "s" : ""} lead time
-												</Badge>
-											</div>
-										</CardHeader>
-										<CardContent className="pt-0">
-											<div className="space-y-3 sm:space-y-4">
-												{dessert.description && (
-													<p className="text-muted-foreground text-xs sm:text-sm leading-relaxed">
-														{dessert.description}
-													</p>
-												)}
-
-												{quantity > 0 ? (
-													<div className="flex items-center justify-between gap-2">
-														<div className="flex items-center space-x-1 sm:space-x-2">
-															<Button
-																variant="outline"
-																size="icon"
-																className="h-8 w-8 sm:h-9 sm:w-9"
-																onClick={() =>
-																	handleQuantityChange(dessert.id, quantity - 1)
-																}
-															>
-																<Minus className="h-3 w-3 sm:h-4 sm:w-4" />
-															</Button>
-															<span className="w-6 sm:w-8 text-center font-medium text-sm sm:text-base">
-																{quantity}
-															</span>
-															<Button
-																variant="outline"
-																size="icon"
-																className="h-8 w-8 sm:h-9 sm:w-9"
-																onClick={() =>
-																	handleQuantityChange(dessert.id, quantity + 1)
-																}
-															>
-																<Plus className="h-3 w-3 sm:h-4 sm:w-4" />
-															</Button>
-														</div>
-														<Badge variant="success" className="text-xs">
-															In Cart
-														</Badge>
-													</div>
+						{filteredDesserts?.map((dessert) => {
+							const quantity = getItemQuantity(dessert.id);
+							const eggBadgeVariant = dessert.containsEgg
+								? "destructive"
+								: "success";
+							return (
+								<Card
+									key={dessert.id}
+									className={cn(
+										"overflow-hidden flex flex-col justify-between ",
+										dessert.imageUrl ? "pt-0" : "",
+									)}
+								>
+									{dessert.imageUrl && (
+										<div className="relative aspect-video w-full">
+											<Image
+												src={dessert.imageUrl}
+												alt={dessert.name}
+												fill
+												className="object-cover"
+												sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+											/>
+										</div>
+									)}
+									<CardHeader className="pb-3 sm:pb-4 flex-1">
+										<div className="flex justify-between items-start gap-2">
+											<CardTitle className="text-lg sm:text-xl leading-tight">
+												{dessert.name}
+											</CardTitle>
+											<Badge
+												variant="secondary"
+												className="shrink-0 text-xs sm:text-sm"
+											>
+												{formatCurrency(Number(dessert.price))}
+											</Badge>
+										</div>
+										<div className="flex flex-wrap gap-2 mt-2">
+											<Badge
+												variant={
+													dessert.category === "cake" ? "default" : "outline"
+												}
+												className="text-xs"
+											>
+												{dessert.category === "cake" ? "Cake" : "Dessert"}
+											</Badge>
+											<Badge
+												variant={eggBadgeVariant}
+												className="text-xs gap-1"
+											>
+												{dessert.containsEgg ? (
+													<>
+														<Egg className="h-3 w-3" />
+														Contains Egg
+													</>
 												) : (
-													<Button
-														onClick={() => handleAddToCart(dessert)}
-														className="w-full text-sm sm:text-base"
-														size="sm"
-													>
-														<Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-														Add to Cart
-													</Button>
+													<>
+														<EggOff className="h-3 w-3" />
+														Eggless
+													</>
 												)}
-											</div>
-										</CardContent>
-									</Card>
-								);
-							})}
+											</Badge>
+											<Badge variant="outline" className="text-xs">
+												{dessert.leadTimeDays} day
+												{dessert.leadTimeDays > 1 ? "s" : ""} lead time
+											</Badge>
+										</div>
+									</CardHeader>
+									<CardContent className="pt-0">
+										<div className="space-y-3 sm:space-y-4">
+											{dessert.description && (
+												<p className="text-muted-foreground text-xs sm:text-sm leading-relaxed">
+													{dessert.description}
+												</p>
+											)}
+
+											{quantity > 0 ? (
+												<div className="flex items-center justify-between gap-2">
+													<div className="flex items-center space-x-1 sm:space-x-2">
+														<Button
+															variant="outline"
+															size="icon"
+															className="h-8 w-8 sm:h-9 sm:w-9"
+															onClick={() =>
+																handleQuantityChange(dessert.id, quantity - 1)
+															}
+														>
+															<Minus className="h-3 w-3 sm:h-4 sm:w-4" />
+														</Button>
+														<span className="w-6 sm:w-8 text-center font-medium text-sm sm:text-base">
+															{quantity}
+														</span>
+														<Button
+															variant="outline"
+															size="icon"
+															className="h-8 w-8 sm:h-9 sm:w-9"
+															onClick={() =>
+																handleQuantityChange(dessert.id, quantity + 1)
+															}
+														>
+															<Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+														</Button>
+													</div>
+													<Badge variant="success" className="text-xs">
+														In Cart
+													</Badge>
+												</div>
+											) : (
+												<Button
+													onClick={() => handleAddToCart(dessert)}
+													className="w-full text-sm sm:text-base"
+													size="sm"
+												>
+													<Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+													Add to Cart
+												</Button>
+											)}
+										</div>
+									</CardContent>
+								</Card>
+							);
+						})}
 					</div>
 				)}
 			</div>
