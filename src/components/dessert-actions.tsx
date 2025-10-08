@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { confirm } from "./confirm-dialog";
 
 interface DessertActionsProps {
 	id: number;
@@ -9,10 +10,12 @@ interface DessertActionsProps {
 
 export function DessertActions({ id }: DessertActionsProps) {
 	const handleDelete = async () => {
-		if (confirm("Are you sure you want to delete this dessert?")) {
-			await fetch(`/api/desserts/${id}`, {
-				method: "DELETE",
-			});
+		const confirmed = await confirm({
+			title: "Delete Dessert",
+			description: "Are you sure you want to delete this dessert?",
+		});
+		if (confirmed) {
+			await fetch(`/api/desserts/${id}`, { method: "DELETE" });
 			window.location.reload();
 		}
 	};

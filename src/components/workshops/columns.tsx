@@ -19,6 +19,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { formatCurrency } from "@/lib/utils";
+import { confirm } from "../confirm-dialog";
 
 export type Workshop = {
 	id: number;
@@ -37,9 +38,10 @@ export type Workshop = {
 };
 
 const handleDelete = async (id: number, title: string) => {
-	const confirmed = window.confirm(
-		`Are you sure you want to delete the workshop "${title}"?`,
-	);
+	const confirmed = await confirm({
+		title: "Delete Workshop",
+		description: `Are you sure you want to delete the workshop "${title}"?`,
+	});
 	if (!confirmed) return;
 
 	try {
