@@ -7,6 +7,7 @@
 @theme {
 	--font-sans: var(--font-montserrat), Montserrat, sans-serif;
 	--font-serif: var(--font-serif), Playfair Display, serif;
+	--font-mono: var(--font-mono), Fira Code, monospace;
 
 	--color-background: hsl(var(--background));
 	--color-foreground: hsl(var(--foreground));
@@ -166,9 +167,6 @@
 	--sidebar-accent-foreground: oklch(0.9842 0.0034 247.8575);
 	--sidebar-border: oklch(0.3741 0.0087 67.5582);
 	--sidebar-ring: oklch(0.6736 0.1576 35.4745);
-	--font-sans: Inter;
-	--font-serif: Lora;
-	--font-mono: Fira Code;
 	--radius: 0.75rem;
 	--shadow-x: 0px;
 	--shadow-y: 8px;
@@ -225,9 +223,9 @@
 	--color-sidebar-border: var(--sidebar-border);
 	--color-sidebar-ring: var(--sidebar-ring);
 
-	--font-sans: var(--font-sans);
-	--font-mono: var(--font-mono);
-	--font-serif: var(--font-serif);
+	--font-sans: var(--font-sans), Inter, sans-serif;
+	--font-mono: var(--font-mono), Fira Code, monospace;
+	--font-serif: var(--font-serif), Lora, serif;
 
 	--radius-sm: calc(var(--radius) - 4px);
 	--radius-md: calc(var(--radius) - 2px);

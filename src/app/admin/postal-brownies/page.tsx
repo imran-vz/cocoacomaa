@@ -44,46 +44,6 @@ export default async function AdminPostalBrowniesPage() {
 					</Button>
 				</div>
 
-				{/* Stats Cards */}
-				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
-					<Card className="p-4 sm:p-6">
-						<CardHeader className="pb-2 px-0 pt-0">
-							<CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
-								Total Combos
-							</CardTitle>
-						</CardHeader>
-						<CardContent className="pt-0 px-0 pb-0">
-							<div className="text-xl sm:text-2xl font-bold">
-								{postalCombos.length}
-							</div>
-						</CardContent>
-					</Card>
-					<Card className="p-4 sm:p-6">
-						<CardHeader className="pb-2 px-0 pt-0">
-							<CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
-								Available
-							</CardTitle>
-						</CardHeader>
-						<CardContent className="pt-0 px-0 pb-0">
-							<div className="text-xl sm:text-2xl font-bold">
-								{postalCombos.filter((c) => c.status === "available").length}
-							</div>
-						</CardContent>
-					</Card>
-					<Card className="p-4 sm:p-6">
-						<CardHeader className="pb-2 px-0 pt-0">
-							<CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
-								Unavailable
-							</CardTitle>
-						</CardHeader>
-						<CardContent className="pt-0 px-0 pb-0">
-							<div className="text-xl sm:text-2xl font-bold">
-								{postalCombos.filter((c) => c.status === "unavailable").length}
-							</div>
-						</CardContent>
-					</Card>
-				</div>
-
 				{/* DataTable */}
 				<Card>
 					<CardHeader className="pb-4">

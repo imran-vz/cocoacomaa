@@ -400,11 +400,12 @@ export default function PostalComboForm({
 						</div>
 
 						{/* OR Divider */}
-						<div className="flex items-center text-sm text-muted-foreground">
-							<div className="h-px bg-border flex-1 sm:w-8" />
-							<span className="px-2">OR</span>
-							<div className="h-px bg-border flex-1 sm:w-8" />
-						</div>
+					</div>
+
+					<div className="flex items-center text-sm text-muted-foreground">
+						<div className="h-px bg-border flex-1 sm:w-8" />
+						<span className="px-2">OR</span>
+						<div className="h-px bg-border flex-1 sm:w-8" />
 					</div>
 
 					{/* URL Input */}
