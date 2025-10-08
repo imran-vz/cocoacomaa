@@ -120,9 +120,6 @@ export default function SpecialsClientPage({
 
 	const availableSpecials =
 		specials?.filter((special) => {
-			// First filter by availability
-			if (special.status !== "available") return false;
-
 			// Then filter by egg content based on selected filter
 			if (eggFilter === "eggless" && special.containsEgg) return false;
 			if (eggFilter === "contains-egg" && !special.containsEgg) return false;
