@@ -5,27 +5,8 @@ import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { calculateNetAmount } from "@/lib/calculateGrossAmount";
 import { config } from "@/lib/config";
+import type { WorkshopOrder } from "@/lib/db/schema";
 import { formatCurrency } from "@/lib/utils";
-
-export type WorkshopOrder = {
-	id: string;
-	amount: string;
-	slots: number;
-	status: "pending" | "payment_pending" | "paid" | "confirmed" | "cancelled";
-	paymentStatus:
-		| "pending"
-		| "created"
-		| "authorized"
-		| "captured"
-		| "refunded"
-		| "failed";
-	createdAt: Date;
-	workshopTitle: string;
-	workshopType: "online" | "offline";
-	customerName: string;
-	customerEmail: string;
-	customerPhone: string;
-};
 
 const getStatusColor = (status: string) => {
 	switch (status) {
@@ -50,7 +31,18 @@ const formatStatus = (status: string) => {
 		.join(" ");
 };
 
-export const columns: ColumnDef<WorkshopOrder>[] = [
+type WorkshopOrderWithAdditionalFields = Pick<
+	WorkshopOrder,
+	"id" | "amount" | "status" | "paymentStatus" | "createdAt" | "slots"
+> & {
+	workshopTitle: string;
+	workshopType: string;
+	customerName: string;
+	customerEmail: string;
+	customerPhone: string;
+};
+
+export const columns: ColumnDef<WorkshopOrderWithAdditionalFields>[] = [
 	{
 		accessorKey: "workshopType",
 		header: "Workshop Type",

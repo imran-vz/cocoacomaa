@@ -9,22 +9,16 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
+import type { Dessert } from "@/lib/db/schema";
 import { formatCurrency } from "@/lib/utils";
 import DeletePostalComboButton from "./delete-postal-combo-button";
 
-export type PostalCombo = {
-	id: number;
-	name: string;
-	description: string;
-	price: string;
-	imageUrl: string | null;
-	createdAt: Date;
-	items: string[];
-	status: "available" | "unavailable";
-	containsEgg: boolean;
-};
-
-export const postalComboColumns: ColumnDef<PostalCombo>[] = [
+export const postalComboColumns: ColumnDef<
+	Omit<
+		Dessert,
+		"createdAt" | "updatedAt" | "isDeleted" | "leadTimeDays" | "category"
+	>
+>[] = [
 	{
 		accessorKey: "imageUrl",
 		header: "Image",

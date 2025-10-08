@@ -18,24 +18,9 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { Workshop } from "@/lib/db/schema";
 import { formatCurrency } from "@/lib/utils";
 import { confirm } from "../confirm-dialog";
-
-export type Workshop = {
-	id: number;
-	title: string;
-	description: string;
-	amount: string;
-	type: "online" | "offline";
-	maxBookings: number;
-	currentBookings?: number;
-	currentSlotsUsed?: number;
-	availableSlots?: number;
-	status: "active" | "inactive";
-	imageUrl?: string | null;
-	createdAt: Date;
-	workshopOrders: { userId: string }[];
-};
 
 const handleDelete = async (id: number, title: string) => {
 	const confirmed = await confirm({
@@ -54,7 +39,17 @@ const handleDelete = async (id: number, title: string) => {
 	}
 };
 
-export const columns: ColumnDef<Workshop>[] = [
+type WorkshopWithSlotData = Omit<
+	Workshop,
+	"createdAt" | "updatedAt" | "isDeleted"
+> & {
+	currentSlotsUsed: number;
+	currentBookings: number;
+	availableSlots: number;
+	workshopOrders: { userId: string }[];
+};
+
+export const columns: ColumnDef<WorkshopWithSlotData>[] = [
 	{
 		accessorKey: "title",
 		header: "Title",

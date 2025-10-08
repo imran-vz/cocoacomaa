@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export function Footer() {
+export default function Footer() {
 	const pathname = usePathname();
 	if (pathname.includes("/admin") || pathname.includes("/manager")) return null;
 
@@ -83,5 +83,3 @@ export function Footer() {
 		</footer>
 	);
 }
-
-export default Footer;

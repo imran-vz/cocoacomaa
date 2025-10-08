@@ -1,6 +1,4 @@
-import { Loader2, type LucideIcon, Moon, SunMedium } from "lucide-react";
-
-export type Icon = LucideIcon;
+import { Loader2, Moon, SunMedium } from "lucide-react";
 
 export const Icons = {
 	sun: SunMedium,

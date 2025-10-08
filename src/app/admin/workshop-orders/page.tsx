@@ -40,6 +40,15 @@ export default async function AdminWorkshopOrdersPage() {
 		},
 	});
 
+	const data = ordersList.map((order) => ({
+		...order,
+		workshopTitle: order.workshop.title,
+		workshopType: order.workshop.type,
+		customerName: order.user.name || "No name",
+		customerEmail: order.user.email,
+		customerPhone: order.user.phone || "Not provided",
+	}));
+
 	return (
 		<div className="container mx-auto p-4 sm:p-6">
 			<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -55,14 +64,7 @@ export default async function AdminWorkshopOrdersPage() {
 				<div className="overflow-x-auto">
 					<DataTable
 						columns={columns}
-						data={ordersList.map((order) => ({
-							...order,
-							workshopTitle: order.workshop.title,
-							workshopType: order.workshop.type,
-							customerName: order.user.name || "No name",
-							customerEmail: order.user.email,
-							customerPhone: order.user.phone || "Not provided",
-						}))}
+						data={data}
 						searchKey="customerName"
 						searchPlaceholder="Search by customer name..."
 						filterableColumns={[
