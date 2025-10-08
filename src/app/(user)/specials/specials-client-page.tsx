@@ -188,21 +188,27 @@ export default function SpecialsClientPage({
 								className="justify-start"
 							>
 								<ToggleGroupItem value="all" aria-label="Show all specials">
-									<span className="text-sm">All Specials</span>
+									<span className="text-xs whitespace-nowrap text-nowrap">
+										All Specials
+									</span>
 								</ToggleGroupItem>
 								<ToggleGroupItem
 									value="eggless"
 									aria-label="Show eggless specials only"
 								>
 									<EggOff className="h-4 w-4 mr-1" />
-									<span className="text-sm">Eggless</span>
+									<span className="text-xs whitespace-nowrap text-nowrap">
+										Eggless
+									</span>
 								</ToggleGroupItem>
 								<ToggleGroupItem
 									value="contains-egg"
 									aria-label="Show specials containing egg"
 								>
 									<Egg className="h-4 w-4 mr-1" />
-									<span className="text-sm">Contains Egg</span>
+									<span className="text-xs whitespace-nowrap text-nowrap">
+										Contains Egg
+									</span>
 								</ToggleGroupItem>
 							</ToggleGroup>
 						</div>
