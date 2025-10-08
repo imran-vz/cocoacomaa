@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { confirm } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -259,7 +260,11 @@ export default function PostalOrderSettingsPage() {
 	};
 
 	const handleDelete = async (id: number) => {
-		if (window.confirm("Are you sure you want to delete these settings?")) {
+		const confirmed = await confirm({
+			title: "Delete Postal Order Settings",
+			description: "Are you sure you want to delete these settings?",
+		});
+		if (confirmed) {
 			deleteSettings(id);
 			toast.success("Settings deleted successfully");
 		}
