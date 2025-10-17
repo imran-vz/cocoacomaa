@@ -90,7 +90,7 @@ export const orders = pgTable("orders", (d) => {
 		notes: d.text("notes"),
 		orderType: d
 			.varchar("order_type", {
-				enum: ["cake-orders", "postal-brownies"],
+				enum: ["cake-orders", "postal-brownies", "specials"],
 			})
 			.notNull()
 			.default("cake-orders"),

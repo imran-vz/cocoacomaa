@@ -22,6 +22,7 @@ const statuses: { label: string; value: Order["status"] }[] = [
 const orderTypes: { label: string; value: Order["orderType"] }[] = [
 	{ label: "Cake Orders", value: "cake-orders" },
 	{ label: "Postal Brownies", value: "postal-brownies" },
+	{ label: "Specials", value: "specials" },
 ];
 
 export default async function OrdersPage() {
@@ -177,6 +178,7 @@ export default async function OrdersPage() {
 						columns={columns}
 						data={ordersList.map((order) => ({
 							...order,
+							userName: order.user.name || "",
 							orderDetails: (
 								<div className="space-y-1">
 									{order.orderItems.map((item) => {
@@ -200,7 +202,6 @@ export default async function OrdersPage() {
 									})}
 								</div>
 							),
-							userName: order.user.name || "",
 						}))}
 						searchKey="userName"
 						searchPlaceholder="Filter orders..."

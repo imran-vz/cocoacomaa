@@ -711,7 +711,11 @@ export default function CheckoutPage({
 							quantity: item.quantity,
 							category: item.category,
 						})),
-						orderType: isPostalBrownies ? "postal-brownies" : "cake-orders",
+						orderType: hasSpecials
+							? "specials"
+							: isPostalBrownies
+								? "postal-brownies"
+								: "cake-orders",
 						total: finalTotal, // Include delivery cost for postal brownies
 						deliveryCost: deliveryCost, // Send delivery cost separately for transparency
 						// Include selected address ID for postal brownies

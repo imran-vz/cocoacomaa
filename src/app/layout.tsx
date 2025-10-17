@@ -31,6 +31,26 @@ export const metadata: Metadata = {
 		title: "Cocoa Comaa",
 		description: "Order custom desserts online",
 	},
+
+	themeColor: "#502922",
+	appleWebApp: {
+		capable: true,
+		statusBarStyle: "default",
+		title: "Cocoa Comaa",
+	},
+	viewport: {
+		width: "device-width",
+		initialScale: 1,
+		maximumScale: 1,
+		userScalable: false,
+	},
+	icons: {
+		icon: [
+			{ url: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
+			{ url: "/icon-512x512.png", sizes: "512x512", type: "image/png" },
+		],
+		apple: [{ url: "/icon-192x192.png", sizes: "192x192", type: "image/png" }],
+	},
 };
 
 export default function RootLayout({
