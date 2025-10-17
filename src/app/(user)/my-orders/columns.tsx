@@ -5,6 +5,7 @@ import { EyeIcon, LinkIcon } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import type { Dessert, Order, OrderItem } from "@/lib/db/schema";
 import {
 	formatDateTime,
 	formatLocalDate,
@@ -12,47 +13,26 @@ import {
 } from "@/lib/format-timestamp";
 import { formatCurrency } from "@/lib/utils";
 
-// Helper function to check if order contains special desserts
-function hasSpecialDesserts(
-	orderItems: {
-		itemType: string;
-		dessert: { category: string } | null;
-	}[],
-): boolean {
-	return orderItems.some(
-		(item) =>
-			item.itemType === "dessert" && item.dessert?.category === "special",
-	);
-}
-
-export const columns: ColumnDef<{
-	id: string;
-	status:
-		| "pending"
-		| "payment_pending"
-		| "paid"
-		| "confirmed"
-		| "preparing"
-		| "ready"
-		| "completed"
-		| "cancelled";
-	createdAt: Date;
-	total: string;
-	pickupDateTime: Date | null;
-	orderType: string;
-	orderItems: Array<{
-		itemType: string;
-		dessert: {
-			category: string;
-		} | null;
-	}>;
-}>[] = [
+export const columns: ColumnDef<
+	Pick<
+		Order,
+		"id" | "status" | "createdAt" | "total" | "pickupDateTime" | "orderType"
+	> & {
+		orderItems: Array<
+			Pick<OrderItem, "itemType"> & {
+				dessert: Pick<Dessert, "category"> | null;
+			}
+		>;
+	}
+>[] = [
 	{
 		id: "id",
 		accessorKey: "id",
 		header: "Order ID",
 		cell: ({ row }) => {
-			const isSpecial = hasSpecialDesserts(row.original.orderItems);
+			const orderType = row.original.orderType as Order["orderType"];
+			const isSpecial = orderType === "specials";
+
 			return (
 				<div className="flex items-center gap-2">
 					<Button variant="link" asChild size="sm">
@@ -83,8 +63,9 @@ export const columns: ColumnDef<{
 		accessorKey: "pickupDateTime",
 		header: "Pickup",
 		cell: ({ row }) => {
-			const isPostal = row.original.orderType === "postal-brownies";
-			const isSpecial = hasSpecialDesserts(row.original.orderItems);
+			const orderType = row.original.orderType as Order["orderType"];
+			const isPostal = orderType === "postal-brownies";
+			const isSpecial = orderType === "specials";
 
 			if (isPostal) {
 				return <span className="text-muted-foreground">Delivery</span>;
