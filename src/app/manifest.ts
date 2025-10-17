@@ -5,12 +5,12 @@ export default function manifest(): MetadataRoute.Manifest {
 		name: "Cocoa Comaa",
 		short_name: "Cocoa Comaa",
 		description: "Order custom desserts and brownies from Cocoa Comaa",
-		start_url: "/admin",
+		start_url: "/?source=pwa",
 		display: "standalone",
 		background_color: "#ffffff",
 		theme_color: "#502922",
 		orientation: "portrait-primary",
-		scope: "/admin",
+		scope: "/",
 		icons: [
 			{
 				src: "/icon-192x192.png",
