@@ -1,7 +1,16 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { Button } from "@/components/ui/button";
 
-export default function Home() {
+export default async function Home() {
+	const session = await auth();
+	if (session?.user?.role === "admin") {
+		redirect("/admin");
+	} else if (session?.user?.role === "manager") {
+		redirect("/manager");
+	}
+
 	return (
 		<div className="min-h-screen mx-auto relative">
 			<div
