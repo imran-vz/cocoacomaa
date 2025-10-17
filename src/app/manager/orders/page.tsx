@@ -139,6 +139,7 @@ export default async function ManagerOrdersPage() {
 						columns={managerColumns}
 						data={ordersList.map((order) => ({
 							...order,
+							userName: order.user.name || "",
 							orderDetails: (
 								<div className="space-y-1">
 									{order.orderItems.map((item) => {
@@ -162,7 +163,6 @@ export default async function ManagerOrdersPage() {
 									})}
 								</div>
 							),
-							userName: order.user.name || "",
 						}))}
 						searchKey="userName"
 						searchPlaceholder="Filter orders..."

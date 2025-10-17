@@ -6,25 +6,16 @@ import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
+import type { Order } from "@/lib/db/schema";
 import { Button } from "../ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
-export const managerColumns: ColumnDef<{
-	id: string;
-	status:
-		| "completed"
-		| "pending"
-		| "payment_pending"
-		| "paid"
-		| "confirmed"
-		| "preparing"
-		| "ready"
-		| "cancelled";
-	orderType: "cake-orders" | "postal-brownies";
-	userName: string;
-	notes: string | null;
-	orderDetails: ReactNode;
-}>[] = [
+export const managerColumns: ColumnDef<
+	Pick<Order, "id" | "status" | "orderType" | "notes"> & {
+		userName: string;
+		orderDetails: ReactNode;
+	}
+>[] = [
 	{
 		accessorKey: "id",
 		header: "Order ID",
