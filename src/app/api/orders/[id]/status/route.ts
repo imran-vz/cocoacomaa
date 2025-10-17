@@ -14,6 +14,7 @@ const updateStatusSchema = z.object({
 		"confirmed",
 		"preparing",
 		"ready",
+		"dispatched",
 		"completed",
 		"cancelled",
 	]),

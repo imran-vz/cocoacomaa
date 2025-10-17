@@ -34,6 +34,7 @@ interface StatusUpdateProps {
 
 const ORDER_STATUSES = [
 	{ value: "preparing", label: "Preparing" },
+	{ value: "dispatched", label: "Dispatched" },
 	{ value: "completed", label: "Completed" },
 	{ value: "cancelled", label: "Cancelled" },
 ];

@@ -12,6 +12,8 @@ export const getStatusColor = (status: string) => {
 			return "bg-purple-100 text-purple-800 border-purple-200";
 		case "ready":
 			return "bg-emerald-100 text-emerald-800 border-emerald-200";
+		case "dispatched":
+			return "bg-cyan-100 text-cyan-800 border-cyan-200";
 		case "completed":
 			return "bg-gray-100 text-gray-800 border-gray-200";
 		case "cancelled":

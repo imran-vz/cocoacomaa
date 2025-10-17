@@ -79,6 +79,13 @@ function getStatusInfo(status: string) {
 			description: "Your order is ready! Come pick it up at your convenience.",
 			color: "#10b981", // emerald
 		},
+		dispatched: {
+			label: "Order Dispatched",
+			emoji: "🚚",
+			description:
+				"Your order has been handed over to the delivery partner by the Cocoa Comaa team.",
+			color: "#06b6d4", // cyan
+		},
 		completed: {
 			label: "Order Completed",
 			emoji: "✨",
@@ -121,6 +128,7 @@ function getStatusBannerText(status: string, customerName: string): string {
 		confirmed: `Hi ${customerName}, your order is confirmed and we'll start preparing it soon!`,
 		preparing: `Hi ${customerName}, our team is busy preparing your delicious treats!`,
 		ready: `Hi ${customerName}, great news - your order is ready for pickup!`,
+		dispatched: `Hi ${customerName}, your order is on its way! We've handed it over to our delivery partner.`,
 		completed: `Hi ${customerName}, your order is complete - we hope you enjoy every bite!`,
 		cancelled: `Hi ${customerName}, your order has been cancelled. We're here to help if you have questions.`,
 	};

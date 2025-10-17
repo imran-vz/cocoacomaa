@@ -62,6 +62,7 @@ export const orders = pgTable("orders", (d) => {
 					"confirmed",
 					"preparing",
 					"ready",
+					"dispatched",
 					"completed",
 					"cancelled",
 				],
