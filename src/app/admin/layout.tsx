@@ -20,10 +20,9 @@ export const metadata: Metadata = {
 	creator: "Imran",
 	keywords: ["cocoa-comaa", "brownie", "dessert", "order", "online"],
 	openGraph: {
-		title: "Cocoa Comaa",
-		description: "Order custom desserts online",
+		title: "Cocoa Comaa - Admin",
+		description: "Admin dashboard for Cocoa Comaa",
 	},
-	manifest: "/admin/manifest.json",
 };
 
 export default async function AdminDashboardLayout({
