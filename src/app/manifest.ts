@@ -5,6 +5,8 @@ export default function manifest(): MetadataRoute.Manifest {
 		name: "Cocoa Comaa",
 		short_name: "CC",
 		description: "Order desserts and brownies from Cocoa Comaa",
+		categories: ["food", "dessert", "brownie"],
+		lang: "en-IN",
 		start_url: "/?source=pwa",
 		display: "standalone",
 		background_color: "#ffffff",
@@ -35,6 +37,17 @@ export default function manifest(): MetadataRoute.Manifest {
 				sizes: "512x512",
 				type: "image/png",
 				purpose: "maskable",
+			},
+		],
+
+		screenshots: [
+			{
+				src: "/screenshot-1.png",
+				sizes: "1024x1024",
+				type: "image/png",
+				form_factor: "narrow",
+				label: "Cocoa Comaa",
+				platform: "android",
 			},
 		],
 	};
