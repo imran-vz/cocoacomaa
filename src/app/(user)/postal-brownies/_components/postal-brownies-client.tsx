@@ -163,7 +163,7 @@ export default function PostalBrowniesClient({
 	};
 
 	return (
-		<div className="min-h-screen bg-background">
+		<div className="min-h-[calc(100svh-11rem)] bg-background">
 			<div className="container mx-auto py-4 sm:py-6 lg:py-8 px-4 sm:px-6">
 				<div className="max-w-6xl mx-auto">
 					{/* Header */}

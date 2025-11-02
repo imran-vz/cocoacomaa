@@ -389,274 +389,273 @@ export default function WorkshopsClientPage({
 	}, []);
 
 	return (
-		<div className="container mx-auto min-h-[calc(100svh-11rem)] py-4 sm:py-6 lg:py-8 px-4">
-			{/* Loading Overlay */}
-			{isProcessing && (
-				<div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
-					<div className="bg-white rounded-lg p-6 sm:p-8 max-w-sm mx-4 text-center shadow-xl">
-						<div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-primary mx-auto mb-4" />
-						<h3 className="text-lg sm:text-xl font-semibold mb-2">
-							Processing Registration
-						</h3>
-						<p className="text-sm sm:text-base text-muted-foreground">
-							Please wait while we process your workshop registration...
-						</p>
-					</div>
-				</div>
-			)}
-
-			<FadeIn>
-				<h1 className="text-2xl sm:text-3xl font-bold mb-6">Workshops</h1>
-				<p className="text-muted-foreground mb-6">
-					Join our hands-on workshops to learn the art of dessert making from
-					Maria and the team.
-				</p>
-			</FadeIn>
-
-			<FadeIn delay={0.1}>
-				<WorkshopTypeToggle value={selectedType} onChange={setSelectedType} />
-			</FadeIn>
-
-			{filteredWorkshops.length === 0 ? (
-				<FadeIn delay={0.2}>
-					<Card>
-						<CardContent className="py-8 text-center">
-							<h3 className="text-lg font-semibold mb-2">
-								No {selectedType} workshops available
+		<div className="container mx-auto sm:px-6 min-h-[calc(100svh-11rem)] py-4 sm:py-6 lg:py-8 px-4">
+			<div className="max-w-6xl mx-auto">
+				{/* Loading Overlay */}
+				{isProcessing && (
+					<div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+						<div className="bg-white rounded-lg p-6 sm:p-8 max-w-sm mx-4 text-center shadow-xl">
+							<div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-primary mx-auto mb-4" />
+							<h3 className="text-lg sm:text-xl font-semibold mb-2">
+								Processing Registration
 							</h3>
-							<p className="text-muted-foreground">
-								{activeWorkshops.length === 0
-									? "Check back soon for upcoming workshops."
-									: `No ${selectedType} workshops are currently available. Try switching to ${selectedType === "online" ? "offline" : "online"} workshops.`}
+							<p className="text-sm sm:text-base text-muted-foreground">
+								Please wait while we process your workshop registration...
 							</p>
-						</CardContent>
-					</Card>
-				</FadeIn>
-			) : (
-				<StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-					{filteredWorkshops.map((workshop) => (
-						<StaggerItem key={workshop.id}>
-							<Card className="h-full flex flex-col overflow-hidden">
-								{workshop.imageUrl && (
-									<div className="relative aspect-video w-full">
-										<Image
-											src={workshop.imageUrl}
-											alt={workshop.title}
-											fill
-											className="object-cover"
-											sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-										/>
-									</div>
-								)}
-								<CardHeader>
-									<div className="flex justify-between items-start gap-2">
-										<CardTitle className="text-lg leading-tight">
-											{workshop.title}
-										</CardTitle>
-										<Badge
-											variant={
-												workshop.type === "online" ? "default" : "secondary"
-											}
-										>
-											{workshop.type}
-										</Badge>
-									</div>
-								</CardHeader>
-								<CardContent className="flex-1 flex flex-col">
-									<div className="mb-4 flex-1">
-										{workshop.description.split("\n").length > 5 ? (
-											<div className="text-muted-foreground whitespace-pre-wrap">
-												{expandedDescriptions.has(workshop.id) ? (
-													<>
-														{workshop.description}
-														<span className="ml-2">
-															<button
-																type="button"
-																onClick={() => toggleDescription(workshop.id)}
-																className="text-primary hover:text-primary/80 text-sm font-medium cursor-pointer underline"
-															>
-																Show less
-															</button>
-														</span>
-													</>
-												) : (
-													<div className="relative">
-														<div className="line-clamp-5">
-															{workshop.description}
-														</div>
-														<div className="absolute bottom-0 right-0 bg-white pl-2">
-															<button
-																type="button"
-																onClick={() => toggleDescription(workshop.id)}
-																className="text-primary hover:text-primary/80 text-sm font-medium cursor-pointer underline"
-															>
-																...Show more
-															</button>
-														</div>
-													</div>
-												)}
-											</div>
-										) : (
-											<p className="text-muted-foreground whitespace-pre-wrap">
-												{workshop.description}
-											</p>
-										)}
-									</div>
-									<div className="mt-auto">
-										{/* Slot Selection - Only for offline workshops */}
-										{workshop.type === "offline" && (
-											<div className="mb-4">
-												<div className="flex items-center justify-between mb-2">
-													<Label className="text-sm font-medium">Slots:</Label>
-													<div className="flex items-center space-x-2">
-														<Button
-															variant="outline"
-															size="icon"
-															className="h-7 w-7"
-															onClick={() =>
-																setSlotCount(
-																	workshop.id,
-																	Math.max(
-																		1,
-																		getSelectedSlots(workshop.id) - 1,
-																	),
-																)
-															}
-															disabled={getSelectedSlots(workshop.id) <= 1}
-														>
-															<Minus className="h-3 w-3" />
-														</Button>
-														<span className="w-8 text-center text-sm font-medium">
-															{getSelectedSlots(workshop.id)}
-														</span>
-														<Button
-															variant="outline"
-															size="icon"
-															className="h-7 w-7"
-															onClick={() => {
-																setSlotCount(
-																	workshop.id,
-																	Math.min(
-																		2,
-																		getSelectedSlots(workshop.id) + 1,
-																		workshop.availableSlots,
-																	),
-																);
-															}}
-															disabled={
-																getSelectedSlots(workshop.id) >= 2 ||
-																getSelectedSlots(workshop.id) >=
-																	workshop.availableSlots
-															}
-														>
-															<Plus className="h-3 w-3" />
-														</Button>
-													</div>
-												</div>
-												<p className="text-xs text-muted-foreground">
-													Maximum 2 slots per person
-												</p>
-											</div>
-										)}
-
-										<div className="flex justify-between items-center font-bold text-lg mb-4">
-											<span>
-												{workshop.type === "offline"
-													? "Total Price:"
-													: "Price:"}
-											</span>
-											<span>
-												{workshop.type === "offline"
-													? formatCurrency(
-															Number(workshop.amount) *
-																getSelectedSlots(workshop.id),
-														)
-													: formatCurrency(Number(workshop.amount))}
-											</span>
-										</div>
-										{workshop.availableSlots < 3 && (
-											<div className="flex items-center justify-between mb-4 text-sm">
-												<span className="text-muted-foreground">
-													Available Slots:
-												</span>
-												<span
-													className={`font-medium ${workshop.availableSlots === 0 ? "text-red-500" : "text-orange-500"}`}
-												>
-													{workshop.availableSlots} / {workshop.maxBookings}
-												</span>
-											</div>
-										)}
-										<Button
-											onClick={() => handleRegister(workshop)}
-											disabled={isProcessing || workshop.availableSlots === 0}
-											className="w-full"
-										>
-											{workshop.availableSlots === 0
-												? "Fully Booked"
-												: processingWorkshopId === workshop.id
-													? "Processing..."
-													: workshop.type === "online"
-														? "Register Now"
-														: `Register for ${getSelectedSlots(workshop.id)} slot${getSelectedSlots(workshop.id) > 1 ? "s" : ""}`}
-										</Button>
-									</div>
-								</CardContent>
-							</Card>
-						</StaggerItem>
-					))}
-				</StaggerContainer>
-			)}
-
-			{/* Phone Number Update Modal */}
-			<Dialog
-				open={showPhoneNumberModal}
-				onOpenChange={setShowPhoneNumberModal}
-			>
-				<DialogContent className="sm:max-w-[425px]">
-					<DialogHeader>
-						<DialogTitle>Update Phone Number</DialogTitle>
-						<DialogDescription>
-							Please enter your phone number to register for workshops. We'll
-							use this to contact you about workshop details.
-						</DialogDescription>
-					</DialogHeader>
-					<div className="grid gap-4 py-4">
-						<div className="grid grid-cols-4 items-center gap-4">
-							<Label htmlFor={phoneInputId} className="text-right">
-								Phone
-							</Label>
-							<Input
-								id={phoneInputId}
-								placeholder="Enter your phone number"
-								value={phoneNumber}
-								onChange={(e) => setPhoneNumber(e.target.value)}
-								className="col-span-3"
-								type="tel"
-							/>
 						</div>
 					</div>
-					<DialogFooter>
-						<Button
-							type="button"
-							variant="outline"
-							onClick={() => {
-								setShowPhoneNumberModal(false);
-								setPhoneNumber("");
-							}}
-							disabled={isUpdatingPhone}
-						>
-							Cancel
-						</Button>
-						<Button
-							type="button"
-							onClick={updatePhoneNumber}
-							disabled={isUpdatingPhone}
-						>
-							{isUpdatingPhone ? "Updating..." : "Update Phone Number"}
-						</Button>
-					</DialogFooter>
-				</DialogContent>
-			</Dialog>
+				)}
+				<FadeIn>
+					<h1 className="text-2xl sm:text-3xl font-bold mb-6">Workshops</h1>
+					<p className="text-muted-foreground mb-6">
+						Join our hands-on workshops to learn the art of dessert making from
+						Maria and the team.
+					</p>
+				</FadeIn>
+				<FadeIn delay={0.1}>
+					<WorkshopTypeToggle value={selectedType} onChange={setSelectedType} />
+				</FadeIn>
+				{filteredWorkshops.length === 0 ? (
+					<FadeIn delay={0.2}>
+						<Card>
+							<CardContent className="py-8 text-center">
+								<h3 className="text-lg font-semibold mb-2">
+									No {selectedType} workshops available
+								</h3>
+								<p className="text-muted-foreground">
+									{activeWorkshops.length === 0
+										? "Check back soon for upcoming workshops."
+										: `No ${selectedType} workshops are currently available. Try switching to ${selectedType === "online" ? "offline" : "online"} workshops.`}
+								</p>
+							</CardContent>
+						</Card>
+					</FadeIn>
+				) : (
+					<StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+						{filteredWorkshops.map((workshop) => (
+							<StaggerItem key={workshop.id}>
+								<Card className="h-full flex flex-col overflow-hidden">
+									{workshop.imageUrl && (
+										<div className="relative aspect-video w-full">
+											<Image
+												src={workshop.imageUrl}
+												alt={workshop.title}
+												fill
+												className="object-cover"
+												sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+											/>
+										</div>
+									)}
+									<CardHeader>
+										<div className="flex justify-between items-start gap-2">
+											<CardTitle className="text-lg leading-tight">
+												{workshop.title}
+											</CardTitle>
+											<Badge
+												variant={
+													workshop.type === "online" ? "default" : "secondary"
+												}
+											>
+												{workshop.type}
+											</Badge>
+										</div>
+									</CardHeader>
+									<CardContent className="flex-1 flex flex-col">
+										<div className="mb-4 flex-1">
+											{workshop.description.split("\n").length > 5 ? (
+												<div className="text-muted-foreground whitespace-pre-wrap">
+													{expandedDescriptions.has(workshop.id) ? (
+														<>
+															{workshop.description}
+															<span className="ml-2">
+																<button
+																	type="button"
+																	onClick={() => toggleDescription(workshop.id)}
+																	className="text-primary hover:text-primary/80 text-sm font-medium cursor-pointer underline"
+																>
+																	Show less
+																</button>
+															</span>
+														</>
+													) : (
+														<div className="relative">
+															<div className="line-clamp-5">
+																{workshop.description}
+															</div>
+															<div className="absolute bottom-0 right-0 bg-white pl-2">
+																<button
+																	type="button"
+																	onClick={() => toggleDescription(workshop.id)}
+																	className="text-primary hover:text-primary/80 text-sm font-medium cursor-pointer underline"
+																>
+																	...Show more
+																</button>
+															</div>
+														</div>
+													)}
+												</div>
+											) : (
+												<p className="text-muted-foreground whitespace-pre-wrap">
+													{workshop.description}
+												</p>
+											)}
+										</div>
+										<div className="mt-auto">
+											{/* Slot Selection - Only for offline workshops */}
+											{workshop.type === "offline" && (
+												<div className="mb-4">
+													<div className="flex items-center justify-between mb-2">
+														<Label className="text-sm font-medium">
+															Slots:
+														</Label>
+														<div className="flex items-center space-x-2">
+															<Button
+																variant="outline"
+																size="icon"
+																className="h-7 w-7"
+																onClick={() =>
+																	setSlotCount(
+																		workshop.id,
+																		Math.max(
+																			1,
+																			getSelectedSlots(workshop.id) - 1,
+																		),
+																	)
+																}
+																disabled={getSelectedSlots(workshop.id) <= 1}
+															>
+																<Minus className="h-3 w-3" />
+															</Button>
+															<span className="w-8 text-center text-sm font-medium">
+																{getSelectedSlots(workshop.id)}
+															</span>
+															<Button
+																variant="outline"
+																size="icon"
+																className="h-7 w-7"
+																onClick={() => {
+																	setSlotCount(
+																		workshop.id,
+																		Math.min(
+																			2,
+																			getSelectedSlots(workshop.id) + 1,
+																			workshop.availableSlots,
+																		),
+																	);
+																}}
+																disabled={
+																	getSelectedSlots(workshop.id) >= 2 ||
+																	getSelectedSlots(workshop.id) >=
+																		workshop.availableSlots
+																}
+															>
+																<Plus className="h-3 w-3" />
+															</Button>
+														</div>
+													</div>
+													<p className="text-xs text-muted-foreground">
+														Maximum 2 slots per person
+													</p>
+												</div>
+											)}
+											<div className="flex justify-between items-center font-bold text-lg mb-4">
+												<span>
+													{workshop.type === "offline"
+														? "Total Price:"
+														: "Price:"}
+												</span>
+												<span>
+													{workshop.type === "offline"
+														? formatCurrency(
+																Number(workshop.amount) *
+																	getSelectedSlots(workshop.id),
+															)
+														: formatCurrency(Number(workshop.amount))}
+												</span>
+											</div>
+											{workshop.availableSlots < 3 && (
+												<div className="flex items-center justify-between mb-4 text-sm">
+													<span className="text-muted-foreground">
+														Available Slots:
+													</span>
+													<span
+														className={`font-medium ${workshop.availableSlots === 0 ? "text-red-500" : "text-orange-500"}`}
+													>
+														{workshop.availableSlots} / {workshop.maxBookings}
+													</span>
+												</div>
+											)}
+											<Button
+												onClick={() => handleRegister(workshop)}
+												disabled={isProcessing || workshop.availableSlots === 0}
+												className="w-full"
+											>
+												{workshop.availableSlots === 0
+													? "Fully Booked"
+													: processingWorkshopId === workshop.id
+														? "Processing..."
+														: workshop.type === "online"
+															? "Register Now"
+															: `Register for ${getSelectedSlots(workshop.id)} slot${getSelectedSlots(workshop.id) > 1 ? "s" : ""}`}
+											</Button>
+										</div>
+									</CardContent>
+								</Card>
+							</StaggerItem>
+						))}
+					</StaggerContainer>
+				)}
+				{/* Phone Number Update Modal */}
+				<Dialog
+					open={showPhoneNumberModal}
+					onOpenChange={setShowPhoneNumberModal}
+				>
+					<DialogContent className="sm:max-w-[425px]">
+						<DialogHeader>
+							<DialogTitle>Update Phone Number</DialogTitle>
+							<DialogDescription>
+								Please enter your phone number to register for workshops. We'll
+								use this to contact you about workshop details.
+							</DialogDescription>
+						</DialogHeader>
+						<div className="grid gap-4 py-4">
+							<div className="grid grid-cols-4 items-center gap-4">
+								<Label htmlFor={phoneInputId} className="text-right">
+									Phone
+								</Label>
+								<Input
+									id={phoneInputId}
+									placeholder="Enter your phone number"
+									value={phoneNumber}
+									onChange={(e) => setPhoneNumber(e.target.value)}
+									className="col-span-3"
+									type="tel"
+								/>
+							</div>
+						</div>
+						<DialogFooter>
+							<Button
+								type="button"
+								variant="outline"
+								onClick={() => {
+									setShowPhoneNumberModal(false);
+									setPhoneNumber("");
+								}}
+								disabled={isUpdatingPhone}
+							>
+								Cancel
+							</Button>
+							<Button
+								type="button"
+								onClick={updatePhoneNumber}
+								disabled={isUpdatingPhone}
+							>
+								{isUpdatingPhone ? "Updating..." : "Update Phone Number"}
+							</Button>
+						</DialogFooter>
+					</DialogContent>
+				</Dialog>
+			</div>
 		</div>
 	);
 }
