@@ -1,22 +1,39 @@
 "use client";
 
 import { AlertTriangle, Clock } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { useCakeOrderSettings } from "@/hooks/use-order-settings";
 import { Alert, AlertDescription, AlertTitle } from "./alert";
 
+function LoadingBanner() {
+	const [isLoading, setIsLoading] = useState(true);
+
+	useEffect(() => {
+		if (isLoading) return;
+		setTimeout(() => {
+			setIsLoading(false);
+		}, 1000);
+	}, [isLoading]);
+
+	if (isLoading) {
+		return null;
+	}
+
+	return (
+		<Alert className="border-orange-200 bg-orange-50 text-orange-800 mb-6">
+			<AlertTriangle className="h-4 w-4 text-orange-600" />
+			<AlertTitle className="text-orange-900 font-semibold">
+				Loading cake order settings...
+			</AlertTitle>
+		</Alert>
+	);
+}
 export default function OrderRestrictionBanner() {
 	const { settings, getNextOrderDay, isLoading } = useCakeOrderSettings();
 
 	if (isLoading) {
-		return (
-			<Alert className="border-orange-200 bg-orange-50 text-orange-800 mb-6">
-				<AlertTriangle className="h-4 w-4 text-orange-600" />
-				<AlertTitle className="text-orange-900 font-semibold">
-					Loading...
-				</AlertTitle>
-			</Alert>
-		);
+		return <LoadingBanner />;
 	}
 
 	// Check if the system is completely disabled

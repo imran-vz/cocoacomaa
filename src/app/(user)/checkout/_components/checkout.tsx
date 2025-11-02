@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import * as z from "zod";
 
 import { confirm } from "@/components/confirm-dialog";
+import { FadeIn } from "@/components/fade-in";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -802,14 +803,19 @@ export default function CheckoutPage({
 				</div>
 			)}
 
-			<h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 lg:mb-8">
-				Checkout
-			</h1>
+			<FadeIn>
+				<h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 lg:mb-8">
+					Checkout
+				</h1>
+			</FadeIn>
 
 			{/* Show order restriction banner when orders are not allowed */}
 			{!isOrderingAllowed && <OrderRestrictionBanner />}
 
-			<div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
+			<FadeIn
+				delay={0.1}
+				className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8"
+			>
 				{/* Customer Information */}
 				<Card className="order-2 lg:order-1">
 					<CardHeader className="pb-4 sm:pb-6">
@@ -1797,7 +1803,7 @@ export default function CheckoutPage({
 						</div>
 					</CardContent>
 				</Card>
-			</div>
+			</FadeIn>
 
 			{/* Phone Edit Dialog */}
 			<PhoneEditDialog

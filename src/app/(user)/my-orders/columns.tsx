@@ -16,7 +16,7 @@ import { formatCurrency } from "@/lib/utils";
 export const columns: ColumnDef<
 	Pick<
 		Order,
-		"id" | "status" | "createdAt" | "total" | "pickupDateTime" | "orderType"
+		"id" | "createdAt" | "total" | "status" | "pickupDateTime" | "orderType"
 	> & {
 		orderItems: Array<
 			Pick<OrderItem, "itemType"> & {

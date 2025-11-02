@@ -8,6 +8,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useId, useState } from "react";
 import { toast } from "sonner";
 
+import { FadeIn } from "@/components/fade-in";
+import { StaggerContainer, StaggerItem } from "@/components/stagger-container";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -403,196 +405,206 @@ export default function WorkshopsClientPage({
 				</div>
 			)}
 
-			<h1 className="text-2xl sm:text-3xl font-bold mb-6">Workshops</h1>
-			<p className="text-muted-foreground mb-6">
-				Join our hands-on workshops to learn the art of dessert making from
-				Maria and the team.
-			</p>
+			<FadeIn>
+				<h1 className="text-2xl sm:text-3xl font-bold mb-6">Workshops</h1>
+				<p className="text-muted-foreground mb-6">
+					Join our hands-on workshops to learn the art of dessert making from
+					Maria and the team.
+				</p>
+			</FadeIn>
 
-			<WorkshopTypeToggle value={selectedType} onChange={setSelectedType} />
+			<FadeIn delay={0.1}>
+				<WorkshopTypeToggle value={selectedType} onChange={setSelectedType} />
+			</FadeIn>
 
 			{filteredWorkshops.length === 0 ? (
-				<Card>
-					<CardContent className="py-8 text-center">
-						<h3 className="text-lg font-semibold mb-2">
-							No {selectedType} workshops available
-						</h3>
-						<p className="text-muted-foreground">
-							{activeWorkshops.length === 0
-								? "Check back soon for upcoming workshops."
-								: `No ${selectedType} workshops are currently available. Try switching to ${selectedType === "online" ? "offline" : "online"} workshops.`}
-						</p>
-					</CardContent>
-				</Card>
+				<FadeIn delay={0.2}>
+					<Card>
+						<CardContent className="py-8 text-center">
+							<h3 className="text-lg font-semibold mb-2">
+								No {selectedType} workshops available
+							</h3>
+							<p className="text-muted-foreground">
+								{activeWorkshops.length === 0
+									? "Check back soon for upcoming workshops."
+									: `No ${selectedType} workshops are currently available. Try switching to ${selectedType === "online" ? "offline" : "online"} workshops.`}
+							</p>
+						</CardContent>
+					</Card>
+				</FadeIn>
 			) : (
-				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+				<StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 					{filteredWorkshops.map((workshop) => (
-						<Card
-							key={workshop.id}
-							className="h-full flex flex-col overflow-hidden"
-						>
-							{workshop.imageUrl && (
-								<div className="relative aspect-video w-full">
-									<Image
-										src={workshop.imageUrl}
-										alt={workshop.title}
-										fill
-										className="object-cover"
-										sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-									/>
-								</div>
-							)}
-							<CardHeader>
-								<div className="flex justify-between items-start gap-2">
-									<CardTitle className="text-lg leading-tight">
-										{workshop.title}
-									</CardTitle>
-									<Badge
-										variant={
-											workshop.type === "online" ? "default" : "secondary"
-										}
-									>
-										{workshop.type}
-									</Badge>
-								</div>
-							</CardHeader>
-							<CardContent className="flex-1 flex flex-col">
-								<div className="mb-4 flex-1">
-									{workshop.description.split("\n").length > 5 ? (
-										<div className="text-muted-foreground whitespace-pre-wrap">
-											{expandedDescriptions.has(workshop.id) ? (
-												<>
-													{workshop.description}
-													<span className="ml-2">
-														<button
-															type="button"
-															onClick={() => toggleDescription(workshop.id)}
-															className="text-primary hover:text-primary/80 text-sm font-medium cursor-pointer underline"
-														>
-															Show less
-														</button>
-													</span>
-												</>
-											) : (
-												<div className="relative">
-													<div className="line-clamp-5">
-														{workshop.description}
-													</div>
-													<div className="absolute bottom-0 right-0 bg-white pl-2">
-														<button
-															type="button"
-															onClick={() => toggleDescription(workshop.id)}
-															className="text-primary hover:text-primary/80 text-sm font-medium cursor-pointer underline"
-														>
-															...Show more
-														</button>
-													</div>
-												</div>
-											)}
-										</div>
-									) : (
-										<p className="text-muted-foreground whitespace-pre-wrap">
-											{workshop.description}
-										</p>
-									)}
-								</div>
-								<div className="mt-auto">
-									{/* Slot Selection - Only for offline workshops */}
-									{workshop.type === "offline" && (
-										<div className="mb-4">
-											<div className="flex items-center justify-between mb-2">
-												<Label className="text-sm font-medium">Slots:</Label>
-												<div className="flex items-center space-x-2">
-													<Button
-														variant="outline"
-														size="icon"
-														className="h-7 w-7"
-														onClick={() =>
-															setSlotCount(
-																workshop.id,
-																Math.max(1, getSelectedSlots(workshop.id) - 1),
-															)
-														}
-														disabled={getSelectedSlots(workshop.id) <= 1}
-													>
-														<Minus className="h-3 w-3" />
-													</Button>
-													<span className="w-8 text-center text-sm font-medium">
-														{getSelectedSlots(workshop.id)}
-													</span>
-													<Button
-														variant="outline"
-														size="icon"
-														className="h-7 w-7"
-														onClick={() => {
-															setSlotCount(
-																workshop.id,
-																Math.min(
-																	2,
-																	getSelectedSlots(workshop.id) + 1,
-																	workshop.availableSlots,
-																),
-															);
-														}}
-														disabled={
-															getSelectedSlots(workshop.id) >= 2 ||
-															getSelectedSlots(workshop.id) >=
-																workshop.availableSlots
-														}
-													>
-														<Plus className="h-3 w-3" />
-													</Button>
-												</div>
-											</div>
-											<p className="text-xs text-muted-foreground">
-												Maximum 2 slots per person
-											</p>
-										</div>
-									)}
-
-									<div className="flex justify-between items-center font-bold text-lg mb-4">
-										<span>
-											{workshop.type === "offline" ? "Total Price:" : "Price:"}
-										</span>
-										<span>
-											{workshop.type === "offline"
-												? formatCurrency(
-														Number(workshop.amount) *
-															getSelectedSlots(workshop.id),
-													)
-												: formatCurrency(Number(workshop.amount))}
-										</span>
+						<StaggerItem key={workshop.id}>
+							<Card className="h-full flex flex-col overflow-hidden">
+								{workshop.imageUrl && (
+									<div className="relative aspect-video w-full">
+										<Image
+											src={workshop.imageUrl}
+											alt={workshop.title}
+											fill
+											className="object-cover"
+											sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+										/>
 									</div>
-									{workshop.availableSlots < 3 && (
-										<div className="flex items-center justify-between mb-4 text-sm">
-											<span className="text-muted-foreground">
-												Available Slots:
+								)}
+								<CardHeader>
+									<div className="flex justify-between items-start gap-2">
+										<CardTitle className="text-lg leading-tight">
+											{workshop.title}
+										</CardTitle>
+										<Badge
+											variant={
+												workshop.type === "online" ? "default" : "secondary"
+											}
+										>
+											{workshop.type}
+										</Badge>
+									</div>
+								</CardHeader>
+								<CardContent className="flex-1 flex flex-col">
+									<div className="mb-4 flex-1">
+										{workshop.description.split("\n").length > 5 ? (
+											<div className="text-muted-foreground whitespace-pre-wrap">
+												{expandedDescriptions.has(workshop.id) ? (
+													<>
+														{workshop.description}
+														<span className="ml-2">
+															<button
+																type="button"
+																onClick={() => toggleDescription(workshop.id)}
+																className="text-primary hover:text-primary/80 text-sm font-medium cursor-pointer underline"
+															>
+																Show less
+															</button>
+														</span>
+													</>
+												) : (
+													<div className="relative">
+														<div className="line-clamp-5">
+															{workshop.description}
+														</div>
+														<div className="absolute bottom-0 right-0 bg-white pl-2">
+															<button
+																type="button"
+																onClick={() => toggleDescription(workshop.id)}
+																className="text-primary hover:text-primary/80 text-sm font-medium cursor-pointer underline"
+															>
+																...Show more
+															</button>
+														</div>
+													</div>
+												)}
+											</div>
+										) : (
+											<p className="text-muted-foreground whitespace-pre-wrap">
+												{workshop.description}
+											</p>
+										)}
+									</div>
+									<div className="mt-auto">
+										{/* Slot Selection - Only for offline workshops */}
+										{workshop.type === "offline" && (
+											<div className="mb-4">
+												<div className="flex items-center justify-between mb-2">
+													<Label className="text-sm font-medium">Slots:</Label>
+													<div className="flex items-center space-x-2">
+														<Button
+															variant="outline"
+															size="icon"
+															className="h-7 w-7"
+															onClick={() =>
+																setSlotCount(
+																	workshop.id,
+																	Math.max(
+																		1,
+																		getSelectedSlots(workshop.id) - 1,
+																	),
+																)
+															}
+															disabled={getSelectedSlots(workshop.id) <= 1}
+														>
+															<Minus className="h-3 w-3" />
+														</Button>
+														<span className="w-8 text-center text-sm font-medium">
+															{getSelectedSlots(workshop.id)}
+														</span>
+														<Button
+															variant="outline"
+															size="icon"
+															className="h-7 w-7"
+															onClick={() => {
+																setSlotCount(
+																	workshop.id,
+																	Math.min(
+																		2,
+																		getSelectedSlots(workshop.id) + 1,
+																		workshop.availableSlots,
+																	),
+																);
+															}}
+															disabled={
+																getSelectedSlots(workshop.id) >= 2 ||
+																getSelectedSlots(workshop.id) >=
+																	workshop.availableSlots
+															}
+														>
+															<Plus className="h-3 w-3" />
+														</Button>
+													</div>
+												</div>
+												<p className="text-xs text-muted-foreground">
+													Maximum 2 slots per person
+												</p>
+											</div>
+										)}
+
+										<div className="flex justify-between items-center font-bold text-lg mb-4">
+											<span>
+												{workshop.type === "offline"
+													? "Total Price:"
+													: "Price:"}
 											</span>
-											<span
-												className={`font-medium ${workshop.availableSlots === 0 ? "text-red-500" : "text-orange-500"}`}
-											>
-												{workshop.availableSlots} / {workshop.maxBookings}
+											<span>
+												{workshop.type === "offline"
+													? formatCurrency(
+															Number(workshop.amount) *
+																getSelectedSlots(workshop.id),
+														)
+													: formatCurrency(Number(workshop.amount))}
 											</span>
 										</div>
-									)}
-									<Button
-										onClick={() => handleRegister(workshop)}
-										disabled={isProcessing || workshop.availableSlots === 0}
-										className="w-full"
-									>
-										{workshop.availableSlots === 0
-											? "Fully Booked"
-											: processingWorkshopId === workshop.id
-												? "Processing..."
-												: workshop.type === "online"
-													? "Register Now"
-													: `Register for ${getSelectedSlots(workshop.id)} slot${getSelectedSlots(workshop.id) > 1 ? "s" : ""}`}
-									</Button>
-								</div>
-							</CardContent>
-						</Card>
+										{workshop.availableSlots < 3 && (
+											<div className="flex items-center justify-between mb-4 text-sm">
+												<span className="text-muted-foreground">
+													Available Slots:
+												</span>
+												<span
+													className={`font-medium ${workshop.availableSlots === 0 ? "text-red-500" : "text-orange-500"}`}
+												>
+													{workshop.availableSlots} / {workshop.maxBookings}
+												</span>
+											</div>
+										)}
+										<Button
+											onClick={() => handleRegister(workshop)}
+											disabled={isProcessing || workshop.availableSlots === 0}
+											className="w-full"
+										>
+											{workshop.availableSlots === 0
+												? "Fully Booked"
+												: processingWorkshopId === workshop.id
+													? "Processing..."
+													: workshop.type === "online"
+														? "Register Now"
+														: `Register for ${getSelectedSlots(workshop.id)} slot${getSelectedSlots(workshop.id) > 1 ? "s" : ""}`}
+										</Button>
+									</div>
+								</CardContent>
+							</Card>
+						</StaggerItem>
 					))}
-				</div>
+				</StaggerContainer>
 			)}
 
 			{/* Phone Number Update Modal */}

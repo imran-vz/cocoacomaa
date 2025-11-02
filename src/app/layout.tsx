@@ -1,5 +1,5 @@
 import { Analytics } from "@vercel/analytics/next";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 
 import Footer from "@/components/footer";
@@ -32,18 +32,12 @@ export const metadata: Metadata = {
 		description: "Order custom desserts online",
 	},
 
-	themeColor: "#502922",
 	appleWebApp: {
 		capable: true,
 		statusBarStyle: "default",
 		title: "Cocoa Comaa",
 	},
-	viewport: {
-		width: "device-width",
-		initialScale: 1,
-		maximumScale: 1,
-		userScalable: false,
-	},
+
 	icons: {
 		icon: [
 			{ url: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
@@ -53,13 +47,21 @@ export const metadata: Metadata = {
 	},
 };
 
+export const viewport: Viewport = {
+	themeColor: { media: "(prefers-color-scheme: dark)", color: "#502922" },
+	width: "device-width",
+	initialScale: 1,
+	maximumScale: 1,
+	userScalable: false,
+};
+
 export default function RootLayout({
 	children,
 }: {
 	children: React.ReactNode;
 }) {
 	return (
-		<html lang="en">
+		<html lang="en" suppressHydrationWarning>
 			<body className={inter.className}>
 				<Analytics />
 				<Providers>

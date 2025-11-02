@@ -1,7 +1,14 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { createContext, useContext, useEffect, useReducer } from "react";
+import {
+	createContext,
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useReducer,
+} from "react";
 
 interface CartItem {
 	id: number;
@@ -22,7 +29,8 @@ type CartAction =
 	| { type: "REMOVE_ITEM"; payload: number }
 	| { type: "UPDATE_QUANTITY"; payload: { id: number; quantity: number } }
 	| { type: "CLEAR_CART" }
-	| { type: "CLEAR_NON_SPECIALS" };
+	| { type: "CLEAR_NON_SPECIALS" }
+	| { type: "RESTORE_CART"; payload: CartState };
 
 const initialState: CartState = {
 	items: [],
@@ -102,6 +110,9 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 			};
 		}
 
+		case "RESTORE_CART":
+			return action.payload;
+
 		default:
 			return state;
 	}
@@ -123,11 +134,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
 	useEffect(() => {
 		const savedCart = localStorage.getItem("cart");
 		if (savedCart) {
-			const { items } = JSON.parse(savedCart);
-			dispatch({ type: "CLEAR_CART" });
-			for (const item of items as CartItem[]) {
-				dispatch({ type: "ADD_ITEM", payload: item });
-			}
+			const cartState = JSON.parse(savedCart) as CartState;
+			dispatch({ type: "RESTORE_CART", payload: cartState });
 		}
 	}, []);
 
@@ -135,41 +143,48 @@ export function CartProvider({ children }: { children: ReactNode }) {
 		localStorage.setItem("cart", JSON.stringify(state));
 	}, [state]);
 
-	const addItem = (item: CartItem) => {
+	const addItem = useCallback((item: CartItem) => {
 		dispatch({ type: "ADD_ITEM", payload: item });
-	};
+	}, []);
 
-	const removeItem = (id: number) => {
+	const removeItem = useCallback((id: number) => {
 		dispatch({ type: "REMOVE_ITEM", payload: id });
-	};
+	}, []);
 
-	const updateQuantity = (id: number, quantity: number) => {
+	const updateQuantity = useCallback((id: number, quantity: number) => {
 		dispatch({ type: "UPDATE_QUANTITY", payload: { id, quantity } });
-	};
+	}, []);
 
-	const clearCart = () => {
+	const clearCart = useCallback(() => {
 		dispatch({ type: "CLEAR_CART" });
-	};
+	}, []);
 
-	const clearNonSpecials = () => {
+	const clearNonSpecials = useCallback(() => {
 		dispatch({ type: "CLEAR_NON_SPECIALS" });
-	};
+	}, []);
 
-	return (
-		<CartContext.Provider
-			value={{
-				items: state.items,
-				total: state.total,
-				addItem,
-				removeItem,
-				updateQuantity,
-				clearCart,
-				clearNonSpecials,
-			}}
-		>
-			{children}
-		</CartContext.Provider>
+	const value = useMemo(
+		() => ({
+			items: state.items,
+			total: state.total,
+			addItem,
+			removeItem,
+			updateQuantity,
+			clearCart,
+			clearNonSpecials,
+		}),
+		[
+			state.items,
+			state.total,
+			addItem,
+			removeItem,
+			updateQuantity,
+			clearCart,
+			clearNonSpecials,
+		],
 	);
+
+	return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 
 export function useCart() {
