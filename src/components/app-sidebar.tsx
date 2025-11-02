@@ -23,11 +23,13 @@ import {
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
+	useSidebar,
 } from "@/components/ui/sidebar";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	const session = useSession();
 	const pathname = usePathname();
+	const { isMobile, setOpenMobile } = useSidebar();
 	const isAdmin = session.data?.user?.role === "admin";
 	const isManager = session.data?.user?.role === "manager";
 
@@ -143,6 +145,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	// Select data based on user role
 	const data = isAdmin ? adminData : isManager ? managerData : managerData;
 
+	const handleLogoClick = () => {
+		if (isMobile) {
+			setOpenMobile(false);
+		}
+	};
+
 	return (
 		<Sidebar collapsible="offcanvas" {...props}>
 			<SidebarHeader>
@@ -152,7 +160,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 							asChild
 							className="data-[slot=sidebar-menu-button]:!p-1.5"
 						>
-							<a href={isAdmin ? "/admin" : "/manager"}>
+							<a
+								href={isAdmin ? "/admin" : "/manager"}
+								onClick={handleLogoClick}
+							>
 								<Image
 									src="/logo.png"
 									alt="Cocoa Comaa"

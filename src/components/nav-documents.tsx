@@ -16,6 +16,7 @@ import {
 	SidebarMenuSub,
 	SidebarMenuSubButton,
 	SidebarMenuSubItem,
+	useSidebar,
 } from "@/components/ui/sidebar";
 
 export function NavDocuments({
@@ -32,6 +33,14 @@ export function NavDocuments({
 		}[];
 	}[];
 }) {
+	const { isMobile, setOpenMobile } = useSidebar();
+
+	const handleClick = () => {
+		if (isMobile) {
+			setOpenMobile(false);
+		}
+	};
+
 	return (
 		<SidebarGroup>
 			<SidebarMenu>
@@ -57,7 +66,7 @@ export function NavDocuments({
 											{item.items.map((subItem) => (
 												<SidebarMenuSubItem key={subItem.title}>
 													<SidebarMenuSubButton asChild>
-														<Link href={subItem.url}>
+														<Link href={subItem.url} onClick={handleClick}>
 															<span>{subItem.title}</span>
 														</Link>
 													</SidebarMenuSubButton>
@@ -68,7 +77,7 @@ export function NavDocuments({
 								</>
 							) : (
 								<SidebarMenuButton asChild tooltip={item.title}>
-									<Link href={item.url}>
+									<Link href={item.url} onClick={handleClick}>
 										{item.icon && <item.icon />}
 										<span>{item.title}</span>
 									</Link>
