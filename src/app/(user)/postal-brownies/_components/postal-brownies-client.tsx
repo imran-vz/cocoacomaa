@@ -12,6 +12,8 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { FadeIn } from "@/components/fade-in";
+import { StaggerContainer, StaggerItem } from "@/components/stagger-container";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +29,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { usePostalOrderSettings } from "@/hooks/use-postal-order-settings";
 import { useCart } from "@/lib/cart-context";
+import type { PostalOrderSettings } from "@/lib/db/schema";
 import { cn, formatCurrency } from "@/lib/utils";
 
 const brownieComboSchema = z.object({
@@ -67,8 +70,10 @@ async function fetchPostalCombos() {
 
 export default function PostalBrowniesClient({
 	postalCombosList,
+	settings,
 }: {
 	postalCombosList: PostalCombo[];
+	settings: PostalOrderSettings[];
 }) {
 	const router = useRouter();
 	const { clearCart, addItem } = useCart();
@@ -81,7 +86,7 @@ export default function PostalBrowniesClient({
 		arePostalOrdersAllowed,
 		getEarliestAvailableSlot,
 		isLoading: isPostalOrderSettingsLoading,
-	} = usePostalOrderSettings(currentMonth);
+	} = usePostalOrderSettings(currentMonth, settings);
 
 	const { data: postalCombos = [] } = useQuery({
 		queryKey: ["postal-combos"],
@@ -195,52 +200,54 @@ export default function PostalBrowniesClient({
 					{isPostalOrderSettingsLoading
 						? null
 						: !arePostalOrdersAllowed && (
-								<div className="mb-6 sm:mb-8">
-									<div className="bg-orange-50 border border-orange-200 rounded-lg p-4 sm:p-6">
-										<div className="flex items-start gap-3">
-											<div className="flex-shrink-0">
-												<svg
-													className="h-5 w-5 text-orange-600"
-													viewBox="0 0 20 20"
-													fill="currentColor"
-													aria-hidden="true"
-												>
-													<path
-														fillRule="evenodd"
-														d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
-														clipRule="evenodd"
-													/>
-												</svg>
-											</div>
-											<div className="flex-1">
-												<h3 className="text-sm sm:text-base font-medium text-orange-800">
-													Postal Brownie Orders Currently Unavailable
-												</h3>
-												<p className="text-xs sm:text-sm text-orange-700 mt-1 leading-relaxed">
-													{earliestSlot ? (
-														<>
-															We will be available to take orders starting{" "}
-															<span className="font-semibold">
-																{new Date(
-																	earliestSlot.orderStartDate,
-																).toLocaleDateString("en-US", {
-																	weekday: "long",
-																	year: "numeric",
-																	month: "long",
-																	day: "numeric",
-																})}
-															</span>
-															. Please check back on that date to place your
-															postal brownie order.
-														</>
-													) : (
-														"We are not accepting postal brownie orders for this month. Please check back later or contact us for more information about upcoming order periods."
-													)}
-												</p>
+								<FadeIn>
+									<div className="mb-6 sm:mb-8">
+										<div className="bg-orange-50 border border-orange-200 rounded-lg p-4 sm:p-6">
+											<div className="flex items-start gap-3">
+												<div className="shrink-0">
+													<svg
+														className="h-5 w-5 text-orange-600"
+														viewBox="0 0 20 20"
+														fill="currentColor"
+														aria-hidden="true"
+													>
+														<path
+															fillRule="evenodd"
+															d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
+															clipRule="evenodd"
+														/>
+													</svg>
+												</div>
+												<div className="flex-1">
+													<h3 className="text-sm sm:text-base font-medium text-orange-800">
+														Postal Brownie Orders Currently Unavailable
+													</h3>
+													<p className="text-xs sm:text-sm text-orange-700 mt-1 leading-relaxed">
+														{earliestSlot ? (
+															<>
+																We will be available to take orders starting{" "}
+																<span className="font-semibold">
+																	{new Date(
+																		earliestSlot.orderStartDate,
+																	).toLocaleDateString("en-US", {
+																		weekday: "long",
+																		year: "numeric",
+																		month: "long",
+																		day: "numeric",
+																	})}
+																</span>
+																. Please check back on that date to place your
+																postal brownie order.
+															</>
+														) : (
+															"We are not accepting postal brownie orders for this month. Please check back later or contact us for more information about upcoming order periods."
+														)}
+													</p>
+												</div>
 											</div>
 										</div>
 									</div>
-								</div>
+								</FadeIn>
 							)}
 
 					{/* Form */}
@@ -271,102 +278,111 @@ export default function PostalBrowniesClient({
 														</p>
 													</div>
 												) : (
-													postalCombos.map((combo) => {
-														const containsEgg = Boolean(combo.containsEgg);
-														const eggBadgeVariant = containsEgg
-															? "destructive"
-															: "success";
-														const eggBadgeLabel = containsEgg
-															? "Contains Egg"
-															: "Eggless";
-														const EggIcon = containsEgg ? Egg : EggOff;
+													<StaggerContainer>
+														{postalCombos.map((combo) => {
+															const containsEgg = Boolean(combo.containsEgg);
+															const eggBadgeVariant = containsEgg
+																? "destructive"
+																: "success";
+															const eggBadgeLabel = containsEgg
+																? "Contains Egg"
+																: "Eggless";
+															const EggIcon = containsEgg ? Egg : EggOff;
 
-														return (
-															<FormItem key={combo.id} className="space-y-0">
-																<FormControl>
-																	<RadioGroupItem
-																		value={combo.id.toString()}
-																		id={combo.id.toString()}
-																		className="sr-only"
-																	/>
-																</FormControl>
-																<Label
-																	htmlFor={combo.id.toString()}
-																	className="cursor-pointer block w-full"
-																>
-																	<Card
-																		className={cn(
-																			"transition-all duration-200 hover:shadow-lg active:scale-[0.98] h-full flex flex-col ",
-																			combo.imageUrl ? "pt-0" : "",
-																			field.value === combo.id.toString()
-																				? "ring-2 ring-primary shadow-lg bg-primary/5"
-																				: "hover:shadow-md",
-																		)}
+															return (
+																<StaggerItem key={combo.id}>
+																	<FormItem
+																		key={combo.id}
+																		className="space-y-0"
 																	>
-																		{combo.imageUrl && (
-																			<div className="relative aspect-[4/3] sm:aspect-video w-full">
-																				<Image
-																					src={combo.imageUrl}
-																					alt={combo.name}
-																					fill
-																					className="object-cover rounded-t-lg"
-																					sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-																				/>
-																			</div>
-																		)}
-																		<CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
-																			<div className="flex flex-col justify-between items-start gap-2">
-																				<CardTitle className="text-base sm:text-lg leading-tight flex-1">
-																					{combo.name}
-																				</CardTitle>
-																				<div className="flex items-center justify-between w-full gap-2">
-																					<div>
-																						<Badge
-																							variant={eggBadgeVariant}
-																							className="gap-1 shrink-0 "
-																						>
-																							<EggIcon className="h-3 w-3" />
-																							{eggBadgeLabel}
-																						</Badge>
+																		<FormControl>
+																			<RadioGroupItem
+																				value={combo.id.toString()}
+																				id={combo.id.toString()}
+																				className="sr-only"
+																			/>
+																		</FormControl>
+																		<Label
+																			htmlFor={combo.id.toString()}
+																			className="cursor-pointer block w-full"
+																		>
+																			<Card
+																				className={cn(
+																					"transition-all duration-200 hover:shadow-lg active:scale-[0.98] h-full flex flex-col ",
+																					combo.imageUrl ? "pt-0" : "",
+																					field.value === combo.id.toString()
+																						? "ring-2 ring-primary shadow-lg bg-primary/5"
+																						: "hover:shadow-md",
+																				)}
+																			>
+																				{combo.imageUrl && (
+																					<div className="relative aspect-4/3 sm:aspect-video w-full">
+																						<Image
+																							src={combo.imageUrl}
+																							alt={combo.name}
+																							fill
+																							className="object-cover rounded-t-lg"
+																							sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+																						/>
 																					</div>
+																				)}
+																				<CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
+																					<div className="flex flex-col justify-between items-start gap-2">
+																						<CardTitle className="text-base sm:text-lg leading-tight flex-1">
+																							{combo.name}
+																						</CardTitle>
+																						<div className="flex items-center justify-between w-full gap-2">
+																							<div>
+																								<Badge
+																									variant={eggBadgeVariant}
+																									className="gap-1 shrink-0 "
+																								>
+																									<EggIcon className="h-3 w-3" />
+																									{eggBadgeLabel}
+																								</Badge>
+																							</div>
 
-																					<Badge
-																						variant={"default"}
-																						className="gap-1 shrink-0"
-																					>
-																						{formatCurrency(
-																							Number(combo.price),
-																						)}
-																					</Badge>
-																				</div>
-																			</div>
-																		</CardHeader>
-																		<CardContent className="pt-0 px-3 sm:px-6 pb-3 sm:pb-6 flex-1 flex flex-col">
-																			<p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 leading-relaxed">
-																				{combo.description}
-																			</p>
-																			<div className="space-y-2 mt-auto">
-																				<h4 className="font-medium text-xs sm:text-sm">
-																					Includes:
-																				</h4>
-																				<ul className="space-y-1">
-																					{combo.items.map((item: string) => (
-																						<li
-																							key={item}
-																							className="text-xs text-muted-foreground flex items-center"
-																						>
-																							<span className="w-1 h-1 bg-primary rounded-full mr-2 flex-shrink-0" />
-																							{item}
-																						</li>
-																					))}
-																				</ul>
-																			</div>
-																		</CardContent>
-																	</Card>
-																</Label>
-															</FormItem>
-														);
-													})
+																							<Badge
+																								variant={"default"}
+																								className="gap-1 shrink-0"
+																							>
+																								{formatCurrency(
+																									Number(combo.price),
+																								)}
+																							</Badge>
+																						</div>
+																					</div>
+																				</CardHeader>
+																				<CardContent className="pt-0 px-3 sm:px-6 pb-3 sm:pb-6 flex-1 flex flex-col">
+																					<p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 leading-relaxed">
+																						{combo.description}
+																					</p>
+																					<div className="space-y-2 mt-auto">
+																						<h4 className="font-medium text-xs sm:text-sm">
+																							Includes:
+																						</h4>
+																						<ul className="space-y-1">
+																							{combo.items.map(
+																								(item: string) => (
+																									<li
+																										key={item}
+																										className="text-xs text-muted-foreground flex items-center"
+																									>
+																										<span className="w-1 h-1 bg-primary rounded-full mr-2 shrink-0" />
+																										{item}
+																									</li>
+																								),
+																							)}
+																						</ul>
+																					</div>
+																				</CardContent>
+																			</Card>
+																		</Label>
+																	</FormItem>
+																</StaggerItem>
+															);
+														})}
+													</StaggerContainer>
 												)}
 											</RadioGroup>
 										</FormControl>
@@ -410,62 +426,66 @@ export default function PostalBrowniesClient({
 								</div>
 							)}
 
-							{/* Action buttons */}
-							<div className="flex flex-col-reverse sm:flex-row gap-3 sm:gap-4">
-								<div className="flex-1" />
-								<Button
-									type="button"
-									variant="outline"
-									onClick={() => router.back()}
-									className=""
-									size="lg"
-								>
-									Back
-								</Button>
-								<Button
-									type="submit"
-									disabled={
-										!selectedCombo || isSubmitting || !arePostalOrdersAllowed
-									}
-									size="lg"
-									variant={!arePostalOrdersAllowed ? "secondary" : "default"}
-								>
-									{!arePostalOrdersAllowed
-										? "Orders Not Available"
-										: isSubmitting
-											? "Adding to Cart..."
-											: "Checkout"}
-								</Button>
-							</div>
+							<FadeIn delay={0.1}>
+								{/* Action buttons */}
+								<div className="flex flex-col-reverse sm:flex-row gap-3 sm:gap-4">
+									<div className="flex-1" />
+									<Button
+										type="button"
+										variant="outline"
+										onClick={() => router.back()}
+										className=""
+										size="lg"
+									>
+										Back
+									</Button>
+									<Button
+										type="submit"
+										disabled={
+											!selectedCombo || isSubmitting || !arePostalOrdersAllowed
+										}
+										size="lg"
+										variant={!arePostalOrdersAllowed ? "secondary" : "default"}
+									>
+										{!arePostalOrdersAllowed
+											? "Orders Not Available"
+											: isSubmitting
+												? "Adding to Cart..."
+												: "Checkout"}
+									</Button>
+								</div>
+							</FadeIn>
 
-							{/* Important notice banner */}
-							<div className="bg-amber-50 border border-amber-200 rounded-lg p-4 sm:p-6">
-								<div className="flex items-start gap-3">
-									<div className="flex-shrink-0">
-										<svg
-											className="h-5 w-5 text-amber-600"
-											viewBox="0 0 20 20"
-											fill="currentColor"
-											aria-hidden="true"
-										>
-											<path
-												fillRule="evenodd"
-												d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
-												clipRule="evenodd"
-											/>
-										</svg>
-									</div>
-									<div className="flex-1">
-										<h3 className="text-sm sm:text-base font-medium text-amber-800">
-											Important Notice
-										</h3>
-										<p className="text-xs sm:text-sm text-amber-700 mt-1 leading-relaxed">
-											Only one brownie combo per order. Adding a new combo will
-											replace your current cart.
-										</p>
+							<FadeIn delay={0.2}>
+								{/* Important notice banner */}
+								<div className="bg-amber-50 border border-amber-200 rounded-lg p-4 sm:p-6">
+									<div className="flex items-start gap-3">
+										<div className="shrink-0">
+											<svg
+												className="h-5 w-5 text-amber-600"
+												viewBox="0 0 20 20"
+												fill="currentColor"
+												aria-hidden="true"
+											>
+												<path
+													fillRule="evenodd"
+													d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
+													clipRule="evenodd"
+												/>
+											</svg>
+										</div>
+										<div className="flex-1">
+											<h3 className="text-sm sm:text-base font-medium text-amber-800">
+												Important Notice
+											</h3>
+											<p className="text-xs sm:text-sm text-amber-700 mt-1 leading-relaxed">
+												Only one brownie combo per order. Adding a new combo
+												will replace your current cart.
+											</p>
+										</div>
 									</div>
 								</div>
-							</div>
+							</FadeIn>
 						</form>
 					</Form>
 				</div>

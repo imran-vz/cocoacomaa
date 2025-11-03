@@ -1,19 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { PostalOrderSettings } from "@/lib/db/schema";
 
-interface PostalOrderSettings {
-	id: number;
-	name: string;
-	month: string;
-	orderStartDate: string;
-	orderEndDate: string;
-	dispatchStartDate: string;
-	dispatchEndDate: string;
-	isActive: boolean;
-	createdAt: Date;
-	updatedAt: Date;
-}
-
-export function usePostalOrderSettings(month: string) {
+export function usePostalOrderSettings(
+	month: string,
+	initialSettings?: PostalOrderSettings[] | undefined,
+) {
 	const queryClient = useQueryClient();
 
 	// Fetch settings
@@ -29,6 +20,7 @@ export function usePostalOrderSettings(month: string) {
 			return data.settings as PostalOrderSettings[];
 		},
 		staleTime: 5 * 60 * 1000, // 5 minutes
+		initialData: initialSettings,
 	});
 
 	// Check if postal orders are allowed today
