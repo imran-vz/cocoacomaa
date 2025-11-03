@@ -58,11 +58,11 @@ export default function OrderRestrictionBanner() {
 
 	return (
 		<Alert className="border-orange-200 bg-orange-50 text-orange-800 mb-6">
-			<AlertTriangle className="h-4 w-4 text-orange-600" />
-			<AlertTitle className="text-orange-900 font-semibold">
+			<AlertTriangle className="h-4 w-4 text-orange-600 shrink-0" />
+			<AlertTitle className="text-orange-900 font-semibold text-sm sm:text-base">
 				Cake Orders Currently Unavailable
 			</AlertTitle>
-			<AlertDescription className="text-orange-700">
+			<AlertDescription className="text-orange-700 text-sm">
 				<div className="space-y-2">
 					{isSystemDisabled ? (
 						<p>
@@ -76,9 +76,9 @@ export default function OrderRestrictionBanner() {
 								We only accept cake orders on <strong>{allowedDaysText}</strong>{" "}
 								each week.
 							</p>
-							<div className="flex items-center gap-2 text-sm">
-								<Clock className="h-3 w-3" />
-								<span>
+							<div className="flex items-start sm:items-center gap-2 text-xs sm:text-sm">
+								<Clock className="h-3 w-3 shrink-0 mt-0.5 sm:mt-0" />
+								<span className="wrap-break-word">
 									{getNextOrderDay === "now"
 										? "Cake orders are being accepted today!"
 										: `Cake orders will resume ${getNextOrderDay}`}
