@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
+import { FadeIn } from "@/components/fade-in";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/lib/db";
 import { desserts, orders, users } from "@/lib/db/schema";
@@ -81,113 +82,117 @@ export default async function AdminDashboard() {
 		.then((res) => res[0].count);
 
 	return (
-		<div className="container mx-auto p-4 sm:p-6">
-			<h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Dashboard</h1>
+		<FadeIn>
+			<div className="container mx-auto p-4 sm:p-6">
+				<h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">
+					Dashboard
+				</h1>
 
-			{/* Main Stats Grid */}
-			<div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-				<Suspense fallback={<Loading />}>
-					<TotalRevenue totalRevenuePromise={totalRevenuePromise} />
-				</Suspense>
-
-				<Suspense fallback={<Loading />}>
-					<TotalOrders totalOrdersPromise={totalOrdersPromise} />
-				</Suspense>
-
-				<Suspense fallback={<Loading />}>
-					<TotalDesserts totalDessertsPromise={totalDessertsPromise} />
-				</Suspense>
-
-				<Suspense fallback={<Loading />}>
-					<TotalCustomers totalCustomersPromise={totalCustomersPromise} />
-				</Suspense>
-			</div>
-
-			{/* Secondary Stats Grid */}
-			<div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mt-4">
-				<Suspense fallback={<Loading />}>
-					<RecentOrders recentOrdersPromise={recentOrdersPromise} />
-				</Suspense>
-
-				<Suspense fallback={<Loading />}>
-					<PendingOrders pendingOrdersPromise={pendingOrdersPromise} />
-				</Suspense>
-
-				<Suspense fallback={<Loading />}>
-					<CompletedOrders completedOrdersPromise={completedOrdersPromise} />
-				</Suspense>
-			</div>
-
-			{/* Quick Actions Section */}
-			<div className="mt-8">
-				<h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
+				{/* Main Stats Grid */}
 				<div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-					<Link href="/admin/orders">
-						<Card className="hover:shadow-md transition-shadow cursor-pointer">
-							<CardContent className="p-4">
-								<div className="flex items-center space-x-4">
-									<Package className="h-6 w-6 text-primary" />
-									<div>
-										<h3 className="font-medium">View Orders</h3>
-										<p className="text-sm text-muted-foreground">
-											Manage all orders
-										</p>
-									</div>
-								</div>
-							</CardContent>
-						</Card>
-					</Link>
+					<Suspense fallback={<Loading />}>
+						<TotalRevenue totalRevenuePromise={totalRevenuePromise} />
+					</Suspense>
 
-					<Link href="/admin/desserts">
-						<Card className="hover:shadow-md transition-shadow cursor-pointer">
-							<CardContent className="p-4">
-								<div className="flex items-center space-x-4">
-									<TrendingUp className="h-6 w-6 text-primary" />
-									<div>
-										<h3 className="font-medium">Manage Desserts</h3>
-										<p className="text-sm text-muted-foreground">
-											Add or edit desserts
-										</p>
-									</div>
-								</div>
-							</CardContent>
-						</Card>
-					</Link>
+					<Suspense fallback={<Loading />}>
+						<TotalOrders totalOrdersPromise={totalOrdersPromise} />
+					</Suspense>
 
-					<Link href="/admin/customers">
-						<Card className="hover:shadow-md transition-shadow cursor-pointer">
-							<CardContent className="p-4">
-								<div className="flex items-center space-x-4">
-									<Users className="h-6 w-6 text-primary" />
-									<div>
-										<h3 className="font-medium">View Customers</h3>
-										<p className="text-sm text-muted-foreground">
-											Manage customers
-										</p>
-									</div>
-								</div>
-							</CardContent>
-						</Card>
-					</Link>
+					<Suspense fallback={<Loading />}>
+						<TotalDesserts totalDessertsPromise={totalDessertsPromise} />
+					</Suspense>
 
-					<Link href="/admin/managers">
-						<Card className="hover:shadow-md transition-shadow cursor-pointer">
-							<CardContent className="p-4">
-								<div className="flex items-center space-x-4">
-									<Shield className="h-6 w-6 text-primary" />
-									<div>
-										<h3 className="font-medium">Manage Managers</h3>
-										<p className="text-sm text-muted-foreground">
-											Add, edit and delete managers
-										</p>
+					<Suspense fallback={<Loading />}>
+						<TotalCustomers totalCustomersPromise={totalCustomersPromise} />
+					</Suspense>
+				</div>
+
+				{/* Secondary Stats Grid */}
+				<div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mt-4">
+					<Suspense fallback={<Loading />}>
+						<RecentOrders recentOrdersPromise={recentOrdersPromise} />
+					</Suspense>
+
+					<Suspense fallback={<Loading />}>
+						<PendingOrders pendingOrdersPromise={pendingOrdersPromise} />
+					</Suspense>
+
+					<Suspense fallback={<Loading />}>
+						<CompletedOrders completedOrdersPromise={completedOrdersPromise} />
+					</Suspense>
+				</div>
+
+				{/* Quick Actions Section */}
+				<div className="mt-8">
+					<h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
+					<div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+						<Link href="/admin/orders">
+							<Card className="hover:shadow-md transition-shadow cursor-pointer">
+								<CardContent className="p-4">
+									<div className="flex items-center space-x-4">
+										<Package className="h-6 w-6 text-primary" />
+										<div>
+											<h3 className="font-medium">View Orders</h3>
+											<p className="text-sm text-muted-foreground">
+												Manage all orders
+											</p>
+										</div>
 									</div>
-								</div>
-							</CardContent>
-						</Card>
-					</Link>
+								</CardContent>
+							</Card>
+						</Link>
+
+						<Link href="/admin/desserts">
+							<Card className="hover:shadow-md transition-shadow cursor-pointer">
+								<CardContent className="p-4">
+									<div className="flex items-center space-x-4">
+										<TrendingUp className="h-6 w-6 text-primary" />
+										<div>
+											<h3 className="font-medium">Manage Desserts</h3>
+											<p className="text-sm text-muted-foreground">
+												Add or edit desserts
+											</p>
+										</div>
+									</div>
+								</CardContent>
+							</Card>
+						</Link>
+
+						<Link href="/admin/customers">
+							<Card className="hover:shadow-md transition-shadow cursor-pointer">
+								<CardContent className="p-4">
+									<div className="flex items-center space-x-4">
+										<Users className="h-6 w-6 text-primary" />
+										<div>
+											<h3 className="font-medium">View Customers</h3>
+											<p className="text-sm text-muted-foreground">
+												Manage customers
+											</p>
+										</div>
+									</div>
+								</CardContent>
+							</Card>
+						</Link>
+
+						<Link href="/admin/managers">
+							<Card className="hover:shadow-md transition-shadow cursor-pointer">
+								<CardContent className="p-4">
+									<div className="flex items-center space-x-4">
+										<Shield className="h-6 w-6 text-primary" />
+										<div>
+											<h3 className="font-medium">Manage Managers</h3>
+											<p className="text-sm text-muted-foreground">
+												Add, edit and delete managers
+											</p>
+										</div>
+									</div>
+								</CardContent>
+							</Card>
+						</Link>
+					</div>
 				</div>
 			</div>
-		</div>
+		</FadeIn>
 	);
 }
 

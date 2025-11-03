@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { DessertForm } from "@/components/desserts/dessert-form";
+import { FadeIn } from "@/components/fade-in";
 import { db } from "@/lib/db";
 
 interface EditSpecialPageProps {
@@ -32,19 +33,21 @@ export default async function EditSpecialPage({
 	}
 
 	return (
-		<DessertForm
-			mode="edit"
-			initialData={{
-				id: special.id,
-				name: special.name,
-				price: special.price,
-				description: special.description,
-				imageUrl: special.imageUrl || "",
-				status: special.status,
-				category: special.category,
-				containsEgg: special.containsEgg,
-				leadTimeDays: special.leadTimeDays || 2,
-			}}
-		/>
+		<FadeIn>
+			<DessertForm
+				mode="edit"
+				initialData={{
+					id: special.id,
+					name: special.name,
+					price: special.price,
+					description: special.description,
+					imageUrl: special.imageUrl || "",
+					status: special.status,
+					category: special.category,
+					containsEgg: special.containsEgg,
+					leadTimeDays: special.leadTimeDays || 2,
+				}}
+			/>
+		</FadeIn>
 	);
 }

@@ -1,6 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { DessertForm } from "@/components/desserts/dessert-form";
+import { FadeIn } from "@/components/fade-in";
 import { db } from "@/lib/db";
 import { desserts } from "@/lib/db/schema";
 
@@ -36,19 +37,21 @@ export default async function EditDessertPage({
 	}
 
 	return (
-		<DessertForm
-			mode="edit"
-			initialData={{
-				id: dessert.id,
-				name: dessert.name,
-				price: dessert.price,
-				description: dessert.description,
-				imageUrl: dessert.imageUrl || "",
-				status: dessert.status,
-				category: dessert.category,
-				containsEgg: dessert.containsEgg,
-				leadTimeDays: dessert.leadTimeDays,
-			}}
-		/>
+		<FadeIn>
+			<DessertForm
+				mode="edit"
+				initialData={{
+					id: dessert.id,
+					name: dessert.name,
+					price: dessert.price,
+					description: dessert.description,
+					imageUrl: dessert.imageUrl || "",
+					status: dessert.status,
+					category: dessert.category,
+					containsEgg: dessert.containsEgg,
+					leadTimeDays: dessert.leadTimeDays,
+				}}
+			/>
+		</FadeIn>
 	);
 }

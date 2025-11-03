@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
+import { FadeIn } from "@/components/fade-in";
 import { WorkshopForm } from "@/components/workshops/workshop-form";
 import { db } from "@/lib/db";
 import { workshops } from "@/lib/db/schema";
@@ -23,18 +24,20 @@ export default async function EditWorkshopPage({
 	}
 
 	return (
-		<WorkshopForm
-			mode="edit"
-			initialData={{
-				id: workshop.id,
-				title: workshop.title,
-				description: workshop.description,
-				amount: workshop.amount,
-				type: workshop.type as "online" | "offline",
-				maxBookings: workshop.maxBookings.toString(),
-				imageUrl: workshop.imageUrl || undefined,
-				status: workshop.status as "active" | "inactive",
-			}}
-		/>
+		<FadeIn>
+			<WorkshopForm
+				mode="edit"
+				initialData={{
+					id: workshop.id,
+					title: workshop.title,
+					description: workshop.description,
+					amount: workshop.amount,
+					type: workshop.type as "online" | "offline",
+					maxBookings: workshop.maxBookings.toString(),
+					imageUrl: workshop.imageUrl || undefined,
+					status: workshop.status as "active" | "inactive",
+				}}
+			/>
+		</FadeIn>
 	);
 }

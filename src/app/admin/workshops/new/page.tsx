@@ -1,5 +1,10 @@
+import { FadeIn } from "@/components/fade-in";
 import { WorkshopForm } from "@/components/workshops/workshop-form";
 
 export default function NewWorkshopPage() {
-	return <WorkshopForm mode="create" />;
+	return (
+		<FadeIn>
+			<WorkshopForm mode="create" />
+		</FadeIn>
+	);
 }
