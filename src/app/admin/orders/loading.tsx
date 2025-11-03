@@ -1,4 +1,5 @@
 import { columns } from "@/components/orders/columns";
+import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 
 export default function OrdersLoading() {
@@ -11,6 +12,9 @@ export default function OrdersLoading() {
 						Manage and track all orders
 					</p>
 				</div>
+				<Button disabled variant="outline" size="sm">
+					Export Orders
+				</Button>
 			</div>
 
 			<div className="rounded-md">
