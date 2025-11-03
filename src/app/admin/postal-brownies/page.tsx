@@ -3,7 +3,6 @@ import Link from "next/link";
 
 import { FadeIn } from "@/components/fade-in";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { db } from "@/lib/db";
 import { postalComboColumns } from "./_components/postal-combo-columns";
@@ -25,8 +24,8 @@ export default async function AdminPostalBrowniesPage() {
 	});
 
 	return (
-		<FadeIn>
-			<div className="container mx-auto py-3 sm:py-6 lg:py-8 px-3 sm:px-4">
+		<div className="container mx-auto py-3 sm:py-6 lg:py-8 px-3 sm:px-4">
+			<FadeIn>
 				<div className="max-w-7xl mx-auto">
 					{/* Header */}
 					<div className="flex flex-col gap-4 mb-6 sm:mb-8">
@@ -49,45 +48,38 @@ export default async function AdminPostalBrowniesPage() {
 							</Link>
 						</Button>
 					</div>
-
-					{/* DataTable */}
-					<Card>
-						<CardHeader className="pb-4">
-							<CardTitle className="text-lg sm:text-xl">
-								All Postal Brownies
-							</CardTitle>
-						</CardHeader>
-						<CardContent className="px-0 sm:px-6">
-							<div className="px-4 sm:px-0">
-								<DataTable
-									columns={postalComboColumns}
-									data={postalCombos}
-									searchKey="name"
-									searchPlaceholder="Search postal brownies..."
-									filterableColumns={[
-										{
-											id: "status",
-											title: "Status",
-											options: [
-												{ label: "Available", value: "available" },
-												{ label: "Unavailable", value: "unavailable" },
-											],
-										},
-										{
-											id: "containsEgg",
-											title: "Egg Content",
-											options: [
-												{ label: "Contains Egg", value: "true" },
-												{ label: "Eggless", value: "false" },
-											],
-										},
-									]}
-								/>
-							</div>
-						</CardContent>
-					</Card>
 				</div>
-			</div>
-		</FadeIn>
+			</FadeIn>
+
+			{/* DataTable */}
+			<FadeIn delay={0.1}>
+				<div className="px-4 sm:px-0">
+					<DataTable
+						columns={postalComboColumns}
+						data={postalCombos}
+						searchKey="name"
+						searchPlaceholder="Search postal brownies..."
+						filterableColumns={[
+							{
+								id: "status",
+								title: "Status",
+								options: [
+									{ label: "Available", value: "available" },
+									{ label: "Unavailable", value: "unavailable" },
+								],
+							},
+							{
+								id: "containsEgg",
+								title: "Egg Content",
+								options: [
+									{ label: "Contains Egg", value: "true" },
+									{ label: "Eggless", value: "false" },
+								],
+							},
+						]}
+					/>
+				</div>
+			</FadeIn>
+		</div>
 	);
 }
