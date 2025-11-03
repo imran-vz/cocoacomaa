@@ -4,6 +4,7 @@ import { AlertTriangle, Clock } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { useCakeOrderSettings } from "@/hooks/use-order-settings";
+import { FadeIn } from "../fade-in";
 import { Alert, AlertDescription, AlertTitle } from "./alert";
 
 function LoadingBanner() {
@@ -21,19 +22,26 @@ function LoadingBanner() {
 	}
 
 	return (
-		<Alert className="border-orange-200 bg-orange-50 text-orange-800 mb-6">
-			<AlertTriangle className="h-4 w-4 text-orange-600" />
-			<AlertTitle className="text-orange-900 font-semibold">
-				Loading cake order settings...
-			</AlertTitle>
-		</Alert>
+		<FadeIn>
+			<Alert variant="destructive" className="mb-6">
+				<AlertTriangle className="h-4 w-4 shrink-0" />
+				<AlertTitle className="font-semibold text-sm sm:text-base">
+					Loading cake order settings...
+				</AlertTitle>
+			</Alert>
+		</FadeIn>
 	);
 }
+
 export default function OrderRestrictionBanner() {
 	const { settings, getNextOrderDay, isLoading } = useCakeOrderSettings();
 
 	if (isLoading) {
-		return <LoadingBanner />;
+		return (
+			<FadeIn>
+				<LoadingBanner />
+			</FadeIn>
+		);
 	}
 
 	// Check if the system is completely disabled
@@ -57,12 +65,12 @@ export default function OrderRestrictionBanner() {
 		: "Mondays and Tuesdays";
 
 	return (
-		<Alert className="border-orange-200 bg-orange-50 text-orange-800 mb-6">
-			<AlertTriangle className="h-4 w-4 text-orange-600 shrink-0" />
-			<AlertTitle className="text-orange-900 font-semibold text-sm sm:text-base">
+		<Alert variant="destructive" className="mb-6">
+			<AlertTriangle className="h-4 w-4 shrink-0" />
+			<AlertTitle className="font-semibold text-sm sm:text-base">
 				Cake Orders Currently Unavailable
 			</AlertTitle>
-			<AlertDescription className="text-orange-700 text-sm">
+			<AlertDescription className="text-sm">
 				<div className="space-y-2">
 					{isSystemDisabled ? (
 						<p>
