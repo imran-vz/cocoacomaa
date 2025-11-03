@@ -41,7 +41,7 @@ import { Separator } from "@/components/ui/separator";
 import type { Order } from "@/lib/db/schema";
 import { cn } from "@/lib/utils";
 
-type ExportData = {
+export type ExportData = {
 	orderId: string;
 	itemName: string;
 	customerName: string;

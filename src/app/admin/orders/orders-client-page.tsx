@@ -3,52 +3,23 @@
 import type { ReactNode } from "react";
 import { FadeIn } from "@/components/fade-in";
 import { columns } from "@/components/orders/columns";
+import type { ExportData } from "@/components/orders/export-filter-dialog";
 import ExportFilterDialog from "@/components/orders/export-filter-dialog";
 import { DataTable } from "@/components/ui/data-table";
 import type { Order } from "@/lib/db/schema";
+import { ORDER_STATUSES, ORDER_TYPES } from "@/lib/orders/constants";
 
-const statuses: { label: string; value: Order["status"] }[] = [
-	{ label: "Pending", value: "pending" },
-	{ label: "Paid", value: "paid" },
-	{ label: "Confirmed", value: "confirmed" },
-	{ label: "Preparing", value: "preparing" },
-	{ label: "Ready", value: "ready" },
-	{ label: "Completed", value: "completed" },
-	{ label: "Cancelled", value: "cancelled" },
-];
-
-const orderTypes: { label: string; value: Order["orderType"] }[] = [
-	{ label: "Cake Orders", value: "cake-orders" },
-	{ label: "Postal Brownies", value: "postal-brownies" },
-	{ label: "Specials", value: "specials" },
-];
-
-type OrderData = {
-	id: string;
-	total: string;
-	status: Order["status"];
-	orderType: Order["orderType"];
-	notes: string | null;
-	createdAt: Date;
+type OrderData = Pick<
+	Order,
+	"id" | "total" | "status" | "orderType" | "notes" | "createdAt"
+> & {
 	userName: string;
 	orderDetails: ReactNode;
 };
 
-type CsvData = {
-	orderId: string;
-	itemName: string;
-	customerName: string;
-	customerPhone: string;
-	address: string;
-	message: string | null;
-	status: Order["status"];
-	orderType: Order["orderType"];
-	createdAt: Date;
-};
-
 interface OrdersClientPageProps {
 	ordersList: OrderData[];
-	csvData: CsvData[];
+	csvData: ExportData[];
 }
 
 export default function OrdersClientPage({
@@ -67,8 +38,8 @@ export default function OrdersClientPage({
 					</div>
 					<ExportFilterDialog
 						data={csvData}
-						statuses={statuses}
-						orderTypes={orderTypes}
+						statuses={ORDER_STATUSES}
+						orderTypes={ORDER_TYPES}
 					/>
 				</div>
 			</FadeIn>
@@ -85,12 +56,12 @@ export default function OrdersClientPage({
 								{
 									id: "status",
 									title: "Status",
-									options: statuses,
+									options: ORDER_STATUSES,
 								},
 								{
 									id: "orderType",
 									title: "Order Type",
-									options: orderTypes,
+									options: ORDER_TYPES,
 								},
 							]}
 						/>
