@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Plus, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
@@ -12,7 +12,7 @@ type WorkshopsClientProps = {
 };
 
 export function WorkshopsClient({ initialData }: WorkshopsClientProps) {
-	const { data: workshops } = useWorkshops(initialData);
+	const { data: workshops, refetch, isRefetching } = useWorkshops(initialData);
 
 	return (
 		<div className="container mx-auto px-4 sm:px-6">
@@ -23,12 +23,24 @@ export function WorkshopsClient({ initialData }: WorkshopsClientProps) {
 						Manage workshop offerings and registrations
 					</p>
 				</div>
-				<Button asChild>
-					<Link href="/admin/workshops/new">
-						<Plus className="mr-2 h-4 w-4" />
-						Add Workshop
-					</Link>
-				</Button>
+				<div className="flex gap-2">
+					<Button
+						variant="outline"
+						onClick={() => refetch()}
+						disabled={isRefetching}
+					>
+						<RefreshCw
+							className={`mr-2 h-4 w-4 ${isRefetching ? "animate-spin" : ""}`}
+						/>
+						Refetch
+					</Button>
+					<Button asChild>
+						<Link href="/admin/workshops/new">
+							<Plus className="mr-2 h-4 w-4" />
+							Add Workshop
+						</Link>
+					</Button>
+				</div>
 			</div>
 
 			<div className="rounded-md">

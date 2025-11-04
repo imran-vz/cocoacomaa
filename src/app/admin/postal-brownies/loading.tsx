@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Plus, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { postalComboColumns } from "./_components/postal-combo-columns";
@@ -8,19 +8,18 @@ export default function PostalBrowniesLoading() {
 		<div className="container mx-auto px-4 sm:px-6">
 			{/* Header */}
 
-			<div className="flex flex-col gap-4 mb-6 sm:mb-8">
-				<div className="text-center sm:text-left">
-					<h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">
-						Postal Brownies
-					</h1>
-					<p className="text-sm sm:text-base text-muted-foreground mt-1">
-						Manage your postal brownie combinations
-					</p>
+			<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+				<h1 className="text-3xl font-bold">Postal Brownies</h1>
+				<div className="flex gap-2">
+					<Button variant="outline" disabled={true}>
+						<RefreshCw className={`mr-2 h-4 w-4 animate-spin`} />
+						Refetch
+					</Button>
+					<Button asChild>
+						<Plus className="mr-2 h-4 w-4" />
+						Add New Combo
+					</Button>
 				</div>
-				<Button disabled size="lg" className="w-full sm:w-auto sm:self-start">
-					<Plus className="h-4 w-4 mr-2" />
-					Add New Combo
-				</Button>
 			</div>
 
 			{/* DataTable */}
