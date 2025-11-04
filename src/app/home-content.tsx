@@ -39,12 +39,12 @@ export function HomeContent() {
 							</p>
 						</StaggerItem>
 						<StaggerItem>
-							<div className="mt-6 flex gap-4 flex-col justify-center items-center sm:flex-row">
+							<div className="mt-6 gap-4 grid grid-cols-1 sm:grid-cols-2 place-items-center">
 								<Button
 									asChild
 									size="lg"
 									variant="outline"
-									className="min-w-xs bg-accent-foreground/10!"
+									className="w-xs bg-accent-foreground/10!"
 								>
 									<Link href="/order">Desserts</Link>
 								</Button>
@@ -52,7 +52,7 @@ export function HomeContent() {
 									asChild
 									size="lg"
 									variant="outline"
-									className="min-w-xs bg-accent-foreground/10!"
+									className="w-xs bg-accent-foreground/10!"
 								>
 									<Link href="/postal-brownies">Postal Brownies</Link>
 								</Button>
@@ -60,7 +60,7 @@ export function HomeContent() {
 									asChild
 									size="lg"
 									variant="outline"
-									className="min-w-xs bg-accent-foreground/10!"
+									className="w-xs bg-accent-foreground/10!"
 								>
 									<Link href="/workshops">Workshops</Link>
 								</Button>
@@ -68,7 +68,7 @@ export function HomeContent() {
 									asChild
 									size="lg"
 									variant="outline"
-									className="min-w-xs bg-accent-foreground/10!"
+									className="w-xs bg-accent-foreground/10!"
 								>
 									<Link href="/specials">Specials</Link>
 								</Button>

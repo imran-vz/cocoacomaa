@@ -268,7 +268,6 @@ export default function PostalBrowniesClient({
 											<RadioGroup
 												onValueChange={field.onChange}
 												value={field.value}
-												className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
 											>
 												{postalCombos.length === 0 ? (
 													<div className="col-span-full text-center py-6 sm:py-8">
@@ -278,7 +277,7 @@ export default function PostalBrowniesClient({
 														</p>
 													</div>
 												) : (
-													<StaggerContainer>
+													<StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
 														{postalCombos.map((combo) => {
 															const containsEgg = Boolean(combo.containsEgg);
 															const eggBadgeVariant = containsEgg
@@ -304,7 +303,7 @@ export default function PostalBrowniesClient({
 																		</FormControl>
 																		<Label
 																			htmlFor={combo.id.toString()}
-																			className="cursor-pointer block w-full h-full"
+																			className="cursor-pointer block w-full "
 																		>
 																			<Card
 																				className={cn(
