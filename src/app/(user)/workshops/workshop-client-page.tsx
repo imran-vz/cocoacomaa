@@ -23,7 +23,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import WorkshopTypeToggle from "@/components/workshop-type-toggle";
 import { formatCurrency } from "@/lib/utils";
 import type { RazorpayOptions, RazorpayResponse } from "@/types/razorpay";
 
@@ -406,14 +405,33 @@ export default function WorkshopsClientPage({
 					</div>
 				)}
 				<FadeIn>
-					<h1 className="text-2xl sm:text-3xl font-bold mb-6">Workshops</h1>
-					<p className="text-muted-foreground mb-6">
+					<h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 lg:mb-8">
+						Workshops
+					</h1>
+					<p className="text-muted-foreground mb-4 sm:mb-6">
 						Join our hands-on workshops to learn the art of dessert making from
 						Maria and the team.
 					</p>
 				</FadeIn>
+
+				{/* Type Filter */}
 				<FadeIn delay={0.1}>
-					<WorkshopTypeToggle value={selectedType} onChange={setSelectedType} />
+					<div className="flex gap-2 mb-4 sm:mb-6">
+						<Button
+							variant={selectedType === "offline" ? "default" : "outline"}
+							size="sm"
+							onClick={() => setSelectedType("offline")}
+						>
+							Offline
+						</Button>
+						<Button
+							variant={selectedType === "online" ? "default" : "outline"}
+							size="sm"
+							onClick={() => setSelectedType("online")}
+						>
+							Online
+						</Button>
+					</div>
 				</FadeIn>
 				{filteredWorkshops.length === 0 ? (
 					<FadeIn delay={0.2}>
@@ -431,10 +449,13 @@ export default function WorkshopsClientPage({
 						</Card>
 					</FadeIn>
 				) : (
-					<StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+					<StaggerContainer
+						key={selectedType}
+						className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+					>
 						{filteredWorkshops.map((workshop) => (
 							<StaggerItem key={workshop.id}>
-								<Card className="h-full flex flex-col overflow-hidden">
+								<Card className="h-full flex flex-col overflow-hidden pt-0">
 									{workshop.imageUrl && (
 										<div className="relative aspect-video w-full">
 											<Image
