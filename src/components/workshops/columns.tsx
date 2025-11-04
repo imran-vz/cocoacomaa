@@ -1,12 +1,10 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import axios from "axios";
 import { format } from "date-fns";
 import { Edit, MoreHorizontal, Trash2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,35 +16,36 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { Workshop } from "@/lib/db/schema";
+import {
+	useDeleteWorkshop,
+	type WorkshopWithSlotData,
+} from "@/hooks/use-workshops";
 import { formatCurrency } from "@/lib/utils";
 import { confirm } from "../confirm-dialog";
 
-const handleDelete = async (id: number, title: string) => {
-	const confirmed = await confirm({
-		title: "Delete Workshop",
-		description: `Are you sure you want to delete the workshop "${title}"?`,
-	});
-	if (!confirmed) return;
+const DeleteAction = ({ id, title }: { id: number; title: string }) => {
+	const { mutate: deleteWorkshop, isPending } = useDeleteWorkshop();
 
-	try {
-		await axios.delete(`/api/workshops/${id}`);
-		toast.success("Workshop deleted successfully");
-		window.location.reload();
-	} catch (error) {
-		console.error("Error deleting workshop:", error);
-		toast.error("Failed to delete workshop");
-	}
-};
+	const handleDelete = async () => {
+		const confirmed = await confirm({
+			title: "Delete Workshop",
+			description: `Are you sure you want to delete the workshop "${title}"?`,
+		});
+		if (!confirmed) return;
 
-type WorkshopWithSlotData = Omit<
-	Workshop,
-	"createdAt" | "updatedAt" | "isDeleted"
-> & {
-	currentSlotsUsed: number;
-	currentBookings: number;
-	availableSlots: number;
-	workshopOrders: { userId: string }[];
+		deleteWorkshop(id);
+	};
+
+	return (
+		<DropdownMenuItem
+			onClick={handleDelete}
+			disabled={isPending}
+			className="text-red-600"
+		>
+			<Trash2 className="mr-2 h-4 w-4" />
+			Delete
+		</DropdownMenuItem>
+	);
 };
 
 export const columns: ColumnDef<WorkshopWithSlotData>[] = [
@@ -165,13 +164,7 @@ export const columns: ColumnDef<WorkshopWithSlotData>[] = [
 								Edit
 							</Link>
 						</DropdownMenuItem>
-						<DropdownMenuItem
-							onClick={() => handleDelete(workshop.id, workshop.title)}
-							className="text-red-600"
-						>
-							<Trash2 className="mr-2 h-4 w-4" />
-							Delete
-						</DropdownMenuItem>
+						<DeleteAction id={workshop.id} title={workshop.title} />
 					</DropdownMenuContent>
 				</DropdownMenu>
 			);

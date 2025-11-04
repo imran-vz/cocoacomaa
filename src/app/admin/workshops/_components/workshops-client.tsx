@@ -1,9 +1,19 @@
+"use client";
+
 import { Plus } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { columns } from "@/components/workshops/columns";
+import { useWorkshops, type WorkshopWithSlotData } from "@/hooks/use-workshops";
 
-export default function WorkshopsLoading() {
+type WorkshopsClientProps = {
+	initialData: WorkshopWithSlotData[];
+};
+
+export function WorkshopsClient({ initialData }: WorkshopsClientProps) {
+	const { data: workshops } = useWorkshops(initialData);
+
 	return (
 		<div className="container mx-auto px-4 sm:px-6">
 			<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -13,9 +23,11 @@ export default function WorkshopsLoading() {
 						Manage workshop offerings and registrations
 					</p>
 				</div>
-				<Button disabled>
-					<Plus className="mr-2 h-4 w-4" />
-					Add Workshop
+				<Button asChild>
+					<Link href="/admin/workshops/new">
+						<Plus className="mr-2 h-4 w-4" />
+						Add Workshop
+					</Link>
 				</Button>
 			</div>
 
@@ -23,7 +35,7 @@ export default function WorkshopsLoading() {
 				<div className="overflow-x-auto">
 					<DataTable
 						columns={columns}
-						data={[]}
+						data={workshops || []}
 						searchKey="title"
 						searchPlaceholder="Filter workshops..."
 						filterableColumns={[
@@ -44,7 +56,6 @@ export default function WorkshopsLoading() {
 								],
 							},
 						]}
-						isLoading={true}
 					/>
 				</div>
 			</div>

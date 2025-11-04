@@ -1,10 +1,19 @@
+"use client";
+
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { columns } from "@/components/desserts/columns";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
+import { type DessertItem, useDesserts } from "@/hooks/use-desserts";
 
-export default function DessertsLoading() {
+type DessertsClientProps = {
+	initialData: DessertItem[];
+};
+
+export function DessertsClient({ initialData }: DessertsClientProps) {
+	const { data: desserts } = useDesserts(initialData);
+
 	return (
 		<div className="container mx-auto px-4 sm:px-6">
 			<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -21,7 +30,7 @@ export default function DessertsLoading() {
 				<div className="overflow-x-auto">
 					<DataTable
 						columns={columns}
-						data={[]}
+						data={desserts || []}
 						searchKey="name"
 						searchPlaceholder="Filter Desserts..."
 						filterableColumns={[
@@ -43,7 +52,6 @@ export default function DessertsLoading() {
 								],
 							},
 						]}
-						isLoading
 					/>
 				</div>
 			</div>

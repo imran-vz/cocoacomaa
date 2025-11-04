@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { useDeleteSpecial } from "@/hooks/use-specials";
 import { confirm } from "./confirm-dialog";
 
 interface SpecialActionsProps {
@@ -9,6 +10,8 @@ interface SpecialActionsProps {
 }
 
 export function SpecialActions({ id }: SpecialActionsProps) {
+	const { mutate: deleteSpecial, isPending } = useDeleteSpecial();
+
 	const handleDelete = async () => {
 		if (
 			await confirm({
@@ -16,8 +19,7 @@ export function SpecialActions({ id }: SpecialActionsProps) {
 				description: "Are you sure you want to delete this special?",
 			})
 		) {
-			await fetch(`/api/desserts/${id}`, { method: "DELETE" });
-			window.location.reload();
+			deleteSpecial(id);
 		}
 	};
 
@@ -33,6 +35,7 @@ export function SpecialActions({ id }: SpecialActionsProps) {
 				size="sm"
 				className="text-red-600"
 				onClick={handleDelete}
+				disabled={isPending}
 			>
 				Delete
 			</Button>

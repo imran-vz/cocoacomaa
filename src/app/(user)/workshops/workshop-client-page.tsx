@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import type { RazorpayOptions, RazorpayResponse } from "@/types/razorpay";
 
 declare global {
@@ -463,7 +463,12 @@ export default function WorkshopsClientPage({
 					>
 						{filteredWorkshops.map((workshop) => (
 							<StaggerItem key={workshop.id}>
-								<Card className="h-full flex flex-col overflow-hidden pt-0">
+								<Card
+									className={cn(
+										"h-full flex flex-col overflow-hidden",
+										workshop.imageUrl ? "pt-0" : "",
+									)}
+								>
 									{workshop.imageUrl && (
 										<div className="relative aspect-video w-full">
 											<Image
