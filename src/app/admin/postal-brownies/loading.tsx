@@ -1,4 +1,5 @@
 import { Plus, RefreshCw } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { postalComboColumns } from "./_components/postal-combo-columns";
@@ -16,8 +17,10 @@ export default function PostalBrowniesLoading() {
 						Refetch
 					</Button>
 					<Button asChild>
-						<Plus className="mr-2 h-4 w-4" />
-						Add New Combo
+						<Link href="/admin/postal-brownies/new">
+							<Plus className="mr-2 h-4 w-4" />
+							Add New Combo
+						</Link>
 					</Button>
 				</div>
 			</div>
