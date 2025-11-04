@@ -290,10 +290,10 @@ export default function PostalBrowniesClient({
 															const EggIcon = containsEgg ? Egg : EggOff;
 
 															return (
-																<StaggerItem key={combo.id}>
+																<StaggerItem key={combo.id} className="h-full">
 																	<FormItem
 																		key={combo.id}
-																		className="space-y-0"
+																		className="space-y-0 h-full"
 																	>
 																		<FormControl>
 																			<RadioGroupItem
@@ -304,7 +304,7 @@ export default function PostalBrowniesClient({
 																		</FormControl>
 																		<Label
 																			htmlFor={combo.id.toString()}
-																			className="cursor-pointer block w-full"
+																			className="cursor-pointer block w-full h-full"
 																		>
 																			<Card
 																				className={cn(
