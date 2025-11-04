@@ -9,6 +9,7 @@ import { postalComboColumns } from "./_components/postal-combo-columns";
 
 export default async function AdminPostalBrowniesPage() {
 	const postalCombos = await db.query.postalCombos.findMany({
+		where: (postalCombos, { eq }) => eq(postalCombos.isDeleted, false),
 		orderBy: (postalCombos, { desc }) => [desc(postalCombos.createdAt)],
 		columns: {
 			id: true,

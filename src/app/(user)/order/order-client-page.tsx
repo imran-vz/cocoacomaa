@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { Egg, EggOff, Minus, Plus } from "lucide-react";
+import { CakeSlice, Egg, EggOff, Minus, Plus } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -12,6 +12,13 @@ import { StaggerContainer, StaggerItem } from "@/components/stagger-container";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Empty,
+	EmptyDescription,
+	EmptyHeader,
+	EmptyMedia,
+	EmptyTitle,
+} from "@/components/ui/empty";
 import OrderRestrictionBanner from "@/components/ui/order-restriction-banner";
 import {
 	Tooltip,
@@ -139,15 +146,23 @@ export default function OrderClientPage({
 
 					{filteredDesserts?.length === 0 ? (
 						<FadeIn delay={0.2}>
-							<Card>
-								<CardContent className="py-6 sm:py-8 text-center">
-									<p className="text-muted-foreground text-sm sm:text-base">
+							<Empty>
+								<EmptyHeader>
+									<EmptyMedia variant="icon">
+										<CakeSlice />
+									</EmptyMedia>
+									<EmptyTitle>
 										{selectedCategory === "all"
-											? "No desserts available at the moment."
-											: `No ${selectedCategory === "cake" ? "cakes" : "desserts"} available at the moment.`}
-									</p>
-								</CardContent>
-							</Card>
+											? "No Desserts Available"
+											: `No ${selectedCategory === "cake" ? "Cakes" : "Desserts"} Available`}
+									</EmptyTitle>
+									<EmptyDescription>
+										{selectedCategory === "all"
+											? "No desserts available at the moment. Check back soon!"
+											: `No ${selectedCategory === "cake" ? "cakes" : "desserts"} available right now. Try browsing other categories!`}
+									</EmptyDescription>
+								</EmptyHeader>
+							</Empty>
 						</FadeIn>
 					) : (
 						<StaggerContainer

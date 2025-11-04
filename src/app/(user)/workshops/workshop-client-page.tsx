@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { Minus, Plus } from "lucide-react";
+import { GraduationCap, Minus, Plus } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useId, useState } from "react";
@@ -21,6 +21,13 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import {
+	Empty,
+	EmptyDescription,
+	EmptyHeader,
+	EmptyMedia,
+	EmptyTitle,
+} from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatCurrency } from "@/lib/utils";
@@ -435,18 +442,19 @@ export default function WorkshopsClientPage({
 				</FadeIn>
 				{filteredWorkshops.length === 0 ? (
 					<FadeIn delay={0.2}>
-						<Card>
-							<CardContent className="py-8 text-center">
-								<h3 className="text-lg font-semibold mb-2">
-									No {selectedType} workshops available
-								</h3>
-								<p className="text-muted-foreground">
+						<Empty>
+							<EmptyHeader>
+								<EmptyMedia variant="icon">
+									<GraduationCap />
+								</EmptyMedia>
+								<EmptyTitle>No {selectedType} workshops available</EmptyTitle>
+								<EmptyDescription>
 									{activeWorkshops.length === 0
 										? "Check back soon for upcoming workshops."
 										: `No ${selectedType} workshops are currently available. Try switching to ${selectedType === "online" ? "offline" : "online"} workshops.`}
-								</p>
-							</CardContent>
-						</Card>
+								</EmptyDescription>
+							</EmptyHeader>
+						</Empty>
 					</FadeIn>
 				) : (
 					<StaggerContainer

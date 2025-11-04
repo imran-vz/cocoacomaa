@@ -18,6 +18,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+	Empty,
+	EmptyDescription,
+	EmptyHeader,
+	EmptyMedia,
+	EmptyTitle,
+} from "@/components/ui/empty";
+import {
 	Form,
 	FormControl,
 	FormField,
@@ -270,12 +277,18 @@ export default function PostalBrowniesClient({
 												value={field.value}
 											>
 												{postalCombos.length === 0 ? (
-													<div className="col-span-full text-center py-6 sm:py-8">
-														<Package className="h-8 w-8 sm:h-12 sm:w-12 mx-auto text-muted-foreground mb-2" />
-														<p className="text-sm sm:text-base text-muted-foreground">
-															No postal combos available at the moment.
-														</p>
-													</div>
+													<Empty>
+														<EmptyHeader>
+															<EmptyMedia variant="icon">
+																<Package />
+															</EmptyMedia>
+															<EmptyTitle>No Combos Available</EmptyTitle>
+															<EmptyDescription>
+																No postal brownie combos are available at the
+																moment. Check back soon for delicious options!
+															</EmptyDescription>
+														</EmptyHeader>
+													</Empty>
 												) : (
 													<StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
 														{postalCombos.map((combo) => {

@@ -10,15 +10,22 @@ import {
 	Minus,
 	Plus,
 	ShoppingCart,
+	Sparkles,
 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Empty,
+	EmptyDescription,
+	EmptyHeader,
+	EmptyMedia,
+	EmptyTitle,
+} from "@/components/ui/empty";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useCart } from "@/lib/cart-context";
 import type { Dessert, SpecialsSettings } from "@/lib/db/schema";
@@ -80,12 +87,17 @@ export default function SpecialsClientPage({
 			<div className="container mx-auto p-4 sm:p-6">
 				<div className="max-w-6xl mx-auto">
 					<h1 className="text-3xl font-bold mb-6">Specials</h1>
-					<Alert>
-						<AlertTitle>Specials Not Available</AlertTitle>
-						<AlertDescription>
-							Specials are currently not available. Please check back later!
-						</AlertDescription>
-					</Alert>
+					<Empty>
+						<EmptyHeader>
+							<EmptyMedia variant="icon">
+								<Sparkles />
+							</EmptyMedia>
+							<EmptyTitle>Specials Not Available</EmptyTitle>
+							<EmptyDescription>
+								Specials are currently not available. Please check back later!
+							</EmptyDescription>
+						</EmptyHeader>
+					</Empty>
 				</div>
 			</div>
 		);
@@ -217,14 +229,19 @@ export default function SpecialsClientPage({
 				</div>
 
 				{availableSpecials.length === 0 ? (
-					<Alert>
-						<AlertTitle>No Specials Found</AlertTitle>
-						<AlertDescription>
-							{eggFilter !== "all"
-								? `No ${eggFilter === "eggless" ? "eggless" : "egg-containing"} specials are currently available. Try changing your filter or check back later!`
-								: "There are currently no specials available. Please check back later!"}
-						</AlertDescription>
-					</Alert>
+					<Empty>
+						<EmptyHeader>
+							<EmptyMedia variant="icon">
+								<Sparkles />
+							</EmptyMedia>
+							<EmptyTitle>No Specials Found</EmptyTitle>
+							<EmptyDescription>
+								{eggFilter !== "all"
+									? `No ${eggFilter === "eggless" ? "eggless" : "egg-containing"} specials are currently available. Try changing your filter or check back later!`
+									: "There are currently no specials available. Please check back later!"}
+							</EmptyDescription>
+						</EmptyHeader>
+					</Empty>
 				) : (
 					<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
 						{availableSpecials.map((special) => {
@@ -291,7 +308,7 @@ export default function SpecialsClientPage({
 													>
 														<Minus className="h-4 w-4" />
 													</Button>
-													<span className="font-medium min-w-[2rem] text-center">
+													<span className="font-medium min-w-8 text-center">
 														{quantity}
 													</span>
 													<Button
