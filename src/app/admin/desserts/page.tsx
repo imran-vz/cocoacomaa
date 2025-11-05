@@ -1,5 +1,4 @@
 import { and, eq, inArray } from "drizzle-orm";
-import { FadeIn } from "@/components/fade-in";
 import { db } from "@/lib/db";
 import { desserts } from "@/lib/db/schema";
 import { DessertsClient } from "./_components/desserts-client";
@@ -24,9 +23,5 @@ export default async function DessertsPage() {
 		),
 	});
 
-	return (
-		<FadeIn>
-			<DessertsClient initialData={dessertsList} />
-		</FadeIn>
-	);
+	return <DessertsClient initialData={dessertsList} />;
 }

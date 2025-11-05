@@ -31,7 +31,7 @@ const formatStatus = (status: string) => {
 		.join(" ");
 };
 
-type WorkshopOrderWithAdditionalFields = Pick<
+export type WorkshopOrderWithAdditionalFields = Pick<
 	WorkshopOrder,
 	"id" | "amount" | "status" | "paymentStatus" | "createdAt" | "slots"
 > & {

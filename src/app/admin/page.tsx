@@ -14,6 +14,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { FadeIn } from "@/components/fade-in";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { db } from "@/lib/db";
 import { desserts, orders, users } from "@/lib/db/schema";
 import { formatCurrency } from "@/lib/utils";
@@ -90,35 +91,126 @@ export default async function AdminDashboard() {
 
 				{/* Main Stats Grid */}
 				<div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-					<Suspense fallback={<Loading />}>
-						<TotalRevenue totalRevenuePromise={totalRevenuePromise} />
+					<Suspense
+						fallback={
+							<StatCardLoading
+								icon={DollarSign}
+								title="Total Revenue"
+								subtitle="From paid orders"
+							/>
+						}
+					>
+						<StatCard
+							title="Total Revenue"
+							icon={DollarSign}
+							valuePromise={totalRevenuePromise}
+							subtitle="From paid orders"
+						/>
 					</Suspense>
 
-					<Suspense fallback={<Loading />}>
-						<TotalOrders totalOrdersPromise={totalOrdersPromise} />
+					<Suspense
+						fallback={
+							<StatCardLoading
+								icon={Package}
+								title="Total Orders"
+								subtitle="Valid orders with payment"
+							/>
+						}
+					>
+						<StatCard
+							title="Total Orders"
+							icon={Package}
+							valuePromise={totalOrdersPromise}
+							subtitle="Valid orders with payment"
+						/>
 					</Suspense>
 
-					<Suspense fallback={<Loading />}>
-						<TotalDesserts totalDessertsPromise={totalDessertsPromise} />
+					<Suspense
+						fallback={
+							<StatCardLoading
+								icon={TrendingUp}
+								title="Total Desserts"
+								subtitle="Available desserts"
+							/>
+						}
+					>
+						<StatCard
+							title="Total Desserts"
+							icon={TrendingUp}
+							valuePromise={totalDessertsPromise}
+							subtitle="Available desserts"
+						/>
 					</Suspense>
 
-					<Suspense fallback={<Loading />}>
-						<TotalCustomers totalCustomersPromise={totalCustomersPromise} />
+					<Suspense
+						fallback={
+							<StatCardLoading
+								icon={Users}
+								title="Total Customers"
+								subtitle="Registered customers"
+							/>
+						}
+					>
+						<StatCard
+							title="Total Customers"
+							icon={Users}
+							valuePromise={totalCustomersPromise}
+							subtitle="Registered customers"
+						/>
 					</Suspense>
 				</div>
 
 				{/* Secondary Stats Grid */}
 				<div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mt-4">
-					<Suspense fallback={<Loading />}>
-						<RecentOrders recentOrdersPromise={recentOrdersPromise} />
+					<Suspense
+						fallback={
+							<StatCardLoading
+								icon={Clock}
+								title="Recent Orders"
+								subtitle="Last 7 days"
+							/>
+						}
+					>
+						<StatCard
+							title="Recent Orders"
+							icon={Clock}
+							valuePromise={recentOrdersPromise}
+							subtitle="Last 7 days"
+						/>
 					</Suspense>
 
-					<Suspense fallback={<Loading />}>
-						<PendingOrders pendingOrdersPromise={pendingOrdersPromise} />
+					<Suspense
+						fallback={
+							<StatCardLoading
+								icon={XCircle}
+								title="Pending Orders"
+								subtitle="Awaiting confirmation"
+							/>
+						}
+					>
+						<StatCard
+							title="Pending Orders"
+							icon={XCircle}
+							valuePromise={pendingOrdersPromise}
+							subtitle="Awaiting confirmation"
+						/>
 					</Suspense>
 
-					<Suspense fallback={<Loading />}>
-						<CompletedOrders completedOrdersPromise={completedOrdersPromise} />
+					<Suspense
+						fallback={
+							<StatCardLoading
+								icon={CheckCircle2}
+								title="Completed Orders"
+								subtitle="Successfully delivered"
+							/>
+						}
+					>
+						<StatCard
+							title="Completed Orders"
+							icon={CheckCircle2}
+							valuePromise={completedOrdersPromise}
+							subtitle="Successfully delivered"
+						/>
 					</Suspense>
 				</div>
 
@@ -196,179 +288,55 @@ export default async function AdminDashboard() {
 	);
 }
 
-async function TotalRevenue({
-	totalRevenuePromise,
+async function StatCard({
+	title,
+	icon: Icon,
+	valuePromise,
+	subtitle,
 }: {
-	totalRevenuePromise: Promise<number>;
+	title: string;
+	icon: React.ComponentType<{ className?: string }>;
+	valuePromise: Promise<number>;
+	subtitle: string;
 }) {
-	const totalRevenue = await totalRevenuePromise.catch(() => 0);
+	const value = await valuePromise.catch(() => 0);
 
 	return (
 		<Card className="hover:shadow-md transition-shadow">
 			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-				<DollarSign className="h-4 w-4 text-muted-foreground" />
+				<CardTitle className="text-sm font-medium">{title}</CardTitle>
+				<Icon className="h-4 w-4 text-muted-foreground" />
 			</CardHeader>
 			<CardContent>
 				<div className="text-xl sm:text-2xl font-bold">
-					{formatCurrency(totalRevenue)}
+					{formatCurrency(value)}
 				</div>
-				<p className="text-xs text-muted-foreground mt-1">From paid orders</p>
+				<p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
 			</CardContent>
 		</Card>
 	);
 }
 
-async function TotalOrders({
-	totalOrdersPromise,
+function StatCardLoading({
+	icon: Icon,
+	title,
+	subtitle,
 }: {
-	totalOrdersPromise: Promise<number>;
+	title: string;
+	icon: React.ComponentType<{ className?: string }>;
+	subtitle: string;
 }) {
-	const totalOrders = await totalOrdersPromise.catch(() => 0);
-
 	return (
 		<Card className="hover:shadow-md transition-shadow">
 			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle className="text-sm font-medium">Total Orders</CardTitle>
-				<Package className="h-4 w-4 text-muted-foreground" />
+				<CardTitle className="text-sm font-medium">{title}</CardTitle>
+				<Icon className="h-4 w-4 text-muted-foreground" />
 			</CardHeader>
-			<CardContent>
-				<div className="text-xl sm:text-2xl font-bold">{totalOrders}</div>
-				<p className="text-xs text-muted-foreground mt-1">
-					Valid orders with payment
-				</p>
-			</CardContent>
-		</Card>
-	);
-}
-
-async function TotalDesserts({
-	totalDessertsPromise,
-}: {
-	totalDessertsPromise: Promise<number>;
-}) {
-	const totalDesserts = await totalDessertsPromise.catch(() => {
-		return 0;
-	});
-
-	return (
-		<Card className="hover:shadow-md transition-shadow">
-			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle className="text-sm font-medium">Total Desserts</CardTitle>
-				<TrendingUp className="h-4 w-4 text-muted-foreground" />
-			</CardHeader>
-			<CardContent>
-				<div className="text-xl sm:text-2xl font-bold">{totalDesserts}</div>
-				<p className="text-xs text-muted-foreground mt-1">Available desserts</p>
-			</CardContent>
-		</Card>
-	);
-}
-
-async function TotalCustomers({
-	totalCustomersPromise,
-}: {
-	totalCustomersPromise: Promise<number>;
-}) {
-	const totalCustomers = await totalCustomersPromise.catch(() => 0);
-
-	return (
-		<Card className="hover:shadow-md transition-shadow">
-			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle className="text-sm font-medium">Total Customers</CardTitle>
-				<Users className="h-4 w-4 text-muted-foreground" />
-			</CardHeader>
-			<CardContent>
-				<div className="text-xl sm:text-2xl font-bold">{totalCustomers}</div>
-				<p className="text-xs text-muted-foreground mt-1">
-					Registered customers
-				</p>
-			</CardContent>
-		</Card>
-	);
-}
-
-async function RecentOrders({
-	recentOrdersPromise,
-}: {
-	recentOrdersPromise: Promise<number>;
-}) {
-	const recentOrders = await recentOrdersPromise.catch(() => 0);
-	return (
-		<Card className="hover:shadow-md transition-shadow">
-			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle className="text-sm font-medium">Recent Orders</CardTitle>
-				<Clock className="h-4 w-4 text-muted-foreground" />
-			</CardHeader>
-			<CardContent>
-				<div className="text-xl sm:text-2xl font-bold">{recentOrders}</div>
-				<p className="text-xs text-muted-foreground mt-1">Last 7 days</p>
-			</CardContent>
-		</Card>
-	);
-}
-
-async function PendingOrders({
-	pendingOrdersPromise,
-}: {
-	pendingOrdersPromise: Promise<number>;
-}) {
-	const pendingOrders = await pendingOrdersPromise.catch(() => 0);
-
-	return (
-		<Card className="hover:shadow-md transition-shadow">
-			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle className="text-sm font-medium">Pending Orders</CardTitle>
-				<XCircle className="h-4 w-4 text-muted-foreground" />
-			</CardHeader>
-			<CardContent>
-				<div className="text-xl sm:text-2xl font-bold">{pendingOrders}</div>
-				<p className="text-xs text-muted-foreground mt-1">
-					Awaiting confirmation
-				</p>
-			</CardContent>
-		</Card>
-	);
-}
-
-async function CompletedOrders({
-	completedOrdersPromise,
-}: {
-	completedOrdersPromise: Promise<number>;
-}) {
-	const completedOrders = await completedOrdersPromise.catch(() => 0);
-
-	return (
-		<Card className="hover:shadow-md transition-shadow">
-			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle className="text-sm font-medium">Completed Orders</CardTitle>
-				<CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-			</CardHeader>
-			<CardContent>
-				<div className="text-xl sm:text-2xl font-bold">{completedOrders}</div>
-				<p className="text-xs text-muted-foreground mt-1">
-					Successfully delivered
-				</p>
-			</CardContent>
-		</Card>
-	);
-}
-
-function Loading() {
-	return (
-		<Card className="hover:shadow-md transition-shadow">
-			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle className="text-sm font-medium">
-					<div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
-				</CardTitle>
-				<div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
-			</CardHeader>
-
 			<CardContent>
 				<div className="text-xl sm:text-2xl font-bold">
-					<div className="h-4 bg-gray-200 rounded animate-pulse" />
+					<Skeleton className="h-8 w-32" />
 				</div>
-				<div className="h-4 bg-gray-200 rounded animate-pulse" />
+				<p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
 			</CardContent>
 		</Card>
 	);

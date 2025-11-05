@@ -1,4 +1,3 @@
-import { FadeIn } from "@/components/fade-in";
 import { db } from "@/lib/db";
 import { SpecialsClient } from "./_components/specials-client";
 
@@ -18,9 +17,5 @@ export default async function SpecialsPage() {
 		},
 	});
 
-	return (
-		<FadeIn>
-			<SpecialsClient initialData={specialsList} />
-		</FadeIn>
-	);
+	return <SpecialsClient initialData={specialsList} />;
 }

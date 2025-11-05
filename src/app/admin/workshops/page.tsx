@@ -1,5 +1,4 @@
 import { desc, eq, sql } from "drizzle-orm";
-import { FadeIn } from "@/components/fade-in";
 import { db } from "@/lib/db";
 import { workshopOrders, workshops } from "@/lib/db/schema";
 import { WorkshopsClient } from "./_components/workshops-client";
@@ -47,9 +46,5 @@ export default async function AdminWorkshopsPage() {
 			})),
 		);
 
-	return (
-		<FadeIn>
-			<WorkshopsClient initialData={workshopsWithSlotData} />
-		</FadeIn>
-	);
+	return <WorkshopsClient initialData={workshopsWithSlotData} />;
 }
