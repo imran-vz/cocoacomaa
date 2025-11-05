@@ -1,6 +1,7 @@
 import { sub } from "date-fns";
 import { and, eq, gte, isNotNull, not, sql } from "drizzle-orm";
 import {
+	ArrowRight,
 	CheckCircle2,
 	Clock,
 	DollarSign,
@@ -215,71 +216,63 @@ export default async function AdminDashboard() {
 				</div>
 
 				{/* Quick Actions Section */}
-				<div className="mt-8">
+				<div className="mt-8 max-w-md">
 					<h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-					<div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-						<Link href="/admin/orders">
-							<Card className="hover:shadow-md transition-shadow cursor-pointer">
-								<CardContent className="p-4">
-									<div className="flex items-center space-x-4">
-										<Package className="h-6 w-6 text-primary" />
-										<div>
-											<h3 className="font-medium">View Orders</h3>
-											<p className="text-sm text-muted-foreground">
-												Manage all orders
-											</p>
-										</div>
-									</div>
-								</CardContent>
-							</Card>
+					<div className="space-y-2">
+						<Link
+							href="/admin/orders"
+							className="flex items-center gap-4 p-4 rounded-lg hover:bg-accent transition-colors"
+						>
+							<Package className="h-5 w-5 text-primary shrink-0" />
+							<div>
+								<h3 className="font-medium">View Orders</h3>
+								<p className="text-sm text-muted-foreground">
+									Manage all orders
+								</p>
+							</div>
+							<ArrowRight className="h-5 w-5 text-primary shrink-0 ml-auto" />
 						</Link>
 
-						<Link href="/admin/desserts">
-							<Card className="hover:shadow-md transition-shadow cursor-pointer">
-								<CardContent className="p-4">
-									<div className="flex items-center space-x-4">
-										<TrendingUp className="h-6 w-6 text-primary" />
-										<div>
-											<h3 className="font-medium">Manage Desserts</h3>
-											<p className="text-sm text-muted-foreground">
-												Add or edit desserts
-											</p>
-										</div>
-									</div>
-								</CardContent>
-							</Card>
+						<Link
+							href="/admin/desserts"
+							className="flex items-center gap-4 p-4 rounded-lg hover:bg-accent transition-colors"
+						>
+							<TrendingUp className="h-5 w-5 text-primary shrink-0" />
+							<div>
+								<h3 className="font-medium">Manage Desserts</h3>
+								<p className="text-sm text-muted-foreground">
+									Add or edit desserts
+								</p>
+							</div>
+							<ArrowRight className="h-5 w-5 text-primary shrink-0 ml-auto" />
 						</Link>
 
-						<Link href="/admin/customers">
-							<Card className="hover:shadow-md transition-shadow cursor-pointer">
-								<CardContent className="p-4">
-									<div className="flex items-center space-x-4">
-										<Users className="h-6 w-6 text-primary" />
-										<div>
-											<h3 className="font-medium">View Customers</h3>
-											<p className="text-sm text-muted-foreground">
-												Manage customers
-											</p>
-										</div>
-									</div>
-								</CardContent>
-							</Card>
+						<Link
+							href="/admin/customers"
+							className="flex items-center gap-4 p-4 rounded-lg hover:bg-accent transition-colors"
+						>
+							<Users className="h-5 w-5 text-primary shrink-0" />
+							<div>
+								<h3 className="font-medium">View Customers</h3>
+								<p className="text-sm text-muted-foreground">
+									Manage customers
+								</p>
+							</div>
+							<ArrowRight className="h-5 w-5 text-primary shrink-0 ml-auto" />
 						</Link>
 
-						<Link href="/admin/managers">
-							<Card className="hover:shadow-md transition-shadow cursor-pointer">
-								<CardContent className="p-4">
-									<div className="flex items-center space-x-4">
-										<Shield className="h-6 w-6 text-primary" />
-										<div>
-											<h3 className="font-medium">Manage Managers</h3>
-											<p className="text-sm text-muted-foreground">
-												Add, edit and delete managers
-											</p>
-										</div>
-									</div>
-								</CardContent>
-							</Card>
+						<Link
+							href="/admin/managers"
+							className="flex items-center gap-4 p-4 rounded-lg hover:bg-accent transition-colors"
+						>
+							<Shield className="h-5 w-5 text-primary shrink-0" />
+							<div>
+								<h3 className="font-medium">Manage Managers</h3>
+								<p className="text-sm text-muted-foreground">
+									Add, edit and delete managers
+								</p>
+							</div>
+							<ArrowRight className="h-5 w-5 text-primary shrink-0 ml-auto" />
 						</Link>
 					</div>
 				</div>
