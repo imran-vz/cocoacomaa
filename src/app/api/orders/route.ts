@@ -4,7 +4,13 @@ import { NextResponse } from "next/server";
 import Razorpay from "razorpay";
 
 import { db } from "@/lib/db";
-import { orderItems, orders, users } from "@/lib/db/schema";
+import {
+	addresses,
+	customerContacts,
+	orderItems,
+	orders,
+	users,
+} from "@/lib/db/schema";
 import { checkoutFormSchemaDB } from "@/lib/schema";
 
 const razorpay = new Razorpay({
@@ -34,6 +40,17 @@ export async function POST(request: NextRequest) {
 			notes,
 			orderType,
 			selectedAddressId,
+			// Gift order fields
+			isGift = false,
+			giftMessage,
+			recipientName,
+			recipientPhone,
+			selectedRecipientContactId,
+			recipientAddressLine1,
+			recipientAddressLine2,
+			recipientCity,
+			recipientState,
+			recipientZip,
 		} = data;
 
 		// Check if order contains special items
@@ -96,20 +113,102 @@ export async function POST(request: NextRequest) {
 				.set({ name, phone, role: "customer", updatedAt: new Date() })
 				.where(eq(users.id, userId));
 
-			// Create order
+			// Handle gift order - create/update customer contact
+			let recipientContactId: number | undefined;
+			let finalAddressId = selectedAddressId;
+
+			if (isGift && recipientName && recipientPhone) {
+				// For gift orders, create recipient address and contact
+				if (orderType === "postal-brownies" && recipientAddressLine1) {
+					// Create recipient address
+					const [newRecipientAddress] = await tx
+						.insert(addresses)
+						.values({
+							userId: userId,
+							addressLine1: recipientAddressLine1,
+							addressLine2: recipientAddressLine2 || null,
+							city: recipientCity || "",
+							state: recipientState || "",
+							zip: recipientZip || "",
+						})
+						.returning();
+
+					finalAddressId = newRecipientAddress.id;
+
+					// Check if contact already exists or create new
+					if (selectedRecipientContactId) {
+						// Get current contact to increment useCount
+						const existingContact = await tx
+							.select()
+							.from(customerContacts)
+							.where(eq(customerContacts.id, selectedRecipientContactId))
+							.limit(1);
+
+						if (existingContact.length > 0) {
+							// Update existing contact usage
+							await tx
+								.update(customerContacts)
+								.set({
+									useCount: existingContact[0].useCount + 1,
+									lastUsedAt: new Date(),
+									updatedAt: new Date(),
+								})
+								.where(eq(customerContacts.id, selectedRecipientContactId));
+							recipientContactId = selectedRecipientContactId;
+						}
+					} else {
+						// Create new customer contact
+						const [newContact] = await tx
+							.insert(customerContacts)
+							.values({
+								userId: userId,
+								name: recipientName,
+								phone: recipientPhone,
+								addressId: newRecipientAddress.id,
+								useCount: 1,
+								lastUsedAt: new Date(),
+							})
+							.returning();
+						recipientContactId = newContact.id;
+					}
+				}
+			}
+
+			// Create order with gift fields
 			const newOrder = await tx
 				.insert(orders)
 				.values({
 					userId: userId,
 					total: total.toString(),
 					deliveryCost: (deliveryCost || 0).toString(),
-					notes: notes,
+					notes: isGift ? null : notes,
 					status: "pending",
 					paymentStatus: "pending",
 					pickupDateTime: pickupDateObj || null,
 					orderType: orderType,
 					// Address fields for postal brownies
-					addressId: selectedAddressId,
+					addressId: finalAddressId,
+					// Gift order fields
+					isGift: isGift,
+					giftMessage: giftMessage || null,
+					recipientContactId: recipientContactId,
+					// Recipient snapshot fields
+					recipientName: isGift ? recipientName : null,
+					recipientPhone: isGift ? recipientPhone : null,
+					recipientAddressLine1:
+						isGift && orderType === "postal-brownies"
+							? recipientAddressLine1
+							: null,
+					recipientAddressLine2:
+						isGift && orderType === "postal-brownies"
+							? recipientAddressLine2
+							: null,
+					recipientCity:
+						isGift && orderType === "postal-brownies" ? recipientCity : null,
+					recipientState:
+						isGift && orderType === "postal-brownies" ? recipientState : null,
+					recipientZip:
+						isGift && orderType === "postal-brownies" ? recipientZip : null,
 				})
 				.returning({ id: orders.id });
 

@@ -1,22 +1,9 @@
-export interface Address {
-	id: number;
-	userId: string;
-	addressLine1: string;
-	addressLine2?: string | null;
-	city: string;
-	state: string;
-	zip: string;
-	createdAt: string;
-	updatedAt: string;
-}
+import type { Address } from "@/lib/db/schema";
 
-export interface CreateAddressRequest {
-	addressLine1: string;
-	addressLine2?: string;
-	city: string;
-	state: string;
-	zip: string;
-}
+export type CreateAddressRequest = Pick<
+	Address,
+	"addressLine1" | "addressLine2" | "city" | "state" | "zip"
+>;
 
 export interface AddressesResponse {
 	success: boolean;

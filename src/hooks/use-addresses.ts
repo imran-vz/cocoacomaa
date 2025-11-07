@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import type { Address } from "@/lib/db/schema";
 import type {
-	Address,
 	AddressesResponse,
 	CreateAddressRequest,
 	CreateAddressResponse,
