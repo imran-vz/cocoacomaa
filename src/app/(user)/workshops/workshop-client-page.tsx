@@ -607,18 +607,6 @@ export default function WorkshopsClientPage({
 														: formatCurrency(Number(workshop.amount))}
 												</span>
 											</div>
-											{workshop.availableSlots < 3 && (
-												<div className="flex items-center justify-between mb-4 text-sm">
-													<span className="text-muted-foreground">
-														Available Slots:
-													</span>
-													<span
-														className={`font-medium ${workshop.availableSlots === 0 ? "text-red-500" : "text-orange-500"}`}
-													>
-														{workshop.availableSlots} / {workshop.maxBookings}
-													</span>
-												</div>
-											)}
 											<Button
 												onClick={() => handleRegister(workshop)}
 												disabled={isProcessing || workshop.availableSlots === 0}
