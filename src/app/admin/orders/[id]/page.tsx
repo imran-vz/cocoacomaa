@@ -27,6 +27,16 @@ export default async function AdminOrderDetailsPage({
 			razorpayPaymentId: true,
 			pickupDateTime: true,
 			notes: true,
+			// Gift order fields
+			isGift: true,
+			giftMessage: true,
+			recipientName: true,
+			recipientPhone: true,
+			recipientAddressLine1: true,
+			recipientAddressLine2: true,
+			recipientCity: true,
+			recipientState: true,
+			recipientZip: true,
 		},
 		with: {
 			orderItems: {

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { toast } from "sonner";
-import { CartPopover } from "@/components/cart-popover";
+import { CartSheet } from "@/components/cart-sheet";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -87,7 +87,7 @@ export function Navigation() {
 							</Button>
 						) : null}
 						{showCart && (
-							<CartPopover
+							<CartSheet
 								onCheckout={handleCheckout}
 								disabled={isOrderPage && !ordersAllowed}
 								checkoutLabel={

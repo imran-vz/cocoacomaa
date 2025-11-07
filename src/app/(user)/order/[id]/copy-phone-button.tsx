@@ -3,11 +3,15 @@ import { Copy } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
-export default function CopyPhoneButton() {
+interface CopyPhoneButtonProps {
+	phone?: string;
+}
+
+export default function CopyPhoneButton({ phone }: CopyPhoneButtonProps) {
 	const copyPhone = async () => {
-		const phone = process.env.NEXT_PUBLIC_PHONE_NUMBER || "";
+		const phoneNumber = phone || process.env.NEXT_PUBLIC_PHONE_NUMBER || "";
 		try {
-			await navigator.clipboard.writeText(phone);
+			await navigator.clipboard.writeText(phoneNumber);
 			toast.success("Phone number copied to clipboard!");
 		} catch (error) {
 			console.error("Failed to copy phone number:", error);

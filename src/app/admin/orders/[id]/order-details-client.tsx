@@ -4,6 +4,7 @@ import {
 	Calendar,
 	Clock,
 	CreditCard,
+	Gift,
 	Mail,
 	MapPin,
 	Package,
@@ -44,6 +45,16 @@ type OrderData = {
 	razorpayPaymentId: string | null;
 	pickupDateTime: Date | null;
 	notes: string | null;
+	// Gift order fields
+	isGift?: boolean | null;
+	giftMessage?: string | null;
+	recipientName?: string | null;
+	recipientPhone?: string | null;
+	recipientAddressLine1?: string | null;
+	recipientAddressLine2?: string | null;
+	recipientCity?: string | null;
+	recipientState?: string | null;
+	recipientZip?: string | null;
 	orderItems: Array<{
 		quantity: number;
 		itemType: string;
@@ -288,6 +299,67 @@ export default function OrderDetailsClient({
 									</div>
 								</CardContent>
 							</Card>
+
+							{/* Gift Order Badge & Recipient Information */}
+							{order.isGift && (
+								<Card className="border-purple-200 bg-purple-50/50">
+									<CardHeader>
+										<CardTitle className="flex items-center gap-2">
+											<Gift className="h-5 w-5 text-purple-600" />
+											<span className="text-purple-900">
+												Recipient Details (Gift Order)
+											</span>
+										</CardTitle>
+									</CardHeader>
+									<CardContent className="space-y-3">
+										{order.recipientName && (
+											<div className="flex items-center gap-2">
+												<User className="h-4 w-4 text-muted-foreground" />
+												<span className="text-sm capitalize">
+													{order.recipientName}
+												</span>
+											</div>
+										)}
+										{order.recipientPhone && (
+											<div className="flex items-center gap-2">
+												<Phone className="h-4 w-4 text-muted-foreground" />
+												<span className="text-sm">{order.recipientPhone}</span>
+												<CopyPhoneButton phone={order.recipientPhone} />
+											</div>
+										)}
+										{order.recipientAddressLine1 && (
+											<div className="space-y-2">
+												<div className="flex items-start gap-2">
+													<MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
+													<div className="text-sm flex-1">
+														<div>{order.recipientAddressLine1}</div>
+														{order.recipientAddressLine2 && (
+															<div>{order.recipientAddressLine2}</div>
+														)}
+														<div>
+															{order.recipientCity}, {order.recipientState}{" "}
+															{order.recipientZip}
+														</div>
+													</div>
+													<CopyAddressButton
+														address={`${order.recipientAddressLine1}${order.recipientAddressLine2 ? `, ${order.recipientAddressLine2}` : ""}, ${order.recipientCity}, ${order.recipientState} ${order.recipientZip}`}
+													/>
+												</div>
+											</div>
+										)}
+										{order.giftMessage && (
+											<div className="mt-3 pt-3 border-t border-purple-200">
+												<div className="text-xs font-medium text-muted-foreground mb-1">
+													Gift Message:
+												</div>
+												<div className="text-sm italic bg-white p-3 rounded-md border border-purple-100">
+													"{order.giftMessage}"
+												</div>
+											</div>
+										)}
+									</CardContent>
+								</Card>
+							)}
 
 							{/* Pickup Information */}
 							{order.pickupDateTime && (

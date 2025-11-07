@@ -90,6 +90,22 @@ export const checkoutFormSchemaDB = z
 		deliveryCost: z.number().optional(), // Delivery cost for postal brownies
 		// Address selection for postal brownies
 		selectedAddressId: z.number().optional(),
+		// Gift order fields
+		isGift: z.boolean().default(false),
+		giftMessage: z
+			.string()
+			.max(500, {
+				message: "Gift message must be less than 500 characters.",
+			})
+			.optional(),
+		recipientName: z.string().optional(),
+		recipientPhone: z.string().optional(),
+		recipientAddressLine1: z.string().optional(),
+		recipientAddressLine2: z.string().optional(),
+		recipientCity: z.string().optional(),
+		recipientState: z.string().optional(),
+		recipientZip: z.string().optional(),
+		selectedRecipientContactId: z.number().optional(),
 	})
 	.refine(
 		(data) => {
@@ -118,9 +134,9 @@ export const checkoutFormSchemaDB = z
 	)
 	.refine(
 		(data) => {
-			// If orderType is postal-brownies, address fields are required
-			if (data.orderType === "postal-brownies") {
-				// Either selectedAddressId should be provided or manual address fields
+			// If orderType is postal-brownies and NOT a gift order, address is required
+			if (data.orderType === "postal-brownies" && !data.isGift) {
+				// Either selectedAddressId should be provided
 				if (data.selectedAddressId) {
 					return true; // If existing address is selected, no need to validate individual fields
 				}
@@ -132,6 +148,58 @@ export const checkoutFormSchemaDB = z
 		{
 			message: "Please select an address",
 			path: ["selectedAddressId"],
+		},
+	)
+	.refine(
+		(data) => {
+			// If isGift is true, recipient name is required
+			if (data.isGift) {
+				return data.recipientName && data.recipientName.trim().length >= 2;
+			}
+			return true;
+		},
+		{
+			message: "Recipient name is required for gift orders",
+			path: ["recipientName"],
+		},
+	)
+	.refine(
+		(data) => {
+			// If isGift is true, recipient phone is required
+			if (data.isGift) {
+				return (
+					data.recipientPhone &&
+					data.recipientPhone.length >= 10 &&
+					/^[0-9+\-\s()]+$/.test(data.recipientPhone)
+				);
+			}
+			return true;
+		},
+		{
+			message: "Valid recipient phone is required for gift orders",
+			path: ["recipientPhone"],
+		},
+	)
+	.refine(
+		(data) => {
+			// If isGift and postal-brownies, recipient address is required
+			if (data.isGift && data.orderType === "postal-brownies") {
+				// Either contact selected or address fields provided
+				if (data.selectedRecipientContactId) {
+					return true;
+				}
+				return (
+					data.recipientAddressLine1 &&
+					data.recipientCity &&
+					data.recipientState &&
+					data.recipientZip
+				);
+			}
+			return true;
+		},
+		{
+			message: "Recipient address is required for gift postal orders",
+			path: ["recipientAddressLine1"],
 		},
 	);
 

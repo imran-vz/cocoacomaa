@@ -3,10 +3,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { format } from "date-fns";
-import { CalendarIcon, Clock, Edit2, Package, Trash2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
@@ -14,7 +12,6 @@ import * as z from "zod";
 import { confirm } from "@/components/confirm-dialog";
 import { FadeIn } from "@/components/fade-in";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
 	Form,
@@ -26,21 +23,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import OrderRestrictionBanner from "@/components/ui/order-restriction-banner";
-import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from "@/components/ui/popover";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
 import {
 	useAddresses,
 	useCreateAddress,
@@ -51,19 +34,26 @@ import { usePostalOrderSettings } from "@/hooks/use-postal-order-settings";
 import { useSpecialsSettings } from "@/hooks/use-specials-settings";
 import { useCart } from "@/lib/cart-context";
 import { config } from "@/lib/config";
+import type { CustomerContact } from "@/lib/db/schema";
 import {
 	calculateDeliveryCost,
 	isBengaluruAddress,
 } from "@/lib/delivery-pricing";
-import { formatLocalDate, formatYearMonth } from "@/lib/format-timestamp";
+import { formatYearMonth } from "@/lib/format-timestamp";
 import { validatePhoneNumber } from "@/lib/phone-validation";
-import { formatCurrency } from "@/lib/utils";
 import type {
 	RazorpayOptions,
 	RazorpayOrderData,
 	RazorpayResponse,
 } from "@/types/razorpay";
+import { CustomerInfoFields } from "./customer-info-fields";
+import { DeliveryAddressSection } from "./delivery-address-section";
+import { EditContactDialog } from "./edit-contact-dialog";
+import { GiftToggleSection } from "./gift-toggle-section";
+import { OrderSummaryCard } from "./order-summary-card";
 import { PhoneEditDialog } from "./phone-edit-dialog";
+import { PickupScheduleSection } from "./pickup-schedule-section";
+import { RecipientInfoSection } from "./recipient-info-section";
 
 interface Dessert {
 	id: number;
@@ -196,24 +186,103 @@ const createCheckoutFormSchema = (
 		addressMode: isPostalBrownies
 			? z.enum(["existing", "new"])
 			: z.enum(["existing", "new"]).optional(),
-		selectedAddressId: isPostalBrownies
-			? z.number().min(1, { message: "Please select a delivery address" })
-			: z.number().optional(),
+		selectedAddressId: z.number().optional(),
 		// New address fields (only used when addressMode is "new")
 		addressLine1: z.string().optional(),
 		addressLine2: z.string().optional(),
 		city: z.string().optional(),
 		state: z.string().optional(),
 		zip: z.string().optional(),
+		// Gift order fields
+		isGift: z.boolean(),
+		giftMessage: z
+			.string()
+			.max(500, {
+				message: "Gift message must be less than 500 characters.",
+			})
+			.optional(),
+		recipientName: z.string().optional(),
+		recipientPhone: z.string().optional(),
+		confirmRecipientPhone: z.string().optional(),
+		selectedRecipientContactId: z.number().optional(),
+		recipientAddressLine1: z.string().optional(),
+		recipientAddressLine2: z.string().optional(),
+		recipientCity: z.string().optional(),
+		recipientState: z.string().optional(),
+		recipientZip: z.string().optional(),
 	});
 
 	// Add refinement to check that phone numbers match (only when confirmPhone is required)
-	return hasExistingPhone
-		? baseSchema
-		: baseSchema.refine((data) => data.phone === data.confirmPhone, {
+	// Always refine for consistent typing
+	return baseSchema
+		.refine(
+			(data) => {
+				if (hasExistingPhone) return true;
+				return data.phone === data.confirmPhone;
+			},
+			{
 				message: "Phone numbers don't match",
 				path: ["confirmPhone"],
-			});
+			},
+		)
+		.refine(
+			(data) => {
+				if (!data.isGift) return true;
+				return data.recipientName && data.recipientName.trim().length >= 2;
+			},
+			{
+				message: "Recipient name is required for gift orders",
+				path: ["recipientName"],
+			},
+		)
+		.refine(
+			(data) => {
+				if (!data.isGift) return true;
+				return data.recipientPhone && data.recipientPhone.length >= 10;
+			},
+			{
+				message: "Recipient phone is required for gift orders",
+				path: ["recipientPhone"],
+			},
+		)
+		.refine(
+			(data) => {
+				if (!data.isGift) return true;
+				return data.recipientPhone === data.confirmRecipientPhone;
+			},
+			{
+				message: "Recipient phone numbers don't match",
+				path: ["confirmRecipientPhone"],
+			},
+		)
+		.refine(
+			(data) => {
+				if (!data.isGift || !isPostalBrownies) return true;
+				// For postal brownies gifts, need recipient address
+				if (data.selectedRecipientContactId) return true;
+				return (
+					data.recipientAddressLine1 &&
+					data.recipientCity &&
+					data.recipientState &&
+					data.recipientZip
+				);
+			},
+			{
+				message: "Recipient address is required for gift postal orders",
+				path: ["recipientAddressLine1"],
+			},
+		)
+		.refine(
+			(data) => {
+				// For non-gift postal brownies, selectedAddressId is required
+				if (!isPostalBrownies || data.isGift) return true;
+				return data.selectedAddressId && data.selectedAddressId > 0;
+			},
+			{
+				message: "Please select a delivery address",
+				path: ["selectedAddressId"],
+			},
+		);
 };
 
 // Address validation schema
@@ -254,8 +323,33 @@ export default function CheckoutPage({
 	const [isPhoneFieldEnabled, setIsPhoneFieldEnabled] = useState(false);
 	const [originalPhone, setOriginalPhone] = useState("");
 	const [isPhoneEditDialogOpen, setIsPhoneEditDialogOpen] = useState(false);
-	const existingId = useId();
-	const newId = useId();
+	const [selectedRecipientContact, setSelectedRecipientContact] = useState<
+		| (CustomerContact & {
+				address: {
+					id: number;
+					addressLine1: string;
+					addressLine2: string | null;
+					city: string;
+					state: string;
+					zip: string;
+				};
+		  })
+		| null
+	>(null);
+	const [isEditContactDialogOpen, setIsEditContactDialogOpen] = useState(false);
+	const [contactToEdit, setContactToEdit] = useState<
+		| (CustomerContact & {
+				address: {
+					id: number;
+					addressLine1: string;
+					addressLine2: string | null;
+					city: string;
+					state: string;
+					zip: string;
+				};
+		  })
+		| null
+	>(null);
 	const { areOrdersAllowed: ordersAllowed, settings } = useCakeOrderSettings();
 	const { settings: specialsSettings } = useSpecialsSettings();
 
@@ -321,12 +415,28 @@ export default function CheckoutPage({
 			city: "",
 			state: "",
 			zip: "",
+			isGift: false,
+			giftMessage: "",
+			recipientName: "",
+			recipientPhone: "",
+			confirmRecipientPhone: "",
+			selectedRecipientContactId: undefined,
+			recipientAddressLine1: "",
+			recipientAddressLine2: "",
+			recipientCity: "",
+			recipientState: "",
+			recipientZip: "",
 		},
 	});
 
 	const addressMode = useWatch({
 		control: form.control,
 		name: "addressMode",
+	});
+
+	const isGift = useWatch({
+		control: form.control,
+		name: "isGift",
 	});
 
 	// Watch new address form fields for dynamic pricing
@@ -458,9 +568,10 @@ export default function CheckoutPage({
 
 		try {
 			setIsCreatingAddress(true);
-			const newAddress = await createAddressMutation.mutateAsync(
-				validation.data,
-			);
+			const newAddress = await createAddressMutation.mutateAsync({
+				...validation.data,
+				addressLine2: validation.data.addressLine2 || null,
+			});
 
 			// Select the newly created address and switch to existing mode
 			form.setValue("selectedAddressId", newAddress.id);
@@ -723,6 +834,17 @@ export default function CheckoutPage({
 						selectedAddressId: isPostalBrownies
 							? data.selectedAddressId
 							: undefined,
+						// Gift order fields
+						isGift: data.isGift,
+						giftMessage: data.giftMessage,
+						recipientName: data.recipientName,
+						recipientPhone: data.recipientPhone,
+						selectedRecipientContactId: data.selectedRecipientContactId,
+						recipientAddressLine1: data.recipientAddressLine1,
+						recipientAddressLine2: data.recipientAddressLine2,
+						recipientCity: data.recipientCity,
+						recipientState: data.recipientState,
+						recipientZip: data.recipientZip,
 					}),
 				});
 
@@ -787,13 +909,13 @@ export default function CheckoutPage({
 		<div className="container mx-auto py-4 sm:py-6 lg:py-8 px-4 relative">
 			{/* Loading Overlay */}
 			{isProcessing && (
-				<div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
-					<div className="bg-white rounded-lg p-6 sm:p-8 max-w-sm mx-4 text-center shadow-xl">
+				<div className="fixed inset-0 bg-primary/50 backdrop-blur-sm z-50 flex items-center justify-center">
+					<div className="bg-background rounded-lg p-6 sm:p-8 max-w-sm mx-4 text-center shadow-xl">
 						<div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-primary mx-auto mb-4" />
-						<h3 className="text-lg sm:text-xl font-semibold mb-2">
+						<h3 className="text-lg sm:text-xl font-semibold mb-2 text-primary">
 							Processing Order
 						</h3>
-						<p className="text-sm sm:text-base text-muted-foreground">
+						<p className="text-sm sm:text-base text-primary">
 							{processingStep || "Please wait..."}
 						</p>
 						<p className="text-xs text-muted-foreground mt-2">
@@ -843,149 +965,34 @@ export default function CheckoutPage({
 										/>
 									)}
 								/>
-								<FormField
-									control={form.control}
-									name="name"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel className="text-sm sm:text-base">
-												Full Name
-											</FormLabel>
-											<FormControl>
-												<Input
-													placeholder="Enter your full name"
-													{...field}
-													className="text-sm sm:text-base"
-													disabled
-													readOnly
-													tabIndex={-1}
-												/>
-											</FormControl>
-											<FormMessage className="text-xs sm:text-sm" />
-										</FormItem>
-									)}
+
+								<CustomerInfoFields
+									form={form}
+									isPhoneFieldEnabled={isPhoneFieldEnabled}
+									isProcessing={isProcessing}
+									onPhoneEditClick={() => setIsPhoneEditDialogOpen(true)}
 								/>
 
-								<FormField
-									control={form.control}
-									name="email"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel className="text-sm sm:text-base">
-												Email Address
-											</FormLabel>
-											<FormControl>
-												<Input
-													type="email"
-													placeholder="Enter your email address"
-													{...field}
-													className="text-sm sm:text-base"
-													readOnly
-													disabled
-													tabIndex={-1}
-												/>
-											</FormControl>
-											<FormMessage className="text-xs sm:text-sm" />
-										</FormItem>
-									)}
-								/>
+								{/* Gift Toggle Section - Only for delivery orders (postal brownies) */}
+								{isPostalBrownies && <GiftToggleSection form={form} />}
 
-								{/* Phone fields - Show differently based on whether user has phone */}
-								{isPhoneFieldEnabled ? (
-									// First-time user or user with no phone - show both fields
-									<>
-										<FormField
-											control={form.control}
-											name="phone"
-											render={({ field }) => (
-												<FormItem>
-													<FormLabel className="text-sm sm:text-base">
-														Phone Number
-													</FormLabel>
-													<FormControl>
-														<Input
-															type="tel"
-															placeholder="Enter your phone number"
-															{...field}
-															className="text-sm sm:text-base"
-															readOnly={isProcessing}
-															disabled={isProcessing}
-														/>
-													</FormControl>
-													<FormMessage className="text-xs sm:text-sm" />
-												</FormItem>
-											)}
-										/>
-
-										<FormField
-											control={form.control}
-											name="confirmPhone"
-											render={({ field }) => (
-												<FormItem>
-													<FormLabel className="text-sm sm:text-base">
-														Confirm Phone Number
-													</FormLabel>
-													<FormControl>
-														<Input
-															type="tel"
-															placeholder="Re-enter your phone number"
-															{...field}
-															className="text-sm sm:text-base"
-															readOnly={isProcessing}
-															disabled={isProcessing}
-															onPaste={(e) => {
-																e.preventDefault();
-																return false;
-															}}
-														/>
-													</FormControl>
-													<FormDescription className="text-xs sm:text-sm">
-														Please re-enter your phone number to confirm
-													</FormDescription>
-													<FormMessage className="text-xs sm:text-sm" />
-												</FormItem>
-											)}
-										/>
-									</>
-								) : (
-									// Repeat user with phone - show phone with edit button
-									<FormField
-										control={form.control}
-										name="phone"
-										render={({ field }) => (
-											<FormItem>
-												<FormLabel className="text-sm sm:text-base">
-													Phone Number
-												</FormLabel>
-												<div className="flex gap-2">
-													<FormControl>
-														<Input
-															type="tel"
-															{...field}
-															className="text-sm sm:text-base"
-															readOnly
-															disabled
-															tabIndex={-1}
-														/>
-													</FormControl>
-													<Button
-														type="button"
-														variant="outline"
-														size="icon"
-														onClick={() => setIsPhoneEditDialogOpen(true)}
-														disabled={isProcessing}
-														title="Edit phone number"
-													>
-														<Edit2 className="h-4 w-4" />
-													</Button>
-												</div>
-												<FormMessage className="text-xs sm:text-sm" />
-											</FormItem>
-										)}
+								{/* Recipient Section - shown when isGift is true */}
+								{isGift && (
+									<RecipientInfoSection
+										form={form}
+										isPostalBrownies={isPostalBrownies}
+										selectedRecipientContact={selectedRecipientContact}
+										onContactSelect={(contact) =>
+											setSelectedRecipientContact(contact)
+										}
+										onEditContact={(contact) => {
+											setContactToEdit(contact);
+											setIsEditContactDialogOpen(true);
+										}}
 									/>
 								)}
 
-								{!hasSpecials && (
+								{!hasSpecials && !isGift && (
 									<FormField
 										control={form.control}
 										name="notes"
@@ -1017,507 +1024,29 @@ export default function CheckoutPage({
 									/>
 								)}
 
-								{/* Address Fields - Only for postal brownies */}
-								{isPostalBrownies && (
-									<div className="space-y-3 sm:space-y-4 lg:space-y-6">
-										<div className="border-t pt-3 sm:pt-4 lg:pt-6">
-											<h3 className="text-sm sm:text-base lg:text-lg font-semibold mb-2 sm:mb-3 lg:mb-4 flex items-center gap-2">
-												<Package className="h-4 w-4 sm:h-4 sm:w-4 lg:h-5 lg:w-5 shrink-0" />
-												<span>Delivery Address</span>
-											</h3>
-											<p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 leading-relaxed">
-												Please provide the complete delivery address for your
-												postal brownie order.
-											</p>
-										</div>
-
-										{/* Address Mode Selection */}
-										<FormField
-											control={form.control}
-											name="addressMode"
-											render={({ field }) => (
-												<FormItem>
-													<FormControl>
-														<RadioGroup
-															onValueChange={field.onChange}
-															defaultValue={field.value}
-															value={field.value}
-															className="grid grid-cols-1 sm:grid-cols-2 gap-2"
-															disabled={addressesLoading}
-														>
-															{addresses.length > 0 && (
-																<div className="flex items-center space-x-2 p-3 border rounded-lg">
-																	<RadioGroupItem
-																		value="existing"
-																		id={existingId}
-																	/>
-																	<Label
-																		htmlFor={existingId}
-																		className="text-sm cursor-pointer flex-1"
-																	>
-																		Select saved address
-																	</Label>
-																</div>
-															)}
-															<div className="flex items-center space-x-2 p-3 border rounded-lg">
-																<RadioGroupItem value="new" id={newId} />
-																<Label
-																	htmlFor={newId}
-																	className="text-sm cursor-pointer flex-1"
-																>
-																	Add new address
-																</Label>
-															</div>
-														</RadioGroup>
-													</FormControl>
-													<FormMessage className="text-xs sm:text-sm" />
-												</FormItem>
-											)}
-										/>
-
-										{/* Existing Address Selection */}
-										{addressMode === "existing" && (
-											<FormField
-												control={form.control}
-												name="selectedAddressId"
-												render={({ field }) => (
-													<FormItem>
-														<FormLabel className="text-sm sm:text-base">
-															Choose Address
-														</FormLabel>
-														<FormControl>
-															{addresses.length === 0 ? (
-																<div className="text-center py-8 text-muted-foreground">
-																	<p className="text-sm">
-																		No saved addresses found
-																	</p>
-																	<p className="text-xs mt-1">
-																		Add a new address to continue
-																	</p>
-																</div>
-															) : (
-																<RadioGroup
-																	onValueChange={(value) =>
-																		field.onChange(Number.parseInt(value))
-																	}
-																	defaultValue={field.value?.toString()}
-																	className="space-y-2"
-																>
-																	{addresses.map((address) => (
-																		<div
-																			key={address.id}
-																			className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-muted/50"
-																		>
-																			<RadioGroupItem
-																				value={address.id.toString()}
-																				id={`address-${address.id}`}
-																				className="mt-1"
-																			/>
-																			<Label
-																				htmlFor={`address-${address.id}`}
-																				className="text-sm cursor-pointer flex-1 leading-relaxed"
-																			>
-																				<div className="space-y-1">
-																					<div className="font-medium">
-																						{address.addressLine1}
-																					</div>
-																					{address.addressLine2 && (
-																						<div className="text-muted-foreground">
-																							{address.addressLine2}
-																						</div>
-																					)}
-																					<div className="text-muted-foreground">
-																						{address.city}, {address.state}{" "}
-																						{address.zip}
-																					</div>
-																				</div>
-																			</Label>
-																			<Button
-																				type="button"
-																				variant="ghost"
-																				size="sm"
-																				onClick={() => {
-																					handleDeleteAddress(address.id);
-																				}}
-																				disabled={
-																					deleteAddressMutation.isPending
-																				}
-																				title="Delete address"
-																			>
-																				{deleteAddressMutation.isPending ? (
-																					<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600" />
-																				) : (
-																					<Trash2 className="h-4 w-4 text-primary" />
-																				)}
-																			</Button>
-																		</div>
-																	))}
-																</RadioGroup>
-															)}
-														</FormControl>
-														<FormMessage className="text-xs sm:text-sm" />
-													</FormItem>
-												)}
-											/>
-										)}
-
-										{/* New Address Form */}
-										{addressMode === "new" && (
-											<div className="space-y-3 sm:space-y-4 lg:space-y-6">
-												<div className="grid grid-cols-1 gap-3 sm:gap-4 lg:gap-6">
-													<FormField
-														control={form.control}
-														name="addressLine1"
-														render={({ field }) => (
-															<FormItem>
-																<FormLabel className="text-sm sm:text-base">
-																	Address Line 1 *
-																</FormLabel>
-																<FormControl>
-																	<Input
-																		placeholder="Street address, building number"
-																		{...field}
-																		className="text-sm sm:text-base"
-																	/>
-																</FormControl>
-																<FormMessage className="text-xs sm:text-sm" />
-															</FormItem>
-														)}
-													/>
-
-													<FormField
-														control={form.control}
-														name="addressLine2"
-														render={({ field }) => (
-															<FormItem>
-																<FormLabel className="text-sm sm:text-base">
-																	Address Line 2
-																</FormLabel>
-																<FormControl>
-																	<Input
-																		placeholder="Apartment, suite, unit (optional)"
-																		{...field}
-																		className="text-sm sm:text-base"
-																	/>
-																</FormControl>
-																<FormMessage className="text-xs sm:text-sm" />
-															</FormItem>
-														)}
-													/>
-
-													<div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-														<FormField
-															control={form.control}
-															name="city"
-															render={({ field }) => (
-																<FormItem>
-																	<FormLabel className="text-sm sm:text-base">
-																		City *
-																	</FormLabel>
-																	<FormControl>
-																		<Input
-																			placeholder="City"
-																			{...field}
-																			className="text-sm sm:text-base"
-																		/>
-																	</FormControl>
-																	<FormMessage className="text-xs sm:text-sm" />
-																</FormItem>
-															)}
-														/>
-
-														<FormField
-															control={form.control}
-															name="state"
-															render={({ field }) => (
-																<FormItem>
-																	<FormLabel className="text-sm sm:text-base">
-																		State *
-																	</FormLabel>
-																	<FormControl>
-																		<Input
-																			placeholder="State"
-																			{...field}
-																			className="text-sm sm:text-base"
-																		/>
-																	</FormControl>
-																	<FormMessage className="text-xs sm:text-sm" />
-																</FormItem>
-															)}
-														/>
-													</div>
-
-													<FormField
-														control={form.control}
-														name="zip"
-														render={({ field }) => (
-															<FormItem>
-																<FormLabel className="text-sm sm:text-base">
-																	ZIP Code *
-																</FormLabel>
-																<FormControl>
-																	<Input
-																		placeholder="ZIP Code"
-																		{...field}
-																		className="text-sm sm:text-base"
-																	/>
-																</FormControl>
-																<FormMessage className="text-xs sm:text-sm" />
-															</FormItem>
-														)}
-													/>
-
-													{/* Create Address Button */}
-													<div className="pt-4">
-														<Button
-															type="button"
-															variant="outline"
-															onClick={handleCreateAddress}
-															disabled={isCreatingAddress}
-															className="w-full"
-														>
-															{isCreatingAddress ? (
-																<>
-																	<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2" />
-																	Creating Address...
-																</>
-															) : (
-																"Create & Save Address"
-															)}
-														</Button>
-														<p className="text-xs text-muted-foreground mt-2 text-center">
-															Address will be saved and automatically selected
-															for this order
-														</p>
-													</div>
-												</div>
-											</div>
-										)}
-									</div>
-								)}
-
-								{/* Pickup Date Selection for Specials Orders */}
-								{!isPostalBrownies && hasSpecials && specialsSettings && (
-									<div className="space-y-3 sm:space-y-4 lg:space-y-6">
-										<div className="border-t pt-3 sm:pt-4 lg:pt-6">
-											<h3 className="text-sm sm:text-base lg:text-lg font-semibold mb-2 sm:mb-3 lg:mb-4 flex items-center gap-2">
-												<CalendarIcon className="h-4 w-4 sm:h-4 sm:w-4 lg:h-5 lg:w-5 shrink-0" />
-												<span>Pickup Date Selection</span>
-											</h3>
-											<p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 leading-relaxed">
-												Select your preferred pickup date from the available
-												range. Pickup time: {specialsSettings.pickupStartTime} -{" "}
-												{specialsSettings.pickupEndTime}
-											</p>
-										</div>
-										<div className="space-y-3 sm:space-y-4 lg:space-y-6">
-											<FormField
-												control={form.control}
-												name="pickupDate"
-												render={({ field }) => (
-													<FormItem className="flex flex-col">
-														<FormLabel className="text-sm sm:text-base font-medium">
-															Pickup Date (Available:{" "}
-															{formatLocalDate(
-																new Date(specialsSettings.pickupStartDate),
-															)}{" "}
-															to{" "}
-															{formatLocalDate(
-																new Date(specialsSettings.pickupEndDate),
-															)}
-															)
-														</FormLabel>
-														<Popover>
-															<PopoverTrigger asChild>
-																<FormControl>
-																	<Button
-																		variant="outline"
-																		className={`w-full h-10 sm:h-11 px-3 py-2 text-left font-normal text-sm sm:text-base justify-between ${
-																			!field.value && "text-muted-foreground"
-																		}`}
-																	>
-																		<span className="truncate">
-																			{field.value
-																				? formatLocalDate(field.value)
-																				: "Select a pickup date"}
-																		</span>
-																		<CalendarIcon className="h-4 w-4 opacity-50 shrink-0 ml-2" />
-																	</Button>
-																</FormControl>
-															</PopoverTrigger>
-															<PopoverContent
-																className="w-auto p-0 z-50"
-																align="start"
-																side="bottom"
-																sideOffset={4}
-															>
-																<Calendar
-																	mode="single"
-																	selected={field.value}
-																	onSelect={field.onChange}
-																	disabled={(date) => {
-																		const startDate = new Date(
-																			specialsSettings.pickupStartDate,
-																		);
-																		const endDate = new Date(
-																			specialsSettings.pickupEndDate,
-																		);
-																		startDate.setHours(0, 0, 0, 0);
-																		endDate.setHours(23, 59, 59, 999);
-																		const compareDate = new Date(date);
-																		compareDate.setHours(12, 0, 0, 0);
-																		return (
-																			compareDate < startDate ||
-																			compareDate > endDate
-																		);
-																	}}
-																	initialFocus
-																	className="rounded-md border-0"
-																/>
-															</PopoverContent>
-														</Popover>
-														<FormMessage className="text-xs sm:text-sm" />
-													</FormItem>
-												)}
-											/>
-										</div>
-									</div>
+								{/* Address Fields - Only for postal brownies and not gift orders */}
+								{isPostalBrownies && !isGift && (
+									<DeliveryAddressSection
+										form={form}
+										addresses={addresses}
+										addressesLoading={addressesLoading}
+										isCreatingAddress={isCreatingAddress}
+										deleteAddressIsPending={deleteAddressMutation.isPending}
+										onCreateAddress={handleCreateAddress}
+										onDeleteAddress={handleDeleteAddress}
+									/>
 								)}
 
 								{/* Pickup Date and Time - Only for non-postal orders */}
-								{!isPostalBrownies && !hasSpecials && (
-									<div className="space-y-3 sm:space-y-4 lg:space-y-6">
-										<div className="border-t pt-3 sm:pt-4 lg:pt-6">
-											<h3 className="text-sm sm:text-base lg:text-lg font-semibold mb-2 sm:mb-3 lg:mb-4 flex items-center gap-2">
-												<CalendarIcon className="h-4 w-4 sm:h-4 sm:w-4 lg:h-5 lg:w-5 shrink-0" />
-												<span>Pickup Schedule</span>
-											</h3>
-											<p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 leading-relaxed">
-												Select your preferred pickup date and time. Available
-												Wednesday to Sunday, 12PM to 6PM. Minimum {maxLeadTime}{" "}
-												day{maxLeadTime > 1 ? "s" : ""} advance booking required
-												based on your cart items.
-											</p>
-										</div>
-
-										<div className="space-y-3 sm:space-y-4 lg:space-y-6">
-											<FormField
-												control={form.control}
-												name="pickupDate"
-												render={({ field }) => (
-													<FormItem className="flex flex-col">
-														<FormLabel className="text-sm sm:text-base font-medium">
-															Pickup Date
-														</FormLabel>
-														<Popover>
-															<PopoverTrigger asChild>
-																<FormControl>
-																	<Button
-																		variant="outline"
-																		className={`w-full h-10 sm:h-11 px-3 py-2 text-left font-normal text-sm sm:text-base justify-between ${
-																			!field.value && "text-muted-foreground"
-																		}`}
-																	>
-																		<span className="truncate">
-																			{field.value
-																				? formatLocalDate(field.value)
-																				: "Pick a date"}
-																		</span>
-																		<CalendarIcon className="h-4 w-4 opacity-50 shrink-0 ml-2" />
-																	</Button>
-																</FormControl>
-															</PopoverTrigger>
-															<PopoverContent
-																className="w-auto p-0 z-50"
-																align="start"
-																side="bottom"
-																sideOffset={4}
-															>
-																<Calendar
-																	mode="single"
-																	selected={field.value}
-																	onSelect={field.onChange}
-																	disabled={(date) =>
-																		isDateDisabled(date, maxLeadTime)
-																	}
-																	initialFocus
-																	className="rounded-md border-0"
-																/>
-															</PopoverContent>
-														</Popover>
-														<FormMessage className="text-xs sm:text-sm" />
-													</FormItem>
-												)}
-											/>
-
-											<FormField
-												control={form.control}
-												name="pickupTime"
-												render={({ field }) => (
-													<FormItem>
-														<FormLabel className="text-sm sm:text-base font-medium">
-															Pickup Time
-														</FormLabel>
-														<Select
-															onValueChange={field.onChange}
-															defaultValue={field.value}
-														>
-															<FormControl>
-																<SelectTrigger className="w-full h-10 sm:h-11 text-sm sm:text-base">
-																	<SelectValue placeholder="Select time" />
-																</SelectTrigger>
-															</FormControl>
-															<SelectContent className="max-h-[200px] sm:max-h-[300px]">
-																{timeSlots.map((slot) => (
-																	<SelectItem
-																		key={slot.value}
-																		value={slot.value}
-																		className="text-sm sm:text-base"
-																	>
-																		{slot.label}
-																	</SelectItem>
-																))}
-															</SelectContent>
-														</Select>
-														<FormMessage className="text-xs sm:text-sm" />
-													</FormItem>
-												)}
-											/>
-										</div>
-
-										{/* Quick Summary for Mobile */}
-										{(form.watch("pickupDate") || form.watch("pickupTime")) && (
-											<div className="bg-muted/50 rounded-lg p-3 sm:p-4 lg:hidden">
-												<div className="flex items-center gap-2 mb-2">
-													<Clock className="h-4 w-4 text-muted-foreground shrink-0" />
-													<span className="text-sm font-medium">
-														Selected Pickup
-													</span>
-												</div>
-												<div className="space-y-1">
-													{form.watch("pickupDate") && (
-														<p className="text-xs text-muted-foreground">
-															📅{" "}
-															{format(
-																form.watch("pickupDate") as Date,
-																"EEEE, MMM d, yyyy",
-															)}
-														</p>
-													)}
-													{form.watch("pickupTime") && (
-														<p className="text-xs text-muted-foreground">
-															🕐{" "}
-															{
-																timeSlots.find(
-																	(t) => t.value === form.watch("pickupTime"),
-																)?.label
-															}
-														</p>
-													)}
-												</div>
-											</div>
-										)}
-									</div>
+								{!isPostalBrownies && (
+									<PickupScheduleSection
+										form={form}
+										maxLeadTime={maxLeadTime}
+										isDateDisabled={isDateDisabled}
+										timeSlots={timeSlots}
+										hasSpecials={hasSpecials}
+										specialsSettings={specialsSettings}
+									/>
 								)}
 
 								<Button
@@ -1527,8 +1056,8 @@ export default function CheckoutPage({
 										!isOrderingAllowed ||
 										form.formState.isSubmitting ||
 										isProcessing ||
-										(isPostalBrownies && addressMode === "new") ||
-										(isPostalBrownies && !selectedAddressId)
+										(isPostalBrownies && !isGift && addressMode === "new") ||
+										(isPostalBrownies && !isGift && !selectedAddressId)
 									}
 									size="lg"
 									variant={!isOrderingAllowed ? "secondary" : "default"}
@@ -1537,9 +1066,9 @@ export default function CheckoutPage({
 										? "Orders Unavailable"
 										: form.formState.isSubmitting || isProcessing
 											? "Processing..."
-											: isPostalBrownies && addressMode === "new"
+											: isPostalBrownies && !isGift && addressMode === "new"
 												? "Create Address First"
-												: isPostalBrownies && !selectedAddressId
+												: isPostalBrownies && !isGift && !selectedAddressId
 													? "Select Address to Continue"
 													: "Place Order & Pay"}
 								</Button>
@@ -1553,12 +1082,12 @@ export default function CheckoutPage({
 													? "Cake order system is currently disabled"
 													: "Orders are only accepted on allowed days"}
 											</p>
-										) : isPostalBrownies && addressMode === "new" ? (
+										) : isPostalBrownies && !isGift && addressMode === "new" ? (
 											<p className="text-xs text-muted-foreground">
 												Please create and save your address before placing the
 												order
 											</p>
-										) : isPostalBrownies && !selectedAddressId ? (
+										) : isPostalBrownies && !isGift && !selectedAddressId ? (
 											<p className="text-xs text-muted-foreground">
 												Please select a delivery address to continue
 											</p>
@@ -1571,238 +1100,21 @@ export default function CheckoutPage({
 				</Card>
 
 				{/* Order Summary */}
-				<Card className="order-1 lg:order-2">
-					<CardHeader className="pb-4 sm:pb-6">
-						<CardTitle className="text-lg sm:text-xl">Order Summary</CardTitle>
-						{!isPostalBrownies && !hasSpecials && items.length > 0 && (
-							<div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-								<Clock className="h-4 w-4 text-blue-600" />
-								<div className="text-sm">
-									<span className="font-medium text-blue-800">
-										Lead Time Required:{" "}
-									</span>
-									<span className="text-blue-700">
-										{maxLeadTime} day{maxLeadTime > 1 ? "s" : ""} minimum
-									</span>
-								</div>
-							</div>
-						)}
-						{hasSpecials && specialsSettings && (
-							<div className="flex items-center gap-2 p-3 bg-purple-50 rounded-lg border border-purple-200">
-								<CalendarIcon className="h-4 w-4 text-purple-600" />
-								<div className="text-sm">
-									<span className="font-medium text-purple-800">
-										Pickup Available:{" "}
-									</span>
-									<span className="text-purple-700">
-										{formatLocalDate(
-											new Date(specialsSettings.pickupStartDate),
-										)}{" "}
-										to{" "}
-										{formatLocalDate(new Date(specialsSettings.pickupEndDate))}{" "}
-										at {specialsSettings.pickupStartTime} -{" "}
-										{specialsSettings.pickupEndTime}
-									</span>
-								</div>
-							</div>
-						)}
-					</CardHeader>
-					<CardContent className="pt-0">
-						<div className="space-y-3 sm:space-y-4">
-							{items.map((item) => {
-								const dessert =
-									item.type === "cake-orders"
-										? desserts.find((d) => d.id === item.id)
-										: null;
-
-								return (
-									<div
-										key={item.id}
-										className="flex justify-between items-start gap-2"
-									>
-										<div className="flex-1 min-w-0">
-											<h4 className="font-medium text-sm sm:text-base leading-tight">
-												{item.name}
-											</h4>
-											<p className="text-xs sm:text-sm text-muted-foreground">
-												{formatCurrency(Number(item.price))} x {item.quantity}
-											</p>
-											{dessert && item.category !== "special" && (
-												<p className="text-xs text-blue-600 mt-1">
-													{dessert.leadTimeDays} day
-													{dessert.leadTimeDays > 1 ? "s" : ""} lead time
-												</p>
-											)}
-										</div>
-										<div className="font-medium text-sm sm:text-base shrink-0">
-											{formatCurrency(Number(item.price) * item.quantity)}
-										</div>
-									</div>
-								);
-							})}
-
-							<div className="border-t pt-3 sm:pt-4 space-y-2">
-								<div className="flex justify-between items-center text-sm sm:text-base">
-									<span>Subtotal:</span>
-									<span>{formatCurrency(Number(total))}</span>
-								</div>
-
-								{isPostalBrownies && (
-									<div className="space-y-1">
-										<div className="flex justify-between items-center text-sm sm:text-base">
-											<span>Delivery:</span>
-											<div className="text-right">
-												{isDiscountApplied && (
-													<div className="text-xs text-muted-foreground line-through">
-														{formatCurrency(config.postalDeliveryCost)}
-													</div>
-												)}
-												<span
-													className={
-														isDiscountApplied
-															? "text-green-600 font-medium"
-															: ""
-													}
-												>
-													{formatCurrency(deliveryCost)}
-												</span>
-											</div>
-										</div>
-										{isDiscountApplied && (
-											<div className="text-xs text-green-600 text-right">
-												Bengaluru discount applied! 🎉
-											</div>
-										)}
-									</div>
-								)}
-
-								<div className="flex justify-between items-center font-medium text-base sm:text-lg border-t pt-2">
-									<span>Total:</span>
-									<span>{formatCurrency(finalTotal)}</span>
-								</div>
-							</div>
-
-							{/* Pickup Info Display - For specials orders */}
-							{!isPostalBrownies && hasSpecials && form.watch("pickupDate") && (
-								<div className="border-t pt-3 sm:pt-4">
-									<div className="flex items-center gap-2 mb-2">
-										<Clock className="h-4 w-4 text-muted-foreground" />
-										<span className="text-sm sm:text-base font-medium">
-											Selected Pickup Date
-										</span>
-									</div>
-									<p className="text-sm sm:text-base text-muted-foreground">
-										{formatLocalDate(form.watch("pickupDate") as Date)} at{" "}
-										{specialsSettings?.pickupStartTime} -{" "}
-										{specialsSettings?.pickupEndTime}
-									</p>
-								</div>
-							)}
-
-							{/* Pickup Info Display - Only for non-postal orders and non-specials */}
-							{!isPostalBrownies &&
-								!hasSpecials &&
-								(form.watch("pickupDate") || form.watch("pickupTime")) && (
-									<div className="border-t pt-3 sm:pt-4">
-										<div className="flex items-center gap-2 mb-2">
-											<Clock className="h-4 w-4 text-muted-foreground" />
-											<span className="text-sm sm:text-base font-medium">
-												Pickup Details
-											</span>
-										</div>
-										{form.watch("pickupDate") && (
-											<p className="text-xs sm:text-sm text-muted-foreground">
-												Date:{" "}
-												{formatLocalDate(form.watch("pickupDate") as Date)}
-											</p>
-										)}
-										{form.watch("pickupTime") && (
-											<p className="text-xs sm:text-sm text-muted-foreground">
-												Time:{" "}
-												{
-													timeSlots.find(
-														(t) => t.value === form.watch("pickupTime"),
-													)?.label
-												}
-											</p>
-										)}
-									</div>
-								)}
-
-							{/* Delivery Address Display - Only for postal brownies */}
-							{isPostalBrownies && form.watch("selectedAddressId") && (
-								<div className="border-t pt-3 sm:pt-4">
-									<div className="flex items-center gap-2 mb-2">
-										<Package className="h-4 w-4 text-muted-foreground" />
-										<span className="text-sm sm:text-base font-medium">
-											Delivery Information
-										</span>
-									</div>
-									{(() => {
-										const selectedAddress = addresses.find(
-											(addr) => addr.id === form.watch("selectedAddressId"),
-										);
-										const currentSlot = getCurrentActiveSlot();
-
-										return (
-											<div className="space-y-3">
-												{selectedAddress && (
-													<div>
-														<p className="text-xs font-medium text-muted-foreground mb-1">
-															Address:
-														</p>
-														<div className="text-xs sm:text-sm text-muted-foreground space-y-1">
-															<p className="font-medium text-foreground">
-																{selectedAddress.addressLine1}
-															</p>
-															{selectedAddress.addressLine2 && (
-																<p>{selectedAddress.addressLine2}</p>
-															)}
-															<p>
-																{selectedAddress.city}, {selectedAddress.state}{" "}
-																{selectedAddress.zip}
-															</p>
-														</div>
-													</div>
-												)}
-
-												{currentSlot && (
-													<div>
-														<p className="text-xs font-medium text-muted-foreground mb-1">
-															Dispatch Period:
-														</p>
-														<div className="text-xs sm:text-sm text-muted-foreground">
-															<p className="font-medium text-foreground">
-																{new Date(
-																	currentSlot.dispatchStartDate,
-																).toLocaleDateString("en-US", {
-																	weekday: "short",
-																	month: "short",
-																	day: "numeric",
-																})}{" "}
-																-{" "}
-																{new Date(
-																	currentSlot.dispatchEndDate,
-																).toLocaleDateString("en-US", {
-																	weekday: "short",
-																	month: "short",
-																	day: "numeric",
-																})}
-															</p>
-															<p className="text-xs text-muted-foreground mt-1">
-																Your order will be dispatched during this period
-															</p>
-														</div>
-													</div>
-												)}
-											</div>
-										);
-									})()}
-								</div>
-							)}
-						</div>
-					</CardContent>
-				</Card>
+				<OrderSummaryCard
+					form={form}
+					items={items}
+					total={total}
+					deliveryCost={deliveryCost}
+					isDiscountApplied={isDiscountApplied}
+					isPostalBrownies={isPostalBrownies}
+					hasSpecials={hasSpecials}
+					maxLeadTime={maxLeadTime}
+					desserts={desserts}
+					addresses={addresses}
+					timeSlots={timeSlots}
+					specialsSettings={specialsSettings}
+					getCurrentActiveSlot={getCurrentActiveSlot}
+				/>
 			</FadeIn>
 
 			{/* Phone Edit Dialog */}
@@ -1811,6 +1123,33 @@ export default function CheckoutPage({
 				onClose={() => setIsPhoneEditDialogOpen(false)}
 				currentPhone={form.getValues("phone")}
 				onSave={handlePhoneEditSave}
+			/>
+
+			{/* Edit Contact Dialog */}
+			<EditContactDialog
+				contact={contactToEdit}
+				open={isEditContactDialogOpen}
+				onOpenChange={setIsEditContactDialogOpen}
+				onSuccess={(updatedContact) => {
+					// Update form with new contact details
+					form.setValue("selectedRecipientContactId", updatedContact.id);
+					form.setValue("recipientName", updatedContact.name);
+					form.setValue("recipientPhone", updatedContact.phone);
+					form.setValue("confirmRecipientPhone", updatedContact.phone);
+					form.setValue(
+						"recipientAddressLine1",
+						updatedContact.address.addressLine1,
+					);
+					form.setValue(
+						"recipientAddressLine2",
+						updatedContact.address.addressLine2 || "",
+					);
+					form.setValue("recipientCity", updatedContact.address.city);
+					form.setValue("recipientState", updatedContact.address.state);
+					form.setValue("recipientZip", updatedContact.address.zip);
+					setSelectedRecipientContact(updatedContact);
+					setContactToEdit(null);
+				}}
 			/>
 		</div>
 	);

@@ -3,12 +3,17 @@ import { Copy } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
-export default function CopyAddressButton() {
+interface CopyAddressButtonProps {
+	address?: string;
+}
+
+export default function CopyAddressButton({ address }: CopyAddressButtonProps) {
 	const copyAddress = async () => {
-		const address =
+		const addressText =
+			address ||
 			"Akshaya Gold Apartment, Pipe Line Rd, VGS Layout, Ejipura, Bengaluru - 560047";
 		try {
-			await navigator.clipboard.writeText(address);
+			await navigator.clipboard.writeText(addressText);
 			toast.success("Address copied to clipboard!");
 		} catch (error) {
 			console.error("Failed to copy address:", error);
