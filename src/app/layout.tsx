@@ -22,11 +22,11 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 export const metadata: Metadata = {
 	metadataBase: new URL("https://cocoacomaa.com"),
 	title: {
-		default: "Cocoa Comaa | Fudgy Custom Brownies & Desserts in Bengaluru",
+		default: "Cocoa Comaa | Fudgy Brownies & Desserts in Bengaluru",
 		template: "%s | Cocoa Comaa",
 	},
 	description:
-		"Order fudgy custom brownies, cakes & desserts in Bengaluru. Baking workshops available. Same-day delivery in Koramangala. Postal brownies shipped across India.",
+		"Order fudgy Brownies, cakes & desserts in Bengaluru. Baking workshops available. Same-day delivery in Koramangala. Postal brownies shipped across India.",
 
 	alternates: {
 		canonical: "https://cocoacomaa.com",
@@ -54,16 +54,16 @@ export const metadata: Metadata = {
 		locale: "en_IN",
 		url: "https://cocoacomaa.com",
 		siteName: "Cocoa Comaa",
-		title: "Cocoa Comaa | Fudgy Custom Brownies & Desserts in Bengaluru",
+		title: "Cocoa Comaa | Fudgy Brownies & Desserts in Bengaluru",
 		description:
-			"Order fudgy custom brownies, cakes & desserts in Bengaluru. Baking workshops available. Same-day delivery in Koramangala.",
+			"Order fudgy Brownies, cakes & desserts in Bengaluru. Baking workshops available. Same-day delivery in Koramangala.",
 	},
 
 	twitter: {
 		card: "summary_large_image",
-		title: "Cocoa Comaa | Fudgy Custom Brownies & Desserts in Bengaluru",
+		title: "Cocoa Comaa | Fudgy Brownies & Desserts in Bengaluru",
 		description:
-			"Order fudgy custom brownies, cakes & desserts in Bengaluru. Baking workshops available. Same-day delivery in Koramangala.",
+			"Order fudgy Brownies, cakes & desserts in Bengaluru. Baking workshops available. Same-day delivery in Koramangala.",
 	},
 
 	appleWebApp: {

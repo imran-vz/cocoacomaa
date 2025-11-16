@@ -45,7 +45,7 @@ export function generateOrganizationSchema(): WithContext<Thing> {
 		url: "https://cocoacomaa.com",
 		logo: "https://cocoacomaa.com/logo.png",
 		description:
-			"Order fudgy custom brownies, cakes & desserts in Bengaluru. Baking workshops available.",
+			"Order fudgy Brownies, cakes & desserts in Bengaluru. Baking workshops available.",
 		email: "contact@cocoacomaa.com",
 		telephone: "+91-84318-73579",
 		address: {

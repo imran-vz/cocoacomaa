@@ -2,8 +2,7 @@ import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
 
-export const alt =
-	"Cocoa Comaa - Fudgy Custom Brownies & Desserts in Bengaluru";
+export const alt = "Cocoa Comaa - Fudgy Brownies & Desserts in Bengaluru";
 export const size = {
 	width: 1200,
 	height: 630,
@@ -67,7 +66,7 @@ export default async function Image() {
 						color: "#e5e5e5",
 					}}
 				>
-					<span>Custom Brownies</span>
+					<span>Brownies</span>
 					<span style={{ opacity: 0.5 }}>•</span>
 					<span>Cakes</span>
 					<span style={{ opacity: 0.5 }}>•</span>
