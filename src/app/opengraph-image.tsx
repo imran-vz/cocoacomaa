@@ -11,6 +11,18 @@ export const size = {
 export const contentType = "image/png";
 
 export default async function Image() {
+	const logoUrl = new URL(
+		"/logo.png",
+		process.env.NEXT_PUBLIC_BASE_URL || "https://cocoacomaa.com",
+	).toString();
+
+	const interBold = await fetch(
+		new URL(
+			"/Inter-Bold.ttf",
+			process.env.NEXT_PUBLIC_BASE_URL || "https://cocoacomaa.com",
+		),
+	).then((res) => res.arrayBuffer());
+
 	return new ImageResponse(
 		<div
 			style={{
@@ -22,6 +34,7 @@ export default async function Image() {
 				justifyContent: "center",
 				backgroundColor: "#502922",
 				backgroundImage: "linear-gradient(135deg, #502922 0%, #3d1f1a 100%)",
+				fontFamily: "Inter",
 			}}
 		>
 			<div
@@ -33,6 +46,16 @@ export default async function Image() {
 					gap: "32px",
 				}}
 			>
+				{/** biome-ignore lint/performance/noImgElement: OG image generation with next/og requires img element */}
+				<img
+					src={logoUrl}
+					alt="Cocoa Comaa Logo"
+					width="120"
+					height="120"
+					style={{
+						borderRadius: "20px",
+					}}
+				/>
 				<h1
 					style={{
 						fontSize: "80px",
@@ -86,6 +109,14 @@ export default async function Image() {
 		</div>,
 		{
 			...size,
+			fonts: [
+				{
+					name: "Inter",
+					data: interBold,
+					style: "normal",
+					weight: 700,
+				},
+			],
 		},
 	);
 }
