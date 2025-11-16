@@ -1,5 +1,25 @@
+import type { Metadata } from "next";
 import InstagramIcon from "@/components/icon/instagram";
 import WhatsAppIcon from "@/components/icon/whatsapp";
+
+export const metadata: Metadata = {
+	title: "Contact Us | Order Custom Desserts in Koramangala",
+	description:
+		"Get in touch with Cocoa Comaa for custom dessert orders, baking workshop inquiries, or any questions. Located in Koramangala, Bengaluru. Email: contact@cocoacomaa.com | Phone: +91 84318 73579",
+	keywords: [
+		"contact cocoa comaa",
+		"order custom cakes bengaluru",
+		"koramangala bakery contact",
+		"bengaluru desserts inquiry",
+		"workshop booking",
+		"custom cake order",
+	],
+	openGraph: {
+		title: "Contact Us | Order Custom Desserts in Koramangala | Cocoa Comaa",
+		description:
+			"Get in touch with Cocoa Comaa for custom dessert orders and inquiries. Located in Koramangala, Bengaluru.",
+	},
+};
 
 export default function ContactUs() {
 	return (

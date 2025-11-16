@@ -1,3 +1,24 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "About Cocoa Comaa | Bengaluru's Fudgy Brownie Specialists",
+	description:
+		"Learn about Cocoa Comaa - started in a tiny home kitchen, now Bengaluru's beloved dessert destination. Specializing in fudgy brownies, custom cakes, and baking workshops in Koramangala.",
+	keywords: [
+		"about cocoa comaa",
+		"bengaluru bakery",
+		"home bakery bengaluru",
+		"artisan brownies",
+		"custom desserts koramangala",
+		"local bakery bengaluru",
+	],
+	openGraph: {
+		title: "About Cocoa Comaa | Bengaluru's Fudgy Brownie Specialists",
+		description:
+			"Learn about Cocoa Comaa - from a tiny home kitchen to Bengaluru's beloved dessert destination.",
+	},
+};
+
 export default function AboutPage() {
 	return (
 		<div className="container max-w-4xl py-8 px-4 min-h-[calc(100svh-11rem)] mx-auto">

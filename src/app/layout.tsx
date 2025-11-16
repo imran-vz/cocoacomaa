@@ -4,10 +4,15 @@ import { Inter } from "next/font/google";
 
 import Footer from "@/components/footer";
 import { Navigation } from "@/components/navigation";
+import { StructuredData } from "@/components/structured-data";
 import BrowserCompatibilityBanner from "@/components/ui/browser-compatibility-banner";
 import { Toaster } from "@/components/ui/sonner";
 import UrlCleaner from "@/components/ui/url-cleaner";
 import { CartProvider } from "@/lib/cart-context";
+import {
+	generateLocalBusinessSchema,
+	generateOrganizationSchema,
+} from "@/lib/seo/structured-data";
 import { Providers } from "./providers";
 
 import "./globals.css";
@@ -15,8 +20,13 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-	title: "Cocoa Comaa",
-	description: "Order custom desserts online",
+	metadataBase: new URL("https://cocoacomaa.com"),
+	title: {
+		default: "Cocoa Comaa | Fudgy Custom Brownies & Desserts in Bengaluru",
+		template: "%s | Cocoa Comaa",
+	},
+	description:
+		"Order fudgy custom brownies, cakes & desserts in Bengaluru. Baking workshops available. Same-day delivery in Koramangala. Postal brownies shipped across India.",
 
 	alternates: {
 		canonical: "https://cocoacomaa.com",
@@ -26,10 +36,34 @@ export const metadata: Metadata = {
 
 	applicationName: "Cocoa Comaa",
 	creator: "Imran",
-	keywords: ["cocoa-comaa", "brownie", "dessert", "order", "online"],
+	keywords: [
+		"bengaluru brownies",
+		"custom cakes bengaluru",
+		"koramangala bakery",
+		"baking workshops",
+		"fudgy brownies",
+		"postal brownies india",
+		"custom desserts",
+		"bengaluru bakery",
+		"koramangala desserts",
+		"online cake order bengaluru",
+	],
+
 	openGraph: {
-		title: "Cocoa Comaa",
-		description: "Order custom desserts online",
+		type: "website",
+		locale: "en_IN",
+		url: "https://cocoacomaa.com",
+		siteName: "Cocoa Comaa",
+		title: "Cocoa Comaa | Fudgy Custom Brownies & Desserts in Bengaluru",
+		description:
+			"Order fudgy custom brownies, cakes & desserts in Bengaluru. Baking workshops available. Same-day delivery in Koramangala.",
+	},
+
+	twitter: {
+		card: "summary_large_image",
+		title: "Cocoa Comaa | Fudgy Custom Brownies & Desserts in Bengaluru",
+		description:
+			"Order fudgy custom brownies, cakes & desserts in Bengaluru. Baking workshops available. Same-day delivery in Koramangala.",
 	},
 
 	appleWebApp: {
@@ -62,6 +96,11 @@ export default function RootLayout({
 }) {
 	return (
 		<html lang="en" suppressHydrationWarning>
+			<head>
+				<StructuredData
+					data={[generateLocalBusinessSchema(), generateOrganizationSchema()]}
+				/>
+			</head>
 			<body className={inter.className}>
 				<Analytics />
 				<Providers>

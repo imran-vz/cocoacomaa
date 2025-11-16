@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { CakeSlice, Egg, EggOff, Minus, Plus } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -46,9 +47,12 @@ const fetchDesserts = async () => {
 
 export default function OrderClientPage({
 	initialDesserts,
+	isAuthenticated,
 }: {
 	initialDesserts: Dessert[];
+	isAuthenticated: boolean;
 }) {
+	const router = useRouter();
 	const { items, addItem, removeItem, updateQuantity } = useCart();
 	const [selectedCategory, setSelectedCategory] = useState<
 		"all" | "cake" | "dessert"
@@ -81,6 +85,10 @@ export default function OrderClientPage({
 	}, [items, removeItem]);
 
 	const handleAddToCart = (dessert: Dessert) => {
+		if (!isAuthenticated) {
+			router.push("/login?redirect=/order");
+			return;
+		}
 		addItem({
 			id: dessert.id,
 			name: dessert.name,

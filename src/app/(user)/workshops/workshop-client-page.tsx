@@ -65,8 +65,10 @@ const fetchWorkshops = async (): Promise<Workshop[]> => {
 
 export default function WorkshopsClientPage({
 	initialData,
+	isAuthenticated,
 }: {
 	initialData: Workshop[];
+	isAuthenticated: boolean;
 }) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -131,6 +133,11 @@ export default function WorkshopsClientPage({
 	};
 
 	const handleRegister = async (workshop: Workshop) => {
+		if (!isAuthenticated) {
+			router.push("/login?redirect=/workshops");
+			return;
+		}
+
 		setIsProcessing(true);
 		setProcessingWorkshopId(workshop.id);
 

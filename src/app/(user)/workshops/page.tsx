@@ -1,15 +1,31 @@
 import { and, count, desc, eq, isNotNull, sql } from "drizzle-orm";
-import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { workshopOrders, workshops } from "@/lib/db/schema";
 import WorkshopsClientPage from "./workshop-client-page";
 
+export const metadata: Metadata = {
+	title: "Baking Workshops in Bengaluru | Learn from Experts",
+	description:
+		"Join hands-on baking workshops in Koramangala, Bengaluru. Learn to make fudgy brownies, custom cakes, and desserts from expert bakers. Book your spot today!",
+	keywords: [
+		"baking workshops bengaluru",
+		"brownie making class",
+		"cake baking workshop koramangala",
+		"dessert classes bengaluru",
+		"learn baking bengaluru",
+		"hands-on baking class",
+	],
+	openGraph: {
+		title: "Baking Workshops in Bengaluru | Learn from Experts | Cocoa Comaa",
+		description:
+			"Join hands-on baking workshops in Koramangala. Learn to make brownies, cakes, and desserts from experts.",
+	},
+};
+
 export default async function WorkshopsPage() {
 	const session = await auth();
-	if (!session?.user?.id) {
-		redirect("/login?redirect=/workshops");
-	}
 
 	const workshopsList = await db.query.workshops.findMany({
 		where: eq(workshops.isDeleted, false),
@@ -45,5 +61,10 @@ export default async function WorkshopsPage() {
 		}),
 	);
 
-	return <WorkshopsClientPage initialData={workshopsWithBookings} />;
+	return (
+		<WorkshopsClientPage
+			initialData={workshopsWithBookings}
+			isAuthenticated={!!session?.user?.id}
+		/>
+	);
 }

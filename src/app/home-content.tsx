@@ -28,9 +28,9 @@ export function HomeContent() {
 				<div className="min-h-[calc(100svh-5rem)] flex justify-center text-white flex-col items-center">
 					<StaggerContainer>
 						<StaggerItem>
-							<h2 className="text-4xl text-center leading-12 font-normal tracking-widest mb-4 font-serif">
+							<h1 className="text-4xl text-center leading-12 font-normal tracking-widest mb-4 font-serif">
 								Fudgy. Messy. Unforgettable.
-							</h2>
+							</h1>
 						</StaggerItem>
 						<StaggerItem>
 							<p className="max-w-sm mx-auto text-xl text-center font-normal tracking-widest mb-4 font-serif">
