@@ -97,6 +97,20 @@ export const orders = pgTable("orders", (d) => {
 			.default("cake-orders"),
 		// Address fields for postal brownie orders
 		addressId: d.integer("address_id").references(() => addresses.id),
+		// Gift order fields
+		isGift: d.boolean("is_gift").notNull().default(false),
+		giftMessage: d.text("gift_message"),
+		recipientContactId: d
+			.integer("recipient_contact_id")
+			.references(() => customerContacts.id),
+		// Recipient snapshot fields (immutable order history)
+		recipientName: d.text("recipient_name"),
+		recipientPhone: d.text("recipient_phone"),
+		recipientAddressLine1: d.text("recipient_address_line_1"),
+		recipientAddressLine2: d.text("recipient_address_line_2"),
+		recipientCity: d.text("recipient_city"),
+		recipientState: d.text("recipient_state"),
+		recipientZip: d.text("recipient_zip"),
 	};
 });
 
@@ -112,6 +126,10 @@ export const ordersRelations = relations(orders, ({ many, one }) => ({
 	address: one(addresses, {
 		fields: [orders.addressId],
 		references: [addresses.id],
+	}),
+	recipientContact: one(customerContacts, {
+		fields: [orders.recipientContactId],
+		references: [customerContacts.id],
 	}),
 }));
 
@@ -287,10 +305,42 @@ export const addresses = pgTable("addresses", (d) => {
 	};
 });
 
+export type Address = typeof addresses.$inferSelect;
+
+export const customerContacts = pgTable("customer_contacts", (d) => {
+	return {
+		id: d.integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		userId: d
+			.text("user_id")
+			.notNull()
+			.references(() => users.id),
+		name: d.text("name").notNull(),
+		phone: d.text("phone").notNull(),
+		addressId: d
+			.integer("address_id")
+			.notNull()
+			.references(() => addresses.id),
+		isDeleted: d.boolean("is_deleted").notNull().default(false),
+		useCount: d.integer("use_count").notNull().default(0),
+		lastUsedAt: d.timestamp("last_used_at"),
+		createdAt: d
+			.timestamp("created_at")
+			.default(sql`CURRENT_TIMESTAMP`)
+			.notNull(),
+		updatedAt: d
+			.timestamp("updated_at")
+			.default(sql`CURRENT_TIMESTAMP`)
+			.notNull(),
+	};
+});
+
+export type CustomerContact = typeof customerContacts.$inferSelect;
+
 export const usersRelations = relations(users, ({ many }) => ({
 	address: many(addresses),
 	orders: many(orders),
 	workshopOrders: many(workshopOrders),
+	customerContacts: many(customerContacts),
 	passwordResetTokens: many(passwordResetTokens),
 	accounts: many(accounts, { relationName: "user_accounts" }),
 	sessions: many(sessions, { relationName: "user_sessions" }),
@@ -322,12 +372,27 @@ export const passwordResetTokensRelations = relations(
 	}),
 );
 
-export const addressesRelations = relations(addresses, ({ one }) => ({
+export const addressesRelations = relations(addresses, ({ one, many }) => ({
 	user: one(users, {
 		fields: [addresses.userId],
 		references: [users.id],
 	}),
+	customerContacts: many(customerContacts),
 }));
+
+export const customerContactsRelations = relations(
+	customerContacts,
+	({ one }) => ({
+		user: one(users, {
+			fields: [customerContacts.userId],
+			references: [users.id],
+		}),
+		address: one(addresses, {
+			fields: [customerContacts.addressId],
+			references: [addresses.id],
+		}),
+	}),
+);
 
 export const cakeOrderSettings = pgTable("cake_order_settings", (d) => {
 	return {

@@ -1,6 +1,6 @@
 import { PINCODES } from "@/lib/bengaluru-pincodes";
 import { config } from "@/lib/config";
-import type { Address } from "@/types/address";
+import type { Address } from "./db/schema";
 
 /**
  * Calculate delivery cost based on address location

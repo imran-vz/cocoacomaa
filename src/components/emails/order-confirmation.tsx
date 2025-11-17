@@ -192,7 +192,11 @@ export default function OrderConfirmationEmail({
 								{orderDetails.orderItems.map((item, index) => (
 									<div
 										key={`${item.itemName}-${item.quantity}-${item.price}-${index}`}
-										className="border-b border-gray-100 last:border-b-0"
+										className={
+											index === orderDetails.orderItems.length - 1
+												? ""
+												: "border-b border-gray-100"
+										}
 									>
 										<Row className="p-3">
 											<Column>
@@ -311,7 +315,7 @@ export default function OrderConfirmationEmail({
 								<Heading className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-amber-800">
 									📦 Postal Brownies Care Instructions
 								</Heading>
-								<div className="bg-gradient-to-r from-amber-50 to-orange-50 p-4 rounded-lg border border-amber-200">
+								<div className="bg-linear-to-r from-amber-50 to-orange-50 p-4 rounded-lg border border-amber-200">
 									<Text className="text-gray-700 mb-2 font-medium">
 										🍫 Upon Delivery:
 									</Text>
