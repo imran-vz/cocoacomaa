@@ -270,7 +270,7 @@ export function WorkshopForm({ mode, initialData }: WorkshopFormProps) {
 								)}
 							/>
 
-							<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+							<div className="grid grid-cols-1 place-items-start md:grid-cols-3 gap-4">
 								<FormField
 									control={form.control}
 									name="amount"
@@ -286,12 +286,10 @@ export function WorkshopForm({ mode, initialData }: WorkshopFormProps) {
 													{...field}
 												/>
 											</FormControl>
-											{grossAmount > 0 && (
-												<p className="text-sm text-muted-foreground">
-													Gross Amount (with {config.paymentProcessingFee}%
-													fee): ₹{grossAmount}
-												</p>
-											)}
+											<p className="text-xs text-muted-foreground min-h-[20px]">
+												Gross Amount (with {config.paymentProcessingFee}% fee):
+												₹{grossAmount.toFixed(2)}
+											</p>
 											<FormMessage />
 										</FormItem>
 									)}
@@ -301,7 +299,7 @@ export function WorkshopForm({ mode, initialData }: WorkshopFormProps) {
 									control={form.control}
 									name="type"
 									render={({ field }) => (
-										<FormItem>
+										<FormItem className="w-full">
 											<FormLabel>Type</FormLabel>
 											<Select
 												onValueChange={field.onChange}
@@ -388,6 +386,7 @@ export function WorkshopForm({ mode, initialData }: WorkshopFormProps) {
 												<SelectContent>
 													<SelectItem value="active">Active</SelectItem>
 													<SelectItem value="inactive">Inactive</SelectItem>
+													<SelectItem value="completed">Completed</SelectItem>
 												</SelectContent>
 											</Select>
 											<FormMessage />

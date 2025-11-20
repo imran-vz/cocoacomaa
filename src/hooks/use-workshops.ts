@@ -9,7 +9,7 @@ export type WorkshopWithSlotData = {
 	amount: string;
 	type: "online" | "offline";
 	maxBookings: number;
-	status: "active" | "inactive";
+	status: "active" | "inactive" | "completed";
 	createdAt: Date;
 	currentSlotsUsed: number;
 	currentBookings: number;
@@ -32,6 +32,16 @@ const deleteWorkshop = async (id: number): Promise<void> => {
 
 	if (!response.ok) {
 		throw new Error("Failed to delete workshop");
+	}
+};
+
+const completeWorkshop = async (id: number): Promise<void> => {
+	const response = await fetch(`/api/admin/workshops/${id}/complete`, {
+		method: "PATCH",
+	});
+
+	if (!response.ok) {
+		throw new Error("Failed to mark workshop as completed");
 	}
 };
 
@@ -60,6 +70,30 @@ export const useDeleteWorkshop = () => {
 		onError: (error) => {
 			console.error("Error deleting workshop:", error);
 			toast.error("Failed to delete workshop");
+		},
+	});
+};
+
+export const useCompleteWorkshop = () => {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: completeWorkshop,
+		onSuccess: (_, completedId) => {
+			queryClient.setQueryData(
+				["admin-workshops"],
+				(old: WorkshopWithSlotData[] = []) =>
+					old.map((workshop) =>
+						workshop.id === completedId
+							? { ...workshop, status: "completed" }
+							: workshop,
+					),
+			);
+			toast.success("Workshop marked as completed");
+		},
+		onError: (error) => {
+			console.error("Error marking workshop as completed:", error);
+			toast.error("Failed to mark workshop as completed");
 		},
 	});
 };

@@ -1,4 +1,13 @@
-import { and, count, desc, eq, isNotNull, sql } from "drizzle-orm";
+import {
+	and,
+	count,
+	desc,
+	eq,
+	inArray,
+	isNotNull,
+	not,
+	sql,
+} from "drizzle-orm";
 import type { Metadata } from "next";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -28,7 +37,10 @@ export default async function WorkshopsPage() {
 	const session = await auth();
 
 	const workshopsList = await db.query.workshops.findMany({
-		where: eq(workshops.isDeleted, false),
+		where: and(
+			eq(workshops.isDeleted, false),
+			not(inArray(workshops.status, ["completed", "inactive"])),
+		),
 		orderBy: [desc(workshops.createdAt)],
 	});
 

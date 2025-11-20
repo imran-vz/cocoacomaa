@@ -408,7 +408,7 @@ export const workshops = pgTable("workshops", (d) => {
 		maxBookings: d.integer("max_bookings").notNull().default(10),
 		imageUrl: d.text("image_url"),
 		status: d
-			.varchar("status", { enum: ["active", "inactive"] })
+			.varchar("status", { enum: ["active", "inactive", "completed"] })
 			.notNull()
 			.default("active"),
 		isDeleted: d.boolean("is_deleted").notNull().default(false),

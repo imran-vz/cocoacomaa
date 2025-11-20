@@ -53,7 +53,7 @@ interface Workshop {
 	maxBookings: number;
 	currentBookings: number;
 	availableSlots: number;
-	status: "active" | "inactive";
+	status: "active" | "inactive" | "completed";
 	imageUrl?: string | null;
 	createdAt: Date;
 }

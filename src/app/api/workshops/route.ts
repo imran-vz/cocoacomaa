@@ -1,4 +1,13 @@
-import { and, count, desc, eq, isNotNull, sql } from "drizzle-orm";
+import {
+	and,
+	count,
+	desc,
+	eq,
+	inArray,
+	isNotNull,
+	not,
+	sql,
+} from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -10,7 +19,10 @@ export async function GET(request: NextRequest) {
 		const includeBookings = searchParams.get("includeBookings") === "true";
 
 		const workshopsList = await db.query.workshops.findMany({
-			where: eq(workshops.isDeleted, false),
+			where: and(
+				eq(workshops.isDeleted, false),
+				not(inArray(workshops.status, ["completed", "inactive"])),
+			),
 			orderBy: [desc(workshops.createdAt)],
 		});
 

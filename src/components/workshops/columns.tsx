@@ -2,7 +2,7 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { Edit, MoreHorizontal, Trash2 } from "lucide-react";
+import { CheckCircle2, Edit, MoreHorizontal, Trash2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -17,6 +17,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+	useCompleteWorkshop,
 	useDeleteWorkshop,
 	type WorkshopWithSlotData,
 } from "@/hooks/use-workshops";
@@ -44,6 +45,39 @@ const DeleteAction = ({ id, title }: { id: number; title: string }) => {
 		>
 			<Trash2 className="mr-2 h-4 w-4" />
 			Delete
+		</DropdownMenuItem>
+	);
+};
+
+const CompleteAction = ({
+	id,
+	title,
+	status,
+}: {
+	id: number;
+	title: string;
+	status: "active" | "inactive" | "completed";
+}) => {
+	const { mutate: completeWorkshop, isPending } = useCompleteWorkshop();
+
+	const handleComplete = async () => {
+		const confirmed = await confirm({
+			title: "Mark Workshop as Completed",
+			description: `Are you sure you want to mark "${title}" as completed? This will hide it from customers.`,
+		});
+		if (!confirmed) return;
+
+		completeWorkshop(id);
+	};
+
+	if (status === "completed") {
+		return null;
+	}
+
+	return (
+		<DropdownMenuItem onClick={handleComplete} disabled={isPending}>
+			<CheckCircle2 className="mr-2 h-4 w-4" />
+			Mark as Completed
 		</DropdownMenuItem>
 	);
 };
@@ -80,11 +114,7 @@ export const columns: ColumnDef<WorkshopWithSlotData>[] = [
 		header: "Type",
 		cell: ({ row }) => {
 			const type = row.getValue("type") as string;
-			return (
-				<Badge variant={type === "online" ? "default" : "secondary"}>
-					{type}
-				</Badge>
-			);
+			return <Badge variant={"outline"}>{type}</Badge>;
 		},
 	},
 	{
@@ -128,7 +158,15 @@ export const columns: ColumnDef<WorkshopWithSlotData>[] = [
 		cell: ({ row }) => {
 			const status = row.getValue("status") as string;
 			return (
-				<Badge variant={status === "active" ? "default" : "secondary"}>
+				<Badge
+					variant={
+						status === "active"
+							? "default"
+							: status === "inactive"
+								? "destructive"
+								: "success"
+					}
+				>
 					{status}
 				</Badge>
 			);
@@ -164,6 +202,11 @@ export const columns: ColumnDef<WorkshopWithSlotData>[] = [
 								Edit
 							</Link>
 						</DropdownMenuItem>
+						<CompleteAction
+							id={workshop.id}
+							title={workshop.title}
+							status={workshop.status}
+						/>
 						<DeleteAction id={workshop.id} title={workshop.title} />
 					</DropdownMenuContent>
 				</DropdownMenu>
