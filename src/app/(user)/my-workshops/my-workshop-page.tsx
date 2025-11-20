@@ -11,32 +11,9 @@ import { useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
+import type { MyWorkshopOrder } from "@/lib/db/workshop-order";
 
-interface WorkshopOrder {
-	id: string;
-	amount: string;
-	slots: number;
-	status: "pending" | "payment_pending" | "paid" | "confirmed" | "cancelled";
-	paymentStatus:
-		| "pending"
-		| "created"
-		| "authorized"
-		| "captured"
-		| "refunded"
-		| "failed";
-	createdAt: Date;
-	notes?: string | null;
-	workshop: {
-		id: number;
-		title: string;
-		description: string;
-		amount: string;
-		type: "online" | "offline";
-		status: "active" | "inactive";
-	};
-}
-
-const fetchMyWorkshops = async (): Promise<WorkshopOrder[]> => {
+const fetchMyWorkshops = async (): Promise<MyWorkshopOrder[]> => {
 	const { data } = await axios.get("/api/workshop-orders");
 	return data.data;
 };
@@ -67,7 +44,7 @@ const formatStatus = (status: string) => {
 export default function MyWorkshopPage({
 	initialData,
 }: {
-	initialData: WorkshopOrder[];
+	initialData: MyWorkshopOrder[];
 }) {
 	const searchParams = useSearchParams();
 	const workshopId = searchParams.get("workshopId");

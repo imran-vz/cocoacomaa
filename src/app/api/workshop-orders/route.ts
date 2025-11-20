@@ -1,4 +1,4 @@
-import { and, desc, eq, isNotNull, sql } from "drizzle-orm";
+import { and, eq, isNotNull, sql } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
 import Razorpay from "razorpay";
 import { auth } from "@/auth";
@@ -6,6 +6,7 @@ import { calculateNetAmount } from "@/lib/calculateGrossAmount";
 import { config } from "@/lib/config";
 import { db } from "@/lib/db";
 import { workshopOrders, workshops } from "@/lib/db/schema";
+import { getMyWorkshopOrders } from "@/lib/db/workshop-order";
 
 const razorpay = new Razorpay({
 	key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
@@ -30,25 +31,7 @@ export async function GET(request: NextRequest) {
 		const isAdmin = session.user.role === "admin";
 		const filterUserId = isAdmin && userId ? userId : session.user.id;
 
-		const ordersList = await db.query.workshopOrders.findMany({
-			where: and(
-				isNotNull(workshopOrders.razorpayPaymentId),
-				eq(workshopOrders.userId, filterUserId),
-				eq(workshopOrders.isDeleted, false),
-			),
-			orderBy: [desc(workshopOrders.createdAt)],
-			with: {
-				workshop: true,
-				user: {
-					columns: {
-						id: true,
-						name: true,
-						email: true,
-						phone: true,
-					},
-				},
-			},
-		});
+		const ordersList = await getMyWorkshopOrders(filterUserId);
 
 		return NextResponse.json({
 			success: true,
