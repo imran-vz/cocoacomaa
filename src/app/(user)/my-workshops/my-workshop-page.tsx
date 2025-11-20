@@ -10,8 +10,8 @@ import { useEffect } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCurrency } from "@/lib/utils";
 import type { MyWorkshopOrder } from "@/lib/db/workshop-order";
+import { formatCurrency } from "@/lib/utils";
 
 const fetchMyWorkshops = async (): Promise<MyWorkshopOrder[]> => {
 	const { data } = await axios.get("/api/workshop-orders");
