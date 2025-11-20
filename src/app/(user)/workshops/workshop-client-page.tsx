@@ -523,7 +523,7 @@ export default function WorkshopsClientPage({
 															<div className="line-clamp-5">
 																{workshop.description}
 															</div>
-															<div className="absolute bottom-0 right-0 bg-white pl-2">
+															<div className="absolute bottom-0 right-0 bg-card pl-2">
 																<button
 																	type="button"
 																	onClick={() => toggleDescription(workshop.id)}
