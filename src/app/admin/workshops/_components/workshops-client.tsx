@@ -58,6 +58,7 @@ export function WorkshopsClient({ initialData }: WorkshopsClientProps) {
 					options: [
 						{ label: "Active", value: "active" },
 						{ label: "Inactive", value: "inactive" },
+						{ label: "Completed", value: "completed" },
 					],
 				},
 			]}
