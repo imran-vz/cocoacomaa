@@ -3,5 +3,5 @@
 
 set -e
 
-pnpm lint:fix
-pnpm build
+bun run lint:fix
+bun run build
