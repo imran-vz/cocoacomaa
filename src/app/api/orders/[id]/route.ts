@@ -1,6 +1,13 @@
 import { eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
+import {
+	createForbiddenResponse,
+	createUnauthorizedResponse,
+	requireAuth,
+	requireSessionId,
+} from "@/lib/auth-utils";
 import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
 
@@ -9,6 +16,11 @@ export async function GET(
 	{ params }: { params: Promise<{ id: string }> },
 ) {
 	try {
+		// Check authentication
+		const session = await auth();
+		requireAuth(session);
+		const userId = requireSessionId(session);
+
 		const { id } = await params;
 
 		if (!id) {
@@ -27,6 +39,7 @@ export async function GET(
 				razorpayOrderId: true,
 				razorpayPaymentId: true,
 				notes: true,
+				userId: true, // Need userId for ownership check
 			},
 			with: {
 				user: {
@@ -54,6 +67,16 @@ export async function GET(
 			return NextResponse.json({ error: "Order not found" }, { status: 404 });
 		}
 
+		// Verify ownership OR admin/manager access
+		const userRole = session?.user?.role;
+		const isAdminOrManager = userRole === "admin" || userRole === "manager";
+
+		if (order.userId !== userId && !isAdminOrManager) {
+			return createForbiddenResponse(
+				"You do not have permission to view this order",
+			);
+		}
+
 		return NextResponse.json({
 			success: true,
 			order: {
@@ -72,6 +95,14 @@ export async function GET(
 			},
 		});
 	} catch (error) {
+		if (error instanceof Error) {
+			if (error.message.includes("Unauthorized")) {
+				return createUnauthorizedResponse(error.message);
+			}
+			if (error.message.includes("Forbidden")) {
+				return createForbiddenResponse(error.message);
+			}
+		}
 		console.error("Error fetching order:", error);
 		return NextResponse.json(
 			{ error: "Failed to fetch order" },

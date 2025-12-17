@@ -4,7 +4,9 @@ import { NextResponse } from "next/server";
 
 import { db } from "@/lib/db";
 import { passwordResetTokens, users } from "@/lib/db/schema";
+import { checkRateLimit, otpVerifyLimiter } from "@/lib/rate-limit";
 import { resetPasswordSchema } from "@/lib/schema";
+import { SECURITY_CONFIG } from "@/lib/security-config";
 
 export async function POST(request: Request) {
 	try {
@@ -23,6 +25,21 @@ export async function POST(request: Request) {
 		}
 
 		const { token, email, password } = data;
+
+		// Rate limiting for OTP verification to prevent brute-force
+		const rateLimitResult = await checkRateLimit(
+			`otp-verify:${email}`,
+			otpVerifyLimiter,
+		);
+
+		if (!rateLimitResult.success) {
+			return NextResponse.json(
+				{
+					message: `Too many verification attempts. Please try again after ${Math.ceil((rateLimitResult.reset - Date.now()) / (60 * 1000))} minutes.`,
+				},
+				{ status: 429 },
+			);
+		}
 
 		// Find valid token
 		const resetToken = await db.query.passwordResetTokens.findFirst({
@@ -57,8 +74,11 @@ export async function POST(request: Request) {
 			return NextResponse.json({ message: "User not found." }, { status: 404 });
 		}
 
-		// Hash new password
-		const hashedPassword = await bcrypt.hash(password, 10);
+		// Hash new password with secure bcrypt rounds
+		const hashedPassword = await bcrypt.hash(
+			password,
+			SECURITY_CONFIG.bcryptRounds,
+		);
 
 		// Update user password
 		await db

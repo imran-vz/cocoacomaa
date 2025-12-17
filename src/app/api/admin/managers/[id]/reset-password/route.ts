@@ -5,6 +5,7 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
+import { SECURITY_CONFIG } from "@/lib/security-config";
 
 const resetPasswordSchema = z.object({
 	newPassword: z
@@ -49,8 +50,11 @@ export async function POST(
 			);
 		}
 
-		// Hash new password
-		const hashedPassword = await bcrypt.hash(validatedData.newPassword, 10);
+		// Hash new password with secure bcrypt rounds
+		const hashedPassword = await bcrypt.hash(
+			validatedData.newPassword,
+			SECURITY_CONFIG.bcryptRounds,
+		);
 
 		// Update manager password
 		const [updatedManager] = await db

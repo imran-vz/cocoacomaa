@@ -2,6 +2,13 @@ import { eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { auth } from "@/auth";
+import {
+	createForbiddenResponse,
+	createUnauthorizedResponse,
+	requireAuth,
+} from "@/lib/auth-utils";
+import { validateCsrfToken } from "@/lib/csrf";
 import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
 import { sendOrderStatusUpdateEmail } from "@/lib/email";
@@ -25,6 +32,20 @@ export async function PATCH(
 	{ params }: { params: Promise<{ id: string }> },
 ) {
 	try {
+		// Check authentication and admin role
+		const session = await auth();
+		requireAuth(session, ["admin"]);
+
+		// Explicitly check that managers cannot update order status
+		if (session?.user?.role === "manager") {
+			return createForbiddenResponse(
+				"Managers have read-only access to orders",
+			);
+		}
+
+		// Validate CSRF token
+		await validateCsrfToken(request);
+
 		const { id } = await params;
 		const body = await request.json();
 
@@ -130,6 +151,17 @@ export async function PATCH(
 			newStatus,
 		});
 	} catch (error) {
+		if (error instanceof Error) {
+			if (error.message.includes("Unauthorized")) {
+				return createUnauthorizedResponse(error.message);
+			}
+			if (
+				error.message.includes("Forbidden") ||
+				error.message.includes("CSRF")
+			) {
+				return createForbiddenResponse(error.message);
+			}
+		}
 		console.error("Error updating order status:", error);
 		return NextResponse.json(
 			{ error: "Failed to update order status" },

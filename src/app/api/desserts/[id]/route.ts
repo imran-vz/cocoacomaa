@@ -1,8 +1,15 @@
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
+import { auth } from "@/auth";
+import {
+	createForbiddenResponse,
+	createUnauthorizedResponse,
+	requireAuth,
+} from "@/lib/auth-utils";
 import { db } from "@/lib/db";
 import { desserts } from "@/lib/db/schema";
+import { apiMutationLimiter, checkRateLimit } from "@/lib/rate-limit";
 
 export async function GET(
 	_: Request,
@@ -39,6 +46,23 @@ export async function PATCH(
 	{ params }: { params: Promise<{ id: string }> },
 ) {
 	try {
+		// Check authentication and admin role
+		const session = await auth();
+		requireAuth(session, ["admin"]);
+
+		// Rate limiting
+		const rateLimitResult = await checkRateLimit(
+			`dessert-update:${session?.user?.id}`,
+			apiMutationLimiter,
+		);
+
+		if (!rateLimitResult.success) {
+			return NextResponse.json(
+				{ error: "Too many requests. Please try again later." },
+				{ status: 429 },
+			);
+		}
+
 		const body = await request.json();
 		const {
 			name,
@@ -80,6 +104,14 @@ export async function PATCH(
 
 		return NextResponse.json(updatedDessert[0]);
 	} catch (error) {
+		if (error instanceof Error) {
+			if (error.message.includes("Unauthorized")) {
+				return createUnauthorizedResponse(error.message);
+			}
+			if (error.message.includes("Forbidden")) {
+				return createForbiddenResponse(error.message);
+			}
+		}
 		console.error(error);
 		return NextResponse.json(
 			{ error: "Failed to update dessert" },
@@ -93,6 +125,23 @@ export async function DELETE(
 	{ params }: { params: Promise<{ id: string }> },
 ) {
 	try {
+		// Check authentication and admin role
+		const session = await auth();
+		requireAuth(session, ["admin"]);
+
+		// Rate limiting
+		const rateLimitResult = await checkRateLimit(
+			`dessert-delete:${session?.user?.id}`,
+			apiMutationLimiter,
+		);
+
+		if (!rateLimitResult.success) {
+			return NextResponse.json(
+				{ error: "Too many requests. Please try again later." },
+				{ status: 429 },
+			);
+		}
+
 		const deletedDessert = await db
 			.update(desserts)
 			.set({ isDeleted: true, updatedAt: new Date() })
@@ -105,6 +154,14 @@ export async function DELETE(
 
 		return NextResponse.json(deletedDessert[0]);
 	} catch (error) {
+		if (error instanceof Error) {
+			if (error.message.includes("Unauthorized")) {
+				return createUnauthorizedResponse(error.message);
+			}
+			if (error.message.includes("Forbidden")) {
+				return createForbiddenResponse(error.message);
+			}
+		}
 		console.error(error);
 		return NextResponse.json(
 			{ error: "Failed to delete dessert" },

@@ -1,3 +1,4 @@
+import { randomInt } from "node:crypto";
 import { and, eq, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
@@ -65,8 +66,8 @@ export async function POST(request: Request) {
 			);
 		}
 
-		// Generate 6-digit OTP
-		const token = Math.floor(100000 + Math.random() * 900000).toString();
+		// Generate 6-digit OTP using cryptographically secure random
+		const token = randomInt(100000, 999999).toString().padStart(6, "0");
 		const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
 		// Delete only expired or used tokens for this email (keep recent ones for rate limiting)

@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { registerSchema } from "@/lib/schema";
+import { SECURITY_CONFIG } from "@/lib/security-config";
 
 export async function POST(request: Request) {
 	try {
@@ -54,7 +55,11 @@ export async function POST(request: Request) {
 			);
 		}
 
-		const hashedPassword = await bcrypt.hash(password, 10);
+		// Use secure bcrypt rounds
+		const hashedPassword = await bcrypt.hash(
+			password,
+			SECURITY_CONFIG.bcryptRounds,
+		);
 
 		await db.insert(users).values({
 			name,

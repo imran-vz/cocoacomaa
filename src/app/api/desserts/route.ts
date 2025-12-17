@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
+import {
+	createForbiddenResponse,
+	createUnauthorizedResponse,
+	requireAuth,
+} from "@/lib/auth-utils";
 import { db } from "@/lib/db";
 import { fetchDesserts } from "@/lib/db/dessert";
 import { type Dessert, desserts } from "@/lib/db/schema";
+import { apiMutationLimiter, checkRateLimit } from "@/lib/rate-limit";
 
 export async function GET(request: Request) {
 	try {
@@ -24,6 +31,23 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
 	try {
+		// Check authentication and admin role
+		const session = await auth();
+		requireAuth(session, ["admin"]);
+
+		// Rate limiting
+		const rateLimitResult = await checkRateLimit(
+			`dessert-create:${session?.user?.id}`,
+			apiMutationLimiter,
+		);
+
+		if (!rateLimitResult.success) {
+			return NextResponse.json(
+				{ error: "Too many requests. Please try again later." },
+				{ status: 429 },
+			);
+		}
+
 		const body = await request.json();
 		const {
 			name,
@@ -68,6 +92,14 @@ export async function POST(request: Request) {
 
 		return NextResponse.json(newDessert[0]);
 	} catch (error) {
+		if (error instanceof Error) {
+			if (error.message.includes("Unauthorized")) {
+				return createUnauthorizedResponse(error.message);
+			}
+			if (error.message.includes("Forbidden")) {
+				return createForbiddenResponse(error.message);
+			}
+		}
 		console.error("Error creating dessert:", error);
 		return NextResponse.json(
 			{ error: "Failed to create dessert" },
