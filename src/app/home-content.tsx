@@ -88,8 +88,8 @@ export function HomeContent() {
 							<strong>brownies in Bangalore</strong>. Baked fresh in our{" "}
 							<strong>Koramangala</strong> kitchen, our desserts are crafted for
 							true chocolate lovers. Whether you need a custom cake for a
-							birthday or a box of our signature postal brownies shipped anywhere
-							in India, we've got you covered.
+							birthday or a box of our signature postal brownies shipped
+							anywhere in India, we've got you covered.
 						</p>
 					</div>
 				</div>
