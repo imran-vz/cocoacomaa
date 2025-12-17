@@ -76,6 +76,23 @@ export function HomeContent() {
 						</StaggerItem>
 					</StaggerContainer>
 				</div>
+
+				<div className="bg-background text-foreground py-16 px-4">
+					<div className="max-w-3xl mx-auto text-center space-y-6">
+						<h2 className="text-3xl font-serif">
+							The Best Brownies in Bangalore
+						</h2>
+						<p className="text-lg leading-relaxed text-muted-foreground">
+							Craving the perfect fudgy brownie? Cocoa Comaa brings you the
+							richest, messiest, and most unforgettable{" "}
+							<strong>brownies in Bangalore</strong>. Baked fresh in our{" "}
+							<strong>Koramangala</strong> kitchen, our desserts are crafted for
+							true chocolate lovers. Whether you need a custom cake for a
+							birthday or a box of our signature postal brownies shipped anywhere
+							in India, we've got you covered.
+						</p>
+					</div>
+				</div>
 			</main>
 		</div>
 	);

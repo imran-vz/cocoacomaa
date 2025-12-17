@@ -22,7 +22,7 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 export const metadata: Metadata = {
 	metadataBase: new URL("https://cocoacomaa.com"),
 	title: {
-		default: "Cocoa Comaa | Fudgy Brownies & Desserts in Bengaluru",
+		default: "Cocoa Comaa | Best Brownies in Bangalore & Custom Desserts",
 		template: "%s | Cocoa Comaa",
 	},
 	description:
@@ -37,6 +37,7 @@ export const metadata: Metadata = {
 	applicationName: "Cocoa Comaa",
 	creator: "Imran",
 	keywords: [
+		"brownies in bangalore",
 		"bengaluru brownies",
 		"custom cakes bengaluru",
 		"koramangala bakery",
