@@ -10,7 +10,7 @@ export async function GET(_request: NextRequest) {
 		const status = {
 			webhook_secret_configured: !!webhookSecret,
 			razorpay_key_configured: !!razorpayKeyId && !!razorpayKeySecret,
-			webhook_url: `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/webhooks/razorpay`,
+			webhook_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/webhooks/razorpay`,
 			supported_events: ["payment.captured", "payment.failed", "order.paid"],
 			timestamp: new Date().toISOString(),
 		};

@@ -8,12 +8,12 @@ const CSRF_HEADER_NAME = "x-csrf-token";
 
 /**
  * Gets the CSRF secret from environment or generates a random one (dev only)
- * In production, NEXTAUTH_SECRET should be used as the signing secret
+ * In production, BETTER_AUTH_SECRET should be used as the signing secret
  */
 function getCsrfSecret(): string {
-	const secret = process.env.NEXTAUTH_SECRET;
+	const secret = process.env.BETTER_AUTH_SECRET;
 	if (!secret) {
-		throw new Error("NEXTAUTH_SECRET is required for CSRF protection");
+		throw new Error("BETTER_AUTH_SECRET is required for CSRF protection");
 	}
 	return secret;
 }
