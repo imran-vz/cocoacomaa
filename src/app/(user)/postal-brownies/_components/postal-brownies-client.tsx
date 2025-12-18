@@ -78,9 +78,11 @@ async function fetchPostalCombos() {
 export default function PostalBrowniesClient({
 	postalCombosList,
 	settings,
+	isAuthenticated,
 }: {
 	postalCombosList: PostalCombo[];
 	settings: PostalOrderSettings[];
+	isAuthenticated: boolean;
 }) {
 	const router = useRouter();
 	const { clearCart, addItem } = useCart();
@@ -142,6 +144,11 @@ export default function PostalBrowniesClient({
 			toast.error(
 				"Postal brownie orders are not currently being accepted for this month",
 			);
+			return;
+		}
+
+		if (!isAuthenticated) {
+			router.push("/login?redirect=/postal-brownies");
 			return;
 		}
 

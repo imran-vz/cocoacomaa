@@ -13,9 +13,9 @@ import {
 	Sparkles,
 } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,10 +59,13 @@ const fetchSpecialsSettings = async () => {
 export default function SpecialsClientPage({
 	initialSpecials,
 	initialSettings,
+	isAuthenticated,
 }: {
 	initialSpecials: Dessert[];
 	initialSettings?: SpecialsSettings | null;
+	isAuthenticated: boolean;
 }) {
+	const router = useRouter();
 	const { items, addItem, removeItem, updateQuantity, clearNonSpecials } =
 		useCart();
 	const [eggFilter, setEggFilter] = useState<
@@ -104,6 +107,11 @@ export default function SpecialsClientPage({
 	}
 
 	const handleAddToCart = (special: Dessert) => {
+		if (!isAuthenticated) {
+			router.push("/login?redirect=/specials");
+			return;
+		}
+
 		// Clear non-special items from cart before adding special
 		clearNonSpecials();
 

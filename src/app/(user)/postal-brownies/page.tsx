@@ -2,7 +2,6 @@ import { format } from "date-fns";
 import { and, eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -31,9 +30,6 @@ export const metadata: Metadata = {
 
 export default async function Page() {
 	const session = await auth.api.getSession({ headers: await headers() });
-	if (!session?.user?.id) {
-		redirect("/login?redirect=/postal-brownies");
-	}
 
 	const [postalCombosList, settings] = await Promise.all([
 		db.query.postalCombos.findMany({
@@ -58,6 +54,7 @@ export default async function Page() {
 		<PostalBrowniesClient
 			postalCombosList={postalCombosList}
 			settings={settings}
+			isAuthenticated={!!session?.user?.id}
 		/>
 	);
 }
