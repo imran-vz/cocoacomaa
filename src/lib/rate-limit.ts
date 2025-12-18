@@ -3,20 +3,14 @@ import { Redis } from "@upstash/redis";
 import { SECURITY_CONFIG } from "./security-config";
 
 // Validate required environment variables
-if (
-	!process.env.UPSTASH_REDIS_REST_URL ||
-	!process.env.UPSTASH_REDIS_REST_TOKEN
-) {
+if (!process.env.KV_URL || !process.env.KV_REST_API_TOKEN) {
 	throw new Error(
-		"UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN environment variables are required for rate limiting",
+		"KV_URL and KV_REST_API_TOKEN environment variables are required for rate limiting",
 	);
 }
 
 // Initialize Redis client
-const redis = new Redis({
-	url: process.env.UPSTASH_REDIS_REST_URL,
-	token: process.env.UPSTASH_REDIS_REST_TOKEN,
-});
+const redis = Redis.fromEnv();
 
 // Create rate limiters for different operations
 export const loginLimiter = new Ratelimit({
