@@ -57,6 +57,9 @@ export default function RegisterPage() {
 			router.replace("/");
 			return;
 		}
+
+		// Show Google One Tap when not authenticated
+		authClient.oneTap();
 	}, [session?.user?.id, router]);
 
 	async function onSubmit(data: SignupFormValues) {

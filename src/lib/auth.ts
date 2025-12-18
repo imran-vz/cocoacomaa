@@ -1,12 +1,14 @@
 import bcrypt from "bcrypt";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { oneTap } from "better-auth/plugins";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { sendPasswordResetEmail, sendVerificationEmail } from "@/lib/email";
 import { SECURITY_CONFIG } from "./security-config";
 
 export const auth = betterAuth({
+	plugins: [oneTap()],
 	database: drizzleAdapter(db, {
 		provider: "pg",
 		schema: {
@@ -24,6 +26,17 @@ export const auth = betterAuth({
 		},
 	},
 
+	emailVerification: {
+		enabled: true,
+		sendOnSignIn: true,
+		async sendVerificationEmail({ user, url }) {
+			void sendVerificationEmail({
+				to: user.email,
+				userName: user.name,
+				url,
+			});
+		},
+	},
 	emailAndPassword: {
 		enabled: true,
 		requireEmailVerification: true,
@@ -35,15 +48,8 @@ export const auth = betterAuth({
 				return await bcrypt.compare(password, hash);
 			},
 		},
-		async sendVerificationEmail({ user, url }: { user: User; url: string }) {
-			await sendVerificationEmail({
-				to: user.email,
-				userName: user.name,
-				url,
-			});
-		},
 		async sendResetPassword({ user, url }) {
-			await sendPasswordResetEmail({
+			void sendPasswordResetEmail({
 				to: user.email,
 				userName: user.name,
 				url,
@@ -53,7 +59,7 @@ export const auth = betterAuth({
 
 	socialProviders: {
 		google: {
-			clientId: process.env.AUTH_GOOGLE_ID || "",
+			clientId: process.env.NEXT_PUBLIC_AUTH_GOOGLE_ID || "",
 			clientSecret: process.env.AUTH_GOOGLE_SECRET || "",
 		},
 	},

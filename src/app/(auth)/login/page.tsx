@@ -45,6 +45,9 @@ export default function LoginPage() {
 			router.replace(redirect || "/");
 			return;
 		}
+
+		// Show Google One Tap when not authenticated
+		authClient.oneTap();
 	}, [session?.user?.id, router, redirect]);
 
 	// Show loading while checking session

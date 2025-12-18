@@ -1,10 +1,21 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { StaggerContainer, StaggerItem } from "@/components/stagger-container";
 import { Button } from "@/components/ui/button";
+import { authClient } from "@/lib/auth-client";
 
 export function HomeContent() {
+	const { data: session } = authClient.useSession();
+
+	useEffect(() => {
+		// Show Google One Tap when not authenticated
+		if (!session?.user?.id) {
+			authClient.oneTap();
+		}
+	}, [session?.user?.id]);
+
 	return (
 		<div className="min-h-screen mx-auto relative">
 			<div
