@@ -63,7 +63,7 @@ export default function RegisterPage() {
 			authClient.oneTap({
 				fetchOptions: {
 					onSuccess: () => {
-						router.replace(redirect || "/");
+						window.location.href = redirect || "/";
 						return;
 					},
 				},
