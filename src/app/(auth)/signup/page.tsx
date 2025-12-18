@@ -61,26 +61,14 @@ export default function RegisterPage() {
 
 	async function onSubmit(data: SignupFormValues) {
 		try {
-			const result = await authClient.signUp.email(
-				{
-					email: data.email,
-					password: data.password,
-					name: data.name,
-					callbackURL: redirect || "/",
-				},
-				{
-					onRequest: (ctx) => {
-						// Add phone as additional field
-						return {
-							...ctx,
-							body: {
-								...ctx.body,
-								phone: data.phone,
-							},
-						};
-					},
-				},
-			);
+			const result = await authClient.signUp.email({
+				email: data.email,
+				password: data.password,
+				name: data.name,
+				role: "customer",
+				phone: data.phone,
+				callbackURL: redirect || "/",
+			});
 
 			if (result.error) {
 				const errorMsg = result.error.message || "Registration failed";

@@ -27,7 +27,9 @@ export default function EmailVerificationEmail({
 	return (
 		<Html>
 			<Head />
-			<Preview>Verify your email to complete your Cocoa Comaa registration</Preview>
+			<Preview>
+				Verify your email to complete your Cocoa Comaa registration
+			</Preview>
 			<Tailwind>
 				<Body className="bg-gray-50 font-sans">
 					<Container className="mx-auto py-8 px-4 max-w-2xl bg-white">
@@ -59,8 +61,8 @@ export default function EmailVerificationEmail({
 							</Text>
 							<Text className="text-gray-700 mb-4">
 								To complete your registration and start ordering delicious
-								desserts, please verify your email address by clicking the button
-								below:
+								desserts, please verify your email address by clicking the
+								button below:
 							</Text>
 
 							<div className="text-center my-8">

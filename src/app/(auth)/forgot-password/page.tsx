@@ -43,7 +43,7 @@ export default function ForgotPasswordPage() {
 
 	async function onSubmit(data: ForgotPasswordFormValues) {
 		try {
-			const result = await authClient.forgetPassword({
+			const result = await authClient.requestPasswordReset({
 				email: data.email,
 				redirectTo: "/reset-password",
 			});
@@ -109,8 +109,8 @@ export default function ForgotPasswordPage() {
 									disabled={form.formState.isSubmitting}
 								>
 									{form.formState.isSubmitting
-									? "Sending reset link..."
-									: "Send reset link"}
+										? "Sending reset link..."
+										: "Send reset link"}
 								</Button>
 							</form>
 						</Form>
