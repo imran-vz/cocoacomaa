@@ -35,7 +35,7 @@ type SignupFormValues = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
 	const router = useRouter();
-	const { data: session } = authClient.useSession();
+	const { data: session, isPending } = authClient.useSession();
 	const searchParams = useSearchParams();
 	const redirect = searchParams.get("redirect");
 
@@ -59,8 +59,17 @@ export default function RegisterPage() {
 		}
 
 		// Show Google One Tap when not authenticated
-		authClient.oneTap();
-	}, [session?.user?.id, router]);
+		if (!isPending) {
+			authClient.oneTap({
+				fetchOptions: {
+					onSuccess: () => {
+						router.replace(redirect || "/");
+						return;
+					},
+				},
+			});
+		}
+	}, [session?.user?.id, router, isPending, redirect]);
 
 	async function onSubmit(data: SignupFormValues) {
 		try {
@@ -88,6 +97,14 @@ export default function RegisterPage() {
 			console.error("Signup error:", error);
 			toast.error("Something went wrong");
 		}
+	}
+
+	if (isPending) {
+		return (
+			<div className="flex h-screen items-center justify-center">
+				<div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+			</div>
+		);
 	}
 
 	return (

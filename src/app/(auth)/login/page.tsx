@@ -47,8 +47,17 @@ export default function LoginPage() {
 		}
 
 		// Show Google One Tap when not authenticated
-		authClient.oneTap();
-	}, [session?.user?.id, router, redirect]);
+		if (!isPending) {
+			authClient.oneTap({
+				fetchOptions: {
+					onSuccess: () => {
+						router.replace(redirect || "/");
+						return;
+					},
+				},
+			});
+		}
+	}, [session?.user?.id, router, redirect, isPending]);
 
 	// Show loading while checking session
 	if (isPending) {

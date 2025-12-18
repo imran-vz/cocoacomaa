@@ -1,20 +1,29 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { StaggerContainer, StaggerItem } from "@/components/stagger-container";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 
 export function HomeContent() {
-	const { data: session } = authClient.useSession();
+	const { data: session, isPending } = authClient.useSession();
+	const router = useRouter();
 
 	useEffect(() => {
 		// Show Google One Tap when not authenticated
-		if (!session?.user?.id) {
-			authClient.oneTap();
+		if (!session?.user?.id && !isPending) {
+			authClient.oneTap({
+				fetchOptions: {
+					onSuccess: () => {
+						router.refresh();
+						return;
+					},
+				},
+			});
 		}
-	}, [session?.user?.id]);
+	}, [session?.user?.id, isPending, router]);
 
 	return (
 		<div className="min-h-screen mx-auto relative">
