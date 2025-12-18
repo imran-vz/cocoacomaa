@@ -1,7 +1,8 @@
 import { and, eq, isNotNull, sql } from "drizzle-orm";
+import { headers } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 import Razorpay from "razorpay";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import { calculateNetAmount } from "@/lib/calculateGrossAmount";
 import { config } from "@/lib/config";
 import { db } from "@/lib/db";
@@ -15,7 +16,7 @@ const razorpay = new Razorpay({
 
 export async function GET(request: NextRequest) {
 	try {
-		const session = await auth();
+		const session = await auth.api.getSession({ headers: await headers() });
 		if (!session?.user?.id) {
 			return NextResponse.json(
 				{ success: false, message: "Unauthorized" },
@@ -48,7 +49,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
 	try {
-		const session = await auth();
+		const session = await auth.api.getSession({ headers: await headers() });
 		if (!session?.user?.id) {
 			return NextResponse.json(
 				{ success: false, message: "Unauthorized" },

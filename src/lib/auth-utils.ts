@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
-import type { Session } from "next-auth";
+import type { auth } from "@/lib/auth";
+
+type Session = typeof auth.$Infer.Session;
 
 /**
  * Throws an error if session is not authenticated or user doesn't have required role
- * @param session - NextAuth session
+ * @param session - Better Auth session
  * @param allowedRoles - Optional array of roles that are allowed to access
  * @throws Error if unauthorized
  */
@@ -13,7 +15,8 @@ export function requireAuth(session: Session | null, allowedRoles?: string[]) {
 	}
 
 	if (allowedRoles && allowedRoles.length > 0) {
-		const userRole = session.user.role;
+		const user = session.user;
+		const userRole = user.role;
 		if (!userRole || !allowedRoles.includes(userRole)) {
 			throw new Error(
 				`Forbidden - Required role: ${allowedRoles.join(" or ")}`,
@@ -24,7 +27,7 @@ export function requireAuth(session: Session | null, allowedRoles?: string[]) {
 
 /**
  * Returns user ID from session, throws if not authenticated
- * @param session - NextAuth session
+ * @param session - Better Auth session
  * @returns User ID
  * @throws Error if no session or user ID
  */
@@ -37,7 +40,7 @@ export function requireSessionId(session: Session | null): string {
 
 /**
  * Checks if session user has admin role
- * @param session - NextAuth session
+ * @param session - Better Auth session
  * @returns true if user is admin
  */
 export function isAdmin(session: Session | null): boolean {
@@ -46,7 +49,7 @@ export function isAdmin(session: Session | null): boolean {
 
 /**
  * Checks if session user has manager role
- * @param session - NextAuth session
+ * @param session - Better Auth session
  * @returns true if user is manager
  */
 export function isManager(session: Session | null): boolean {
@@ -55,7 +58,7 @@ export function isManager(session: Session | null): boolean {
 
 /**
  * Checks if session user has the specified role
- * @param session - NextAuth session
+ * @param session - Better Auth session
  * @param role - Role to check
  * @returns true if user has the role
  */

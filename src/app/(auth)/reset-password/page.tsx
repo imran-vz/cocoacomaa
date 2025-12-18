@@ -1,16 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
 import { ArrowLeft, EyeIcon, EyeOffIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import type { z } from "zod";
-
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -22,95 +19,81 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { resetPasswordSchema } from "@/lib/schema";
+import { authClient } from "@/lib/auth-client";
+
+const resetPasswordSchema = z
+	.object({
+		password: z
+			.string()
+			.min(6, { message: "Password must be at least 6 characters." }),
+		confirmPassword: z
+			.string()
+			.min(6, { message: "Please confirm your password." }),
+	})
+	.refine((data) => data.password === data.confirmPassword, {
+		message: "Passwords don't match.",
+		path: ["confirmPassword"],
+	});
 
 type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 
 export default function ResetPasswordPage() {
 	const router = useRouter();
-	const { data } = useSession();
+	const { data: session } = authClient.useSession();
 	const [showPassword, setShowPassword] = useState(false);
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 	const searchParams = useSearchParams();
-	const email = searchParams.get("email");
+	const token = searchParams.get("token");
 
 	const form = useForm<ResetPasswordFormValues>({
 		resolver: zodResolver(resetPasswordSchema),
 		defaultValues: {
-			token: "",
-			email: email || "",
 			password: "",
 			confirmPassword: "",
 		},
 	});
 
-	// Redirect if already logged in or no email provided
+	// Redirect if already logged in or no token provided
 	useEffect(() => {
-		if (data?.user.id) {
+		if (session?.user?.id) {
 			router.replace("/");
 			return;
 		}
-		if (!email) {
+		if (!token) {
+			toast.error("Invalid or expired reset link");
 			router.replace("/forgot-password");
 			return;
 		}
-	}, [data?.user?.id, router, email]);
+	}, [session?.user?.id, router, token]);
 
 	async function onSubmit(data: ResetPasswordFormValues) {
+		if (!token) {
+			toast.error("Invalid or expired reset link");
+			return;
+		}
+
 		try {
-			await axios.post("/api/auth/reset-password", data, {
-				headers: {
-					"Content-Type": "application/json",
-					Accept: "application/json",
-				},
+			const result = await authClient.resetPassword({
+				newPassword: data.password,
+				token,
 			});
+
+			if (result.error) {
+				toast.error(result.error.message || "Failed to reset password");
+				return;
+			}
 
 			toast.success(
 				"Password reset successfully! Please log in with your new password.",
 			);
 			router.push("/login");
 		} catch (error: unknown) {
-			if (axios.isAxiosError(error)) {
-				toast.error(error.response?.data.message || "Something went wrong");
-				return;
-			}
+			console.error("Reset password error:", error);
 			toast.error("Something went wrong");
 		}
 	}
 
-	async function resendOTP() {
-		if (!email) return;
-
-		try {
-			await axios.post(
-				"/api/auth/forgot-password",
-				{ email },
-				{
-					headers: {
-						"Content-Type": "application/json",
-						Accept: "application/json",
-					},
-				},
-			);
-			toast.success("New OTP sent! Check your email.");
-		} catch (error) {
-			if (axios.isAxiosError(error)) {
-				if (error.response?.status === 429) {
-					toast.error(
-						error.response?.data.message ||
-							"Too many requests. Please try again later.",
-					);
-				} else {
-					toast.error(error.response?.data.message || "Failed to resend OTP");
-				}
-			} else {
-				toast.error("Failed to resend OTP");
-			}
-			console.error(error);
-		}
-	}
-
-	if (!email) {
+	if (!token) {
 		return null; // Will redirect in useEffect
 	}
 
@@ -122,8 +105,7 @@ export default function ResetPasswordPage() {
 						Reset your password
 					</h1>
 					<p className="text-sm text-muted-foreground">
-						Enter the 6-digit OTP sent to <strong>{email}</strong> and your new
-						password
+						Enter your new password below
 					</p>
 				</div>
 
@@ -134,27 +116,6 @@ export default function ResetPasswordPage() {
 								onSubmit={form.handleSubmit(onSubmit)}
 								className="space-y-6"
 							>
-								<FormField
-									control={form.control}
-									name="token"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>6-Digit OTP</FormLabel>
-											<FormControl>
-												<Input
-													type="text"
-													placeholder="123456"
-													className="h-12 text-base text-center tracking-widest"
-													maxLength={6}
-													autoComplete="one-time-code"
-													{...field}
-												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-
 								<FormField
 									control={form.control}
 									name="password"
@@ -237,14 +198,7 @@ export default function ResetPasswordPage() {
 					</CardContent>
 				</Card>
 
-				<div className="flex flex-col items-center space-y-2">
-					<button
-						type="button"
-						onClick={resendOTP}
-						className="text-sm text-blue-600 hover:text-blue-800 underline"
-					>
-						Didn't receive the OTP? Resend
-					</button>
+				<div className="flex items-center justify-center">
 					<Link
 						href="/forgot-password"
 						className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"

@@ -3,7 +3,6 @@
 import { LogOut, ShoppingBag, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { CartPopover } from "@/components/cart-popover";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -17,23 +16,30 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useCakeOrderSettings } from "@/hooks/use-order-settings";
+import { authClient } from "@/lib/auth-client";
 import { Skeleton } from "./ui/skeleton";
 
 export function Navigation() {
-	const session = useSession();
+	const { data: session, isPending } = authClient.useSession();
 	const router = useRouter();
 	const pathname = usePathname();
 	const isAdminPage = pathname.startsWith("/admin");
 	const isManagerPage = pathname.startsWith("/manager");
-	const isAdmin = session.data?.user?.role === "admin";
-	const isManager = session.data?.user?.role === "manager";
+	const isAdmin = session?.user?.role === "admin";
+	const isManager = session?.user?.role === "manager";
 	const isOrderPage = pathname === "/order";
 	const isSpecialsPage = pathname === "/specials";
 	const showCart = isOrderPage || isSpecialsPage;
 	const { areOrdersAllowed: ordersAllowed, settings } = useCakeOrderSettings();
 
 	const handleLogout = async () => {
-		await signOut({ callbackUrl: "/" });
+		await authClient.signOut({
+			fetchOptions: {
+				onSuccess: () => {
+					window.location.href = "/";
+				},
+			},
+		});
 	};
 
 	const handleCheckout = () => {
@@ -48,7 +54,7 @@ export function Navigation() {
 				return;
 			}
 		} else if (isSpecialsPage) {
-			if (!session.data?.user?.id) {
+			if (!session?.user?.id) {
 				router.push("/login?redirect=/specials");
 				return;
 			}
@@ -75,7 +81,7 @@ export function Navigation() {
 					</div>
 
 					<div className="ml-auto mr-4 flex items-center gap-2">
-						{session.status === "loading" ? (
+						{isPending ? (
 							<Skeleton className="h-8 w-24" />
 						) : isAdmin ? (
 							<Button asChild variant="secondary">
@@ -101,9 +107,9 @@ export function Navigation() {
 					</div>
 					{/* Navigation */}
 					<div className="flex items-center space-x-4">
-						{session.status === "loading" ? (
+						{isPending ? (
 							<Skeleton className="h-8 w-8" />
-						) : !session.data?.user?.id ? (
+						) : !session?.user?.id ? (
 							<Button variant="ghost" asChild>
 								<Link href="/login">Login</Link>
 							</Button>
@@ -116,12 +122,12 @@ export function Navigation() {
 									>
 										<Avatar className="h-8 w-8">
 											<AvatarImage
-												src={session.data.user.image || undefined}
-												alt={session.data.user.name || "User"}
+												src={session.user.image || undefined}
+												alt={session.user.name || "User"}
 											/>
 											<AvatarFallback>
-												{session.data.user.name
-													? session.data.user.name
+												{session.user.name
+													? session.user.name
 															.split(" ")
 															.map((n) => n[0])
 															.join("")

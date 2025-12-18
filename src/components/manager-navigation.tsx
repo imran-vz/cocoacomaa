@@ -3,7 +3,6 @@
 import { Home, LogOut, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -14,13 +13,20 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { authClient } from "@/lib/auth-client";
 
 export function ManagerNavigation() {
-	const session = useSession();
+	const { data: session } = authClient.useSession();
 	const pathname = usePathname();
 
 	const handleLogout = async () => {
-		await signOut({ callbackUrl: "/" });
+		await authClient.signOut({
+			fetchOptions: {
+				onSuccess: () => {
+					window.location.href = "/";
+				},
+			},
+		});
 	};
 
 	return (
@@ -65,7 +71,7 @@ export function ManagerNavigation() {
 					<div className="flex items-center gap-2">
 						<ThemeToggle />
 
-						{session.data?.user?.id && (
+						{session?.user?.id && (
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
 									<Button
@@ -74,12 +80,12 @@ export function ManagerNavigation() {
 									>
 										<Avatar className="h-8 w-8">
 											<AvatarImage
-												src={session.data.user.image || undefined}
-												alt={session.data.user.name || "User"}
+												src={session.user.image || undefined}
+												alt={session.user.name || "User"}
 											/>
 											<AvatarFallback>
-												{session.data.user.name
-													? session.data.user.name
+												{session.user.name
+													? session.user.name
 															.split(" ")
 															.map((n) => n[0])
 															.join("")
@@ -93,12 +99,12 @@ export function ManagerNavigation() {
 								<DropdownMenuContent align="end" className="w-56">
 									<div className="flex items-center justify-start gap-2 p-2">
 										<div className="flex flex-col space-y-1 leading-none">
-											{session.data.user.name && (
-												<p className="font-medium">{session.data.user.name}</p>
+											{session.user.name && (
+												<p className="font-medium">{session.user.name}</p>
 											)}
-											{session.data.user.email && (
+											{session.user.email && (
 												<p className="w-[200px] truncate text-sm text-muted-foreground">
-													{session.data.user.email}
+													{session.user.email}
 												</p>
 											)}
 										</div>

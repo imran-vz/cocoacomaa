@@ -111,7 +111,7 @@ export default function RootLayout({
 						<Navigation />
 						{children}
 						<Footer />
-						<Toaster />
+						<Toaster richColors />
 					</CartProvider>
 				</Providers>
 			</body>

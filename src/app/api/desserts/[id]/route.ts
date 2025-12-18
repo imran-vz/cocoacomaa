@@ -1,7 +1,8 @@
 import { and, eq } from "drizzle-orm";
+import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import {
 	createForbiddenResponse,
 	createUnauthorizedResponse,
@@ -47,7 +48,7 @@ export async function PATCH(
 ) {
 	try {
 		// Check authentication and admin role
-		const session = await auth();
+		const session = await auth.api.getSession({ headers: await headers() });
 		requireAuth(session, ["admin"]);
 
 		// Rate limiting
@@ -126,7 +127,7 @@ export async function DELETE(
 ) {
 	try {
 		// Check authentication and admin role
-		const session = await auth();
+		const session = await auth.api.getSession({ headers: await headers() });
 		requireAuth(session, ["admin"]);
 
 		// Rate limiting

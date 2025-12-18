@@ -9,7 +9,8 @@ import {
 	sql,
 } from "drizzle-orm";
 import type { Metadata } from "next";
-import { auth } from "@/auth";
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { workshopOrders, workshops } from "@/lib/db/schema";
 import WorkshopsClientPage from "./workshop-client-page";
@@ -34,7 +35,7 @@ export const metadata: Metadata = {
 };
 
 export default async function WorkshopsPage() {
-	const session = await auth();
+	const session = await auth.api.getSession({ headers: await headers() });
 
 	const workshopsList = await db.query.workshops.findMany({
 		where: and(

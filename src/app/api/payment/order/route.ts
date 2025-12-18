@@ -1,8 +1,9 @@
 import { and, eq } from "drizzle-orm";
+import { headers } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 import Razorpay from "razorpay";
 
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import {
 	createUnauthorizedResponse,
 	requireAuth,
@@ -20,7 +21,7 @@ const razorpay = new Razorpay({
 export async function POST(request: NextRequest) {
 	try {
 		// Check authentication
-		const session = await auth();
+		const session = await auth.api.getSession({ headers: await headers() });
 		requireAuth(session);
 		const userId = requireSessionId(session);
 

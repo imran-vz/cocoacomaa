@@ -1,9 +1,10 @@
 import { format } from "date-fns";
 import { and, eq } from "drizzle-orm";
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { postalCombos, postalOrderSettings } from "@/lib/db/schema";
 import PostalBrowniesClient from "./_components/postal-brownies-client";
@@ -29,7 +30,7 @@ export const metadata: Metadata = {
 };
 
 export default async function Page() {
-	const session = await auth();
+	const session = await auth.api.getSession({ headers: await headers() });
 	if (!session?.user?.id) {
 		redirect("/login?redirect=/postal-brownies");
 	}

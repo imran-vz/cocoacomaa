@@ -1,7 +1,8 @@
 import { eq } from "drizzle-orm";
+import { headers } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 
@@ -13,7 +14,7 @@ const createManagerSchema = z.object({
 
 export async function GET() {
 	try {
-		const session = await auth();
+		const session = await auth.api.getSession({ headers: await headers() });
 
 		if (!session || session.user?.role !== "admin") {
 			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -36,7 +37,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
 	try {
-		const session = await auth();
+		const session = await auth.api.getSession({ headers: await headers() });
 
 		if (!session || session.user?.role !== "admin") {
 			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

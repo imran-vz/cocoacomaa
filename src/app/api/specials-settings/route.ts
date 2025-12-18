@@ -1,8 +1,9 @@
 import { eq } from "drizzle-orm";
+import { headers } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
 	type SpecialsSettings,
@@ -61,7 +62,7 @@ export async function GET() {
 // PUT - Update specials settings
 export async function PUT(request: NextRequest) {
 	try {
-		const session = await auth();
+		const session = await auth.api.getSession({ headers: await headers() });
 		if (!session?.user?.id) {
 			return NextResponse.json(
 				{ success: false, error: "Unauthorized" },

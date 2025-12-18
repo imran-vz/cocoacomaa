@@ -1,7 +1,8 @@
 import { eq } from "drizzle-orm";
+import { headers } from "next/headers";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import {
 	createForbiddenResponse,
 	createUnauthorizedResponse,
@@ -17,7 +18,7 @@ export async function GET(
 ) {
 	try {
 		// Check authentication
-		const session = await auth();
+		const session = await auth.api.getSession({ headers: await headers() });
 		requireAuth(session);
 		const userId = requireSessionId(session);
 

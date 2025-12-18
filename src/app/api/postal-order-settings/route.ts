@@ -1,8 +1,9 @@
 import { and, eq } from "drizzle-orm";
+import { headers } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { postalOrderSettings, users } from "@/lib/db/schema";
 
@@ -117,7 +118,7 @@ export async function GET(request: NextRequest) {
 // POST - Create new postal order settings
 export async function POST(request: NextRequest) {
 	try {
-		const session = await auth();
+		const session = await auth.api.getSession({ headers: await headers() });
 		if (!session?.user?.id) {
 			return NextResponse.json(
 				{ success: false, error: "Unauthorized" },
@@ -274,7 +275,7 @@ export async function POST(request: NextRequest) {
 // PUT - Update existing postal order settings
 export async function PUT(request: NextRequest) {
 	try {
-		const session = await auth();
+		const session = await auth.api.getSession({ headers: await headers() });
 		if (!session?.user?.id) {
 			return NextResponse.json(
 				{ success: false, error: "Unauthorized" },
@@ -460,7 +461,7 @@ export async function PUT(request: NextRequest) {
 // DELETE - Delete postal order settings
 export async function DELETE(request: NextRequest) {
 	try {
-		const session = await auth();
+		const session = await auth.api.getSession({ headers: await headers() });
 		if (!session?.user?.id) {
 			return NextResponse.json(
 				{ success: false, error: "Unauthorized" },

@@ -1,11 +1,10 @@
 "use client";
 
-import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { toast } from "sonner";
-
 import { Icons } from "@/components/icons";
 import { Button } from "@/components/ui/button";
+import { authClient } from "@/lib/auth-client";
 
 interface GoogleSignInButtonProps {
 	text?: string;
@@ -22,8 +21,9 @@ export function GoogleSignInButton({
 		try {
 			setIsLoading(true);
 
-			await signIn("google", {
-				redirectTo: redirect || "/",
+			await authClient.signIn.social({
+				provider: "google",
+				callbackURL: redirect || "/",
 			});
 		} catch (error) {
 			console.error("Google sign-in error:", error);

@@ -1,6 +1,7 @@
 import { and, desc, eq, isNotNull } from "drizzle-orm";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
 import { columns } from "./columns";
@@ -9,7 +10,7 @@ import { MyOrdersContent } from "./my-orders-content";
 export const dynamic = "force-dynamic";
 
 export default async function MyOrdersPage() {
-	const session = await auth();
+	const session = await auth.api.getSession({ headers: await headers() });
 	if (!session?.user?.id) {
 		redirect("/login");
 	}

@@ -1,16 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -22,13 +19,14 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { authClient } from "@/lib/auth-client";
 import { forgotPasswordSchema } from "@/lib/schema";
 
 type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
 export default function ForgotPasswordPage() {
 	const router = useRouter();
-	const { data } = useSession();
+	const { data: session } = authClient.useSession();
 
 	const form = useForm<ForgotPasswordFormValues>({
 		resolver: zodResolver(forgotPasswordSchema),
@@ -37,35 +35,30 @@ export default function ForgotPasswordPage() {
 
 	// Redirect if already logged in
 	useEffect(() => {
-		if (data?.user.id) {
+		if (session?.user?.id) {
 			router.replace("/");
 			return;
 		}
-	}, [data?.user?.id, router]);
+	}, [session?.user?.id, router]);
 
 	async function onSubmit(data: ForgotPasswordFormValues) {
 		try {
-			await axios.post("/api/auth/forgot-password", data, {
-				headers: {
-					"Content-Type": "application/json",
-					Accept: "application/json",
-				},
+			const result = await authClient.forgetPassword({
+				email: data.email,
+				redirectTo: "/reset-password",
 			});
 
-			toast.success("If this email exists, an OTP will be sent.");
-			router.push(`/reset-password?email=${encodeURIComponent(data.email)}`);
-		} catch (error: unknown) {
-			if (axios.isAxiosError(error)) {
-				if (error.response?.status === 429) {
-					toast.error(
-						error.response?.data.message ||
-							"Too many requests. Please try again later.",
-					);
-				} else {
-					toast.error(error.response?.data.message || "Something went wrong");
-				}
+			if (result.error) {
+				toast.error(result.error.message || "Something went wrong");
 				return;
 			}
+
+			toast.success(
+				"If this email exists, a password reset link will be sent to your inbox.",
+			);
+			// Don't redirect, let user know to check their email
+		} catch (error: unknown) {
+			console.error("Forgot password error:", error);
 			toast.error("Something went wrong");
 		}
 	}
@@ -78,7 +71,7 @@ export default function ForgotPasswordPage() {
 						Forgot your password?
 					</h1>
 					<p className="text-sm text-muted-foreground">
-						Enter your email address and we'll send you an OTP to reset your
+						Enter your email address and we'll send you a link to reset your
 						password
 					</p>
 				</div>
@@ -115,7 +108,9 @@ export default function ForgotPasswordPage() {
 									className="w-full h-12 text-base"
 									disabled={form.formState.isSubmitting}
 								>
-									{form.formState.isSubmitting ? "Sending OTP..." : "Send OTP"}
+									{form.formState.isSubmitting
+									? "Sending reset link..."
+									: "Send reset link"}
 								</Button>
 							</form>
 						</Form>

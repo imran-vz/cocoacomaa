@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
 import type * as React from "react";
 import { NavDocuments } from "@/components/nav-documents";
 import { NavMain } from "@/components/nav-main";
@@ -25,20 +24,21 @@ import {
 	SidebarMenuItem,
 	useSidebar,
 } from "@/components/ui/sidebar";
+import { authClient } from "@/lib/auth-client";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-	const session = useSession();
+	const { data: session } = authClient.useSession();
 	const pathname = usePathname();
 	const { isMobile, setOpenMobile } = useSidebar();
-	const isAdmin = session.data?.user?.role === "admin";
-	const isManager = session.data?.user?.role === "manager";
+	const isAdmin = session?.user?.role === "admin";
+	const isManager = session?.user?.role === "manager";
 
 	// Admin navigation structure
 	const adminData = {
 		user: {
-			name: session.data?.user?.name || "Admin",
-			email: session.data?.user?.email || "",
-			avatar: session.data?.user?.image || "",
+			name: session?.user?.name || "Admin",
+			email: session?.user?.email || "",
+			avatar: session?.user?.image || "",
 		},
 		navMain: [
 			{
@@ -119,9 +119,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	// Manager navigation structure (read-only access to orders)
 	const managerData = {
 		user: {
-			name: session.data?.user?.name || "Manager",
-			email: session.data?.user?.email || "",
-			avatar: session.data?.user?.image || "",
+			name: session?.user?.name || "Manager",
+			email: session?.user?.email || "",
+			avatar: session?.user?.image || "",
 		},
 		navMain: [
 			{

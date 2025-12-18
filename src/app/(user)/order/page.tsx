@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { auth } from "@/auth";
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
 import { fetchDesserts } from "@/lib/db/dessert";
 import OrderClientPage from "./order-client-page";
 
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
 };
 
 export default async function OrderPage() {
-	const session = await auth();
+	const session = await auth.api.getSession({ headers: await headers() });
 	const initialDesserts = await fetchDesserts();
 
 	return (

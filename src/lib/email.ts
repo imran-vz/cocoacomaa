@@ -1,7 +1,9 @@
 import { render } from "@react-email/render";
 import { Resend } from "resend";
+import EmailVerificationEmail from "@/components/emails/email-verification";
 import OrderConfirmationEmail from "@/components/emails/order-confirmation";
 import OrderStatusUpdateEmail from "@/components/emails/order-status-update";
+import PasswordResetEmail from "@/components/emails/password-reset";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -214,5 +216,109 @@ Team Cocoa Comaa
 			error,
 		);
 		throw error;
+	}
+}
+
+export async function sendVerificationEmail({
+	to,
+	userName,
+	url,
+}: {
+	to: string;
+	userName: string;
+	url: string;
+}) {
+	try {
+		const emailHtml = await render(
+			EmailVerificationEmail({ userName, verificationUrl: url }),
+		);
+
+		const textContent = `
+Verify Your Email - Cocoa Comaa
+
+Welcome to Cocoa Comaa, ${userName}!
+
+Thank you for signing up. Please verify your email address to complete your registration.
+
+Click the link below to verify your email:
+${url}
+
+This link will expire in 24 hours.
+
+If you didn't create an account with Cocoa Comaa, please ignore this email.
+
+Need help?
+Phone: ${process.env.NEXT_PUBLIC_BUSINESS_PHONE}
+Email: contact@cocoacomaa.com
+WhatsApp: https://wa.me/918431873579
+
+Thank you for choosing Cocoa Comaa! 🍰
+		`;
+
+		await resend.emails.send({
+			from: "Cocoa Comaa <noreply@cocoacomaa.com>",
+			to: [to],
+			subject: "Verify your email - Cocoa Comaa",
+			html: emailHtml,
+			text: textContent.trim(),
+		});
+
+		console.log(`Verification email sent to ${to}`);
+		return { success: true };
+	} catch (error) {
+		console.error("Error sending verification email:", error);
+		return { success: false, error };
+	}
+}
+
+export async function sendPasswordResetEmail({
+	to,
+	userName,
+	url,
+}: {
+	to: string;
+	userName: string;
+	url: string;
+}) {
+	try {
+		const emailHtml = await render(
+			PasswordResetEmail({ userName, resetUrl: url }),
+		);
+
+		const textContent = `
+Reset Your Password - Cocoa Comaa
+
+Hi ${userName},
+
+We received a request to reset your password for your Cocoa Comaa account.
+
+Click the link below to reset your password:
+${url}
+
+This link will expire in 1 hour.
+
+If you didn't request a password reset, please ignore this email or contact us if you have concerns.
+
+Need help?
+Phone: ${process.env.NEXT_PUBLIC_BUSINESS_PHONE}
+Email: contact@cocoacomaa.com
+WhatsApp: https://wa.me/918431873579
+
+Thank you for choosing Cocoa Comaa! 🍰
+		`;
+
+		await resend.emails.send({
+			from: "Cocoa Comaa <noreply@cocoacomaa.com>",
+			to: [to],
+			subject: "Reset your password - Cocoa Comaa",
+			html: emailHtml,
+			text: textContent.trim(),
+		});
+
+		console.log(`Password reset email sent to ${to}`);
+		return { success: true };
+	} catch (error) {
+		console.error("Error sending password reset email:", error);
+		return { success: false, error };
 	}
 }

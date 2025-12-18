@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import { fetchDesserts } from "@/lib/db/dessert";
 import { fetchSpecialsSettings } from "@/lib/db/specials";
 import SpecialsClientPage from "./specials-client-page";
@@ -25,7 +26,7 @@ export const metadata: Metadata = {
 };
 
 export default async function SpecialsLoading() {
-	const session = await auth();
+	const session = await auth.api.getSession({ headers: await headers() });
 	if (!session?.user?.id) {
 		redirect("/login?redirect=/specials");
 	}

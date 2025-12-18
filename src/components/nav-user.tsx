@@ -1,9 +1,7 @@
 "use client";
 
 import { LogOutIcon, Monitor, Moon, MoreVerticalIcon, Sun } from "lucide-react";
-import { signOut } from "next-auth/react";
 import { useTheme } from "next-themes";
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
 	DropdownMenu,
@@ -22,6 +20,7 @@ import {
 	SidebarMenuItem,
 	useSidebar,
 } from "@/components/ui/sidebar";
+import { authClient } from "@/lib/auth-client";
 
 export function NavUser({
 	user,
@@ -36,7 +35,13 @@ export function NavUser({
 	const { theme, setTheme } = useTheme();
 
 	const handleLogout = async () => {
-		await signOut({ callbackUrl: "/" });
+		await authClient.signOut({
+			fetchOptions: {
+				onSuccess: () => {
+					window.location.href = "/";
+				},
+			},
+		});
 	};
 
 	return (

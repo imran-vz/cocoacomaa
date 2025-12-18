@@ -1,9 +1,10 @@
 import { and, eq } from "drizzle-orm";
+import { headers } from "next/headers";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { addresses } from "@/lib/db/schema";
 
@@ -18,7 +19,7 @@ const createAddressSchema = z.object({
 // GET - Fetch user's addresses
 export async function GET() {
 	try {
-		const session = await auth();
+		const session = await auth.api.getSession({ headers: await headers() });
 		if (!session?.user?.id) {
 			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 		}
@@ -47,7 +48,7 @@ export async function GET() {
 // POST - Create new address
 export async function POST(request: NextRequest) {
 	try {
-		const session = await auth();
+		const session = await auth.api.getSession({ headers: await headers() });
 		if (!session?.user?.id) {
 			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 		}

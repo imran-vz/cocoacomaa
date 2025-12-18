@@ -1,6 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
 import { relations, sql } from "drizzle-orm";
-import { pgTable, primaryKey } from "drizzle-orm/pg-core";
+import { pgTable } from "drizzle-orm/pg-core";
 
 export const desserts = pgTable("desserts", (d) => {
 	return {
@@ -188,13 +188,13 @@ export const users = pgTable("users", (d) => {
 			.text("id")
 			.primaryKey()
 			.$defaultFn(() => createId()),
-		name: d.text("name"),
+		name: d.text("name").notNull(),
 		email: d.text("email").notNull().unique(),
 		phone: d.text("phone"),
 		phoneVerified: d.boolean("phone_verified").notNull().default(false),
 		password: d.text("password"),
-		// NextAuth required fields
-		emailVerified: d.timestamp("emailVerified", { mode: "date" }),
+		// Better Auth required fields
+		emailVerified: d.boolean("email_verified").notNull().default(false),
 		image: d.text("image"),
 		createdAt: d.timestamp("created_at").defaultNow().notNull(),
 		updatedAt: d.timestamp("updated_at").defaultNow().notNull(),
@@ -205,63 +205,61 @@ export const users = pgTable("users", (d) => {
 	};
 });
 
-// NextAuth required tables
-export const accounts = pgTable(
-	"account",
-	(d) => ({
-		userId: d
-			.text("userId")
-			.notNull()
-			.references(() => users.id, { onDelete: "cascade" }),
-		type: d.text("type").notNull(),
-		provider: d.text("provider").notNull(),
-		providerAccountId: d.text("providerAccountId").notNull(),
-		refresh_token: d.text("refresh_token"),
-		access_token: d.text("access_token"),
-		expires_at: d.integer("expires_at"),
-		token_type: d.text("token_type"),
-		scope: d.text("scope"),
-		id_token: d.text("id_token"),
-		session_state: d.text("session_state"),
-	}),
-	(account) => ({
-		compoundKey: primaryKey({
-			columns: [account.provider, account.providerAccountId],
-		}),
-	}),
-);
-
-export const sessions = pgTable("session", (d) => ({
-	sessionToken: d.text("sessionToken").notNull().primaryKey(),
+// Better Auth required tables
+export const accounts = pgTable("account", (d) => ({
+	id: d
+		.text("id")
+		.primaryKey()
+		.$defaultFn(() => createId()),
 	userId: d
 		.text("userId")
 		.notNull()
 		.references(() => users.id, { onDelete: "cascade" }),
-	expires: d.timestamp("expires", { mode: "date" }).notNull(),
+	accountId: d.text("accountId").notNull(),
+	providerId: d.text("providerId").notNull(),
+	accessToken: d.text("accessToken"),
+	refreshToken: d.text("refreshToken"),
+	accessTokenExpiresAt: d.timestamp("accessTokenExpiresAt", { mode: "date" }),
+	refreshTokenExpiresAt: d.timestamp("refreshTokenExpiresAt", {
+		mode: "date",
+	}),
+	scope: d.text("scope"),
+	idToken: d.text("idToken"),
+	password: d.text("password"),
+	createdAt: d.timestamp("createdAt").defaultNow().notNull(),
+	updatedAt: d.timestamp("updatedAt").defaultNow().notNull(),
 }));
 
-export const verificationTokens = pgTable(
-	"verificationToken",
-	(d) => ({
-		identifier: d.text("identifier").notNull(),
-		token: d.text("token").notNull(),
-		expires: d.timestamp("expires", { mode: "date" }).notNull(),
-	}),
-	(vt) => ({
-		compoundKey: primaryKey({ columns: [vt.identifier, vt.token] }),
-	}),
-);
+export const sessions = pgTable("session", (d) => ({
+	id: d
+		.text("id")
+		.primaryKey()
+		.$defaultFn(() => createId()),
+	token: d.text("token").notNull().unique(),
+	userId: d
+		.text("userId")
+		.notNull()
+		.references(() => users.id, { onDelete: "cascade" }),
+	expiresAt: d.timestamp("expiresAt", { mode: "date" }).notNull(),
+	ipAddress: d.text("ipAddress"),
+	userAgent: d.text("userAgent"),
+	createdAt: d.timestamp("createdAt").defaultNow().notNull(),
+	updatedAt: d.timestamp("updatedAt").defaultNow().notNull(),
+}));
 
-export const passwordResetTokens = pgTable("password_reset_tokens", (d) => {
-	return {
-		id: d.integer("id").primaryKey().generatedAlwaysAsIdentity(),
-		email: d.text("email").notNull(),
-		token: d.text("token").notNull().unique(),
-		expiresAt: d.timestamp("expires_at").notNull(),
-		createdAt: d.timestamp("created_at").defaultNow().notNull(),
-		used: d.boolean("used").notNull().default(false),
-	};
-});
+export const verification = pgTable("verification", (d) => ({
+	id: d
+		.text("id")
+		.primaryKey()
+		.$defaultFn(() => createId()),
+	identifier: d.text("identifier").notNull(),
+	value: d.text("value").notNull(),
+	expiresAt: d.timestamp("expiresAt", { mode: "date" }).notNull(),
+	createdAt: d.timestamp("createdAt").defaultNow().notNull(),
+	updatedAt: d.timestamp("updatedAt").defaultNow().notNull(),
+}));
+
+// Removed: passwordResetTokens table - using better-auth's built-in reset flow
 
 export const addresses = pgTable("addresses", (d) => {
 	return {
@@ -291,7 +289,6 @@ export const usersRelations = relations(users, ({ many }) => ({
 	address: many(addresses),
 	orders: many(orders),
 	workshopOrders: many(workshopOrders),
-	passwordResetTokens: many(passwordResetTokens),
 	accounts: many(accounts, { relationName: "user_accounts" }),
 	sessions: many(sessions, { relationName: "user_sessions" }),
 }));
@@ -312,15 +309,7 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
 	}),
 }));
 
-export const passwordResetTokensRelations = relations(
-	passwordResetTokens,
-	({ one }) => ({
-		user: one(users, {
-			fields: [passwordResetTokens.email],
-			references: [users.email],
-		}),
-	}),
-);
+// Removed: passwordResetTokensRelations
 
 export const addressesRelations = relations(addresses, ({ one }) => ({
 	user: one(users, {

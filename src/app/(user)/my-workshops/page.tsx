@@ -1,10 +1,11 @@
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import { getMyWorkshopOrders } from "@/lib/db/workshop-order";
 import MyWorkshopPage from "./my-workshop-page";
 
 export default async function Page() {
-	const session = await auth();
+	const session = await auth.api.getSession({ headers: await headers() });
 	if (!session?.user?.id) {
 		redirect("/login?redirect=/my-workshops");
 	}

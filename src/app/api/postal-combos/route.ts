@@ -1,9 +1,10 @@
 import { and, eq } from "drizzle-orm";
+import { headers } from "next/headers";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { postalCombos } from "@/lib/db/schema";
 
@@ -46,7 +47,7 @@ export async function GET() {
 // POST - Create new postal combo
 export async function POST(request: NextRequest) {
 	try {
-		const session = await auth();
+		const session = await auth.api.getSession({ headers: await headers() });
 		if (!session?.user || session.user.role !== "admin") {
 			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 		}

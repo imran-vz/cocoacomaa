@@ -1,15 +1,12 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
 import { EyeIcon, EyeOffIcon, Info } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
-
 import { Icons } from "@/components/icons";
 import {
 	AlertDialog,
@@ -31,13 +28,14 @@ import {
 } from "@/components/ui/form";
 import { GoogleSignInButton } from "@/components/ui/google-signin-button";
 import { Input } from "@/components/ui/input";
+import { authClient } from "@/lib/auth-client";
 import { registerSchema } from "@/lib/schema";
 
 type SignupFormValues = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
 	const router = useRouter();
-	const { data } = useSession();
+	const { data: session } = authClient.useSession();
 	const searchParams = useSearchParams();
 	const redirect = searchParams.get("redirect");
 
@@ -55,53 +53,49 @@ export default function RegisterPage() {
 	});
 
 	useEffect(() => {
-		if (data?.user.id) {
+		if (session?.user?.id) {
 			router.replace("/");
 			return;
 		}
-	}, [data?.user?.id, router]);
+	}, [session?.user?.id, router]);
 
 	async function onSubmit(data: SignupFormValues) {
 		try {
-			await axios.post("/api/register", data, {
-				headers: {
-					"Content-Type": "application/json",
-					Accept: "application/json",
+			const result = await authClient.signUp.email(
+				{
+					email: data.email,
+					password: data.password,
+					name: data.name,
+					callbackURL: redirect || "/",
 				},
-			});
+				{
+					onRequest: (ctx) => {
+						// Add phone as additional field
+						return {
+							...ctx,
+							body: {
+								...ctx.body,
+								phone: data.phone,
+							},
+						};
+					},
+				},
+			);
 
-			toast.success("Registration successful! Please log in.");
-			router.push(`/login${redirect ? `?redirect=${redirect}` : ""}`);
-			router.refresh();
-		} catch (error: unknown) {
-			if (axios.isAxiosError(error)) {
-				if (error.response?.data.errors) {
-					const errors = Object.keys(error.response?.data.errors).map((key) =>
-						error.response?.data.errors[key]?.join("\n"),
-					);
-					if (errors.length > 0) {
-						toast.error(
-							<div>
-								<ul className="list-disc list-inside space-y-1">
-									{errors.map((error) => (
-										<li key={error}>{error}</li>
-									))}
-								</ul>
-							</div>,
-						);
-						return;
-					}
-
-					toast.error(error.response?.data.message || "Something went wrong");
-					return;
-				}
-
-				toast.error(error.response?.data.message || "Something went wrong");
+			if (result.error) {
+				const errorMsg = result.error.message || "Registration failed";
+				toast.error(errorMsg);
 				return;
 			}
 
+			toast.success(
+				"Registration successful! Please check your email for verification.",
+			);
+			router.push(`/login${redirect ? `?redirect=${redirect}` : ""}`);
+			router.refresh();
+		} catch (error: unknown) {
+			console.error("Signup error:", error);
 			toast.error("Something went wrong");
-			return;
 		}
 	}
 

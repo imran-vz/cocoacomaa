@@ -1,7 +1,8 @@
 import crypto from "node:crypto";
 import { and, eq, isNotNull, sql } from "drizzle-orm";
+import { headers } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { workshopOrders, workshops } from "@/lib/db/schema";
 
@@ -14,7 +15,7 @@ interface VerifyPaymentRequest {
 
 export async function POST(request: NextRequest) {
 	try {
-		const session = await auth();
+		const session = await auth.api.getSession({ headers: await headers() });
 		if (!session?.user?.id) {
 			return NextResponse.json(
 				{ success: false, message: "Unauthorized" },

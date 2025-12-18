@@ -1,6 +1,7 @@
 import { put } from "@vercel/blob";
+import { headers } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import {
 	createForbiddenResponse,
 	createUnauthorizedResponse,
@@ -12,7 +13,7 @@ import { SECURITY_CONFIG } from "@/lib/security-config";
 export async function POST(request: NextRequest) {
 	try {
 		// Check authentication and admin role
-		const session = await auth();
+		const session = await auth.api.getSession({ headers: await headers() });
 		requireAuth(session, ["admin"]);
 
 		// Aggressive rate limiting for uploads

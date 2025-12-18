@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
+import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 
@@ -9,7 +10,7 @@ export async function PATCH(
 	{ params }: { params: Promise<{ userId: string }> },
 ) {
 	try {
-		const session = await auth();
+		const session = await auth.api.getSession({ headers: await headers() });
 
 		// Check if user is admin or manager
 		if (

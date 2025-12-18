@@ -3,12 +3,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -21,13 +19,14 @@ import {
 } from "@/components/ui/form";
 import { GoogleSignInButton } from "@/components/ui/google-signin-button";
 import { Input } from "@/components/ui/input";
+import { authClient } from "@/lib/auth-client";
 import { loginSchema } from "@/lib/schema";
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
 	const router = useRouter();
-	const { data, status } = useSession();
+	const { data: session, isPending } = authClient.useSession();
 	const [showPassword, setShowPassword] = useState(false);
 	const searchParams = useSearchParams();
 	const redirect = searchParams.get("redirect");
@@ -41,15 +40,15 @@ export default function LoginPage() {
 	});
 
 	useEffect(() => {
-		if (status === "authenticated" && data?.user.id) {
+		if (session?.user?.id) {
 			console.log("redirecting to /");
 			router.replace(redirect || "/");
 			return;
 		}
-	}, [data?.user.id, status, router, redirect]);
+	}, [session?.user?.id, router, redirect]);
 
 	// Show loading while checking session
-	if (status === "loading") {
+	if (isPending) {
 		return (
 			<div className="flex h-screen items-center justify-center">
 				<div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -58,23 +57,37 @@ export default function LoginPage() {
 	}
 
 	// Don't render login form if user is authenticated
-	if (status === "authenticated") {
+	if (session?.user?.id) {
 		return null;
 	}
 
 	async function onSubmit(data: LoginFormValues) {
 		try {
-			const result = await signIn("credentials", {
+			const result = await authClient.signIn.email({
 				email: data.email,
 				password: data.password,
-				redirect: false,
+				rememberMe: true,
 			});
 
-			if (result?.error) {
-				toast.error("Invalid credentials");
-				form.setError("password", { message: "Invalid credentials" });
-				form.setError("email", { message: "Invalid credentials" });
-				return;
+			if (result.error) {
+				console.error(result.error);
+				if (result.error.code === "INVALID_EMAIL_OR_PASSWORD") {
+					toast.error("Invalid credentials");
+					form.setError("password", { message: "Invalid credentials" });
+					form.setError("email", { message: "Invalid credentials" });
+					return;
+				}
+
+				if (result.error.code === "EMAIL_NOT_VERIFIED") {
+					toast.error(
+						"Please verify your email address. Check your inbox for the verification link.",
+					);
+					form.setError("password", { message: "" });
+					form.setError("email", {
+						message: "Email not verified. Check your inbox.",
+					});
+					return;
+				}
 			}
 
 			if (redirect) {
