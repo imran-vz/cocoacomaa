@@ -9,6 +9,12 @@ import { SECURITY_CONFIG } from "./security-config";
 
 export const auth = betterAuth({
 	plugins: [oneTap()],
+	account: {
+		accountLinking: {
+			enabled: true,
+			trustedProviders: ["google"],
+		},
+	},
 	database: drizzleAdapter(db, {
 		provider: "pg",
 		schema: {
