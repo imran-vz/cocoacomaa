@@ -90,7 +90,7 @@ export async function PUT(request: NextRequest) {
 				{
 					success: false,
 					error: "Invalid data",
-					details: validation.error.errors,
+					details: validation.error.issues,
 				},
 				{ status: 400 },
 			);

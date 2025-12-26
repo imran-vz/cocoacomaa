@@ -1,28 +1,17 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "@tanstack/react-form";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import type { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-	Form,
-	FormControl,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
-} from "@/components/ui/form";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { GoogleSignInButton } from "@/components/ui/google-signin-button";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 import { loginSchema } from "@/lib/schema";
-
-type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
 	const router = useRouter();
@@ -31,11 +20,64 @@ export default function LoginPage() {
 	const searchParams = useSearchParams();
 	const redirect = searchParams.get("redirect");
 
-	const form = useForm<LoginFormValues>({
-		resolver: zodResolver(loginSchema),
+	const form = useForm({
 		defaultValues: {
 			email: "",
 			password: "",
+		},
+		validators: {
+			onSubmit: loginSchema,
+		},
+		onSubmit: async ({ value }) => {
+			try {
+				const result = await authClient.signIn.email({
+					email: value.email,
+					password: value.password,
+					rememberMe: true,
+				});
+
+				if (result.error) {
+					console.error(result.error);
+					if (result.error.code === "INVALID_EMAIL_OR_PASSWORD") {
+						toast.error("Invalid credentials");
+						form.setFieldMeta("password", (prev) => ({
+							...prev,
+							errors: ["Invalid credentials"],
+						}));
+						form.setFieldMeta("email", (prev) => ({
+							...prev,
+							errors: ["Invalid credentials"],
+						}));
+						return;
+					}
+
+					if (result.error.code === "EMAIL_NOT_VERIFIED") {
+						toast.error(
+							"Please verify your email address. Check your inbox for the verification link.",
+						);
+						form.setFieldMeta("password", (prev) => ({
+							...prev,
+							errors: [""],
+						}));
+						form.setFieldMeta("email", (prev) => ({
+							...prev,
+							errors: ["Email not verified. Check your inbox."],
+						}));
+						return;
+					}
+				}
+
+				if (redirect) {
+					console.log("redirect", redirect);
+					window.location.href = redirect;
+				} else {
+					console.log("no redirect");
+					window.location.href = "/";
+				}
+			} catch (error) {
+				console.error(error);
+				toast.error("Something went wrong");
+			}
 		},
 	});
 
@@ -73,48 +115,6 @@ export default function LoginPage() {
 		return null;
 	}
 
-	async function onSubmit(data: LoginFormValues) {
-		try {
-			const result = await authClient.signIn.email({
-				email: data.email,
-				password: data.password,
-				rememberMe: true,
-			});
-
-			if (result.error) {
-				console.error(result.error);
-				if (result.error.code === "INVALID_EMAIL_OR_PASSWORD") {
-					toast.error("Invalid credentials");
-					form.setError("password", { message: "Invalid credentials" });
-					form.setError("email", { message: "Invalid credentials" });
-					return;
-				}
-
-				if (result.error.code === "EMAIL_NOT_VERIFIED") {
-					toast.error(
-						"Please verify your email address. Check your inbox for the verification link.",
-					);
-					form.setError("password", { message: "" });
-					form.setError("email", {
-						message: "Email not verified. Check your inbox.",
-					});
-					return;
-				}
-			}
-
-			if (redirect) {
-				console.log("redirect", redirect);
-				window.location.href = redirect;
-			} else {
-				console.log("no redirect");
-				window.location.href = "/";
-			}
-		} catch (error) {
-			console.error(error);
-			toast.error("Something went wrong");
-		}
-	}
-
 	return (
 		<div className="min-h-[calc(100svh-10rem)] flex items-center justify-center px-2 py-8 bg-background">
 			<div className="w-full max-w-sm md:max-w-md flex flex-col justify-center space-y-6 mx-auto">
@@ -148,38 +148,58 @@ export default function LoginPage() {
 							</div>
 						</div>
 
-						<Form {...form}>
-							<form
-								onSubmit={form.handleSubmit(onSubmit)}
-								className="space-y-6"
-							>
-								<FormField
-									control={form.control}
-									name="email"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>Email</FormLabel>
-											<FormControl>
-												<Input
-													type="email"
-													placeholder="m@example.com"
-													className="h-12 text-base"
-													autoComplete="email"
-													{...field}
-												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
+						<form
+							onSubmit={(e) => {
+								e.preventDefault();
+								form.handleSubmit();
+							}}
+							className="space-y-6"
+						>
+							<form.Field
+								name="email"
+								// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+								children={(field) => {
+									const isInvalid =
+										field.state.meta.isTouched && !field.state.meta.isValid;
+									const hasErrors =
+										field.state.meta.errors &&
+										field.state.meta.errors.length > 0;
+									return (
+										<Field data-invalid={isInvalid || hasErrors}>
+											<FieldLabel htmlFor={field.name}>Email</FieldLabel>
+											<Input
+												id={field.name}
+												name={field.name}
+												type="email"
+												value={field.state.value}
+												onBlur={field.handleBlur}
+												onChange={(e) => field.handleChange(e.target.value)}
+												aria-invalid={isInvalid || hasErrors}
+												placeholder="m@example.com"
+												className="h-12 text-base"
+												autoComplete="email"
+											/>
+											{(isInvalid || hasErrors) && (
+												<FieldError errors={field.state.meta.errors} />
+											)}
+										</Field>
+									);
+								}}
+							/>
 
-								<FormField
-									control={form.control}
-									name="password"
-									render={({ field }) => (
-										<FormItem>
+							<form.Field
+								name="password"
+								// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+								children={(field) => {
+									const isInvalid =
+										field.state.meta.isTouched && !field.state.meta.isValid;
+									const hasErrors =
+										field.state.meta.errors &&
+										field.state.meta.errors.length > 0;
+									return (
+										<Field data-invalid={isInvalid || hasErrors}>
 											<div className="flex items-center">
-												<FormLabel>Password</FormLabel>
+												<FieldLabel htmlFor={field.name}>Password</FieldLabel>
 												<a
 													href="/forgot-password"
 													className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
@@ -187,41 +207,52 @@ export default function LoginPage() {
 													Forgot your password?
 												</a>
 											</div>
-											<FormControl>
-												<div className="relative">
-													<Input
-														type={showPassword ? "text" : "password"}
-														placeholder="********"
-														className="h-12 text-base pr-10"
-														autoComplete="current-password"
-														{...field}
-													/>
-													<button
-														type="button"
-														className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-														onClick={() => setShowPassword(!showPassword)}
-														aria-label={
-															showPassword ? "Hide password" : "Show password"
-														}
-													>
-														{showPassword ? <EyeOffIcon /> : <EyeIcon />}
-													</button>
-												</div>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
+											<div className="relative">
+												<Input
+													id={field.name}
+													name={field.name}
+													type={showPassword ? "text" : "password"}
+													value={field.state.value}
+													onBlur={field.handleBlur}
+													onChange={(e) => field.handleChange(e.target.value)}
+													aria-invalid={isInvalid || hasErrors}
+													placeholder="********"
+													className="h-12 text-base pr-10"
+													autoComplete="current-password"
+												/>
+												<button
+													type="button"
+													className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+													onClick={() => setShowPassword(!showPassword)}
+													aria-label={
+														showPassword ? "Hide password" : "Show password"
+													}
+												>
+													{showPassword ? <EyeOffIcon /> : <EyeIcon />}
+												</button>
+											</div>
+											{(isInvalid || hasErrors) && (
+												<FieldError errors={field.state.meta.errors} />
+											)}
+										</Field>
+									);
+								}}
+							/>
 
-								<Button
-									type="submit"
-									className="w-full h-12 text-base"
-									disabled={form.formState.isSubmitting}
-								>
-									{form.formState.isSubmitting ? "Signing in..." : "Sign in"}
-								</Button>
-							</form>
-						</Form>
+							<form.Subscribe
+								selector={(state) => state.isSubmitting}
+								// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+								children={(isSubmitting) => (
+									<Button
+										type="submit"
+										className="w-full h-12 text-base"
+										disabled={isSubmitting}
+									>
+										{isSubmitting ? "Signing in..." : "Sign in"}
+									</Button>
+								)}
+							/>
+						</form>
 					</CardContent>
 				</Card>
 				<div className="text-center text-sm text-muted-foreground mt-2">

@@ -1,8 +1,7 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "@tanstack/react-form";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -16,22 +15,18 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-	Form,
-	FormControl,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
-} from "@/components/ui/form";
+	Field,
+	FieldError,
+	FieldGroup,
+	FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
 const createManagerSchema = z.object({
 	name: z.string().min(1, "Name is required"),
-	email: z.email("Valid email is required"),
-	phone: z.string().optional(),
+	email: z.string().email("Valid email is required"),
+	phone: z.string(),
 });
-
-type CreateManagerForm = z.infer<typeof createManagerSchema>;
 
 interface CreateManagerDialogProps {
 	children: React.ReactNode;
@@ -41,44 +36,45 @@ export function CreateManagerDialog({ children }: CreateManagerDialogProps) {
 	const [open, setOpen] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
 
-	const form = useForm<CreateManagerForm>({
-		resolver: zodResolver(createManagerSchema),
+	const form = useForm({
 		defaultValues: {
 			name: "",
 			email: "",
 			phone: "",
 		},
-	});
+		validators: {
+			onSubmit: createManagerSchema,
+		},
+		onSubmit: async ({ value }) => {
+			setIsLoading(true);
+			try {
+				const response = await fetch("/api/admin/managers", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify(value),
+				});
 
-	const onSubmit = async (values: CreateManagerForm) => {
-		setIsLoading(true);
-		try {
-			const response = await fetch("/api/admin/managers", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify(values),
-			});
+				if (!response.ok) {
+					const errorData = await response.json();
+					throw new Error(errorData.error || "Failed to create manager");
+				}
 
-			if (!response.ok) {
-				const errorData = await response.json();
-				throw new Error(errorData.error || "Failed to create manager");
+				toast.success("Manager created successfully");
+				setOpen(false);
+				form.reset();
+				window.location.reload();
+			} catch (error) {
+				console.error("Error creating manager:", error);
+				toast.error(
+					error instanceof Error ? error.message : "Failed to create manager",
+				);
+			} finally {
+				setIsLoading(false);
 			}
-
-			toast.success("Manager created successfully");
-			setOpen(false);
-			form.reset();
-			window.location.reload();
-		} catch (error) {
-			console.error("Error creating manager:", error);
-			toast.error(
-				error instanceof Error ? error.message : "Failed to create manager",
-			);
-		} finally {
-			setIsLoading(false);
-		}
-	};
+		},
+	});
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
@@ -91,65 +87,106 @@ export function CreateManagerDialog({ children }: CreateManagerDialogProps) {
 						orders.
 					</DialogDescription>
 				</DialogHeader>
-				<Form {...form}>
-					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-						<FormField
-							control={form.control}
+				<form
+					onSubmit={(e) => {
+						e.preventDefault();
+						form.handleSubmit();
+					}}
+					className="space-y-4"
+				>
+					<FieldGroup>
+						<form.Field
 							name="name"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Name</FormLabel>
-									<FormControl>
-										<Input placeholder="Manager name" {...field} />
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<FormField
-							control={form.control}
-							name="email"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Email</FormLabel>
-									<FormControl>
+							// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+							children={(field) => {
+								const isInvalid =
+									field.state.meta.isTouched && !field.state.meta.isValid;
+								return (
+									<Field data-invalid={isInvalid}>
+										<FieldLabel htmlFor={field.name}>Name</FieldLabel>
 										<Input
-											type="email"
-											placeholder="manager@example.com"
-											{...field}
+											id={field.name}
+											name={field.name}
+											value={field.state.value}
+											onBlur={field.handleBlur}
+											onChange={(e) => field.handleChange(e.target.value)}
+											aria-invalid={isInvalid}
+											placeholder="Manager name"
 										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
+										{isInvalid && (
+											<FieldError errors={field.state.meta.errors} />
+										)}
+									</Field>
+								);
+							}}
 						/>
-						<FormField
-							control={form.control}
+						<form.Field
+							name="email"
+							// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+							children={(field) => {
+								const isInvalid =
+									field.state.meta.isTouched && !field.state.meta.isValid;
+								return (
+									<Field data-invalid={isInvalid}>
+										<FieldLabel htmlFor={field.name}>Email</FieldLabel>
+										<Input
+											id={field.name}
+											name={field.name}
+											type="email"
+											value={field.state.value}
+											onBlur={field.handleBlur}
+											onChange={(e) => field.handleChange(e.target.value)}
+											aria-invalid={isInvalid}
+											placeholder="manager@example.com"
+										/>
+										{isInvalid && (
+											<FieldError errors={field.state.meta.errors} />
+										)}
+									</Field>
+								);
+							}}
+						/>
+						<form.Field
 							name="phone"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Phone (Optional)</FormLabel>
-									<FormControl>
-										<Input placeholder="Phone number" {...field} />
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
+							// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+							children={(field) => {
+								const isInvalid =
+									field.state.meta.isTouched && !field.state.meta.isValid;
+								return (
+									<Field data-invalid={isInvalid}>
+										<FieldLabel htmlFor={field.name}>
+											Phone (Optional)
+										</FieldLabel>
+										<Input
+											id={field.name}
+											name={field.name}
+											value={field.state.value}
+											onBlur={field.handleBlur}
+											onChange={(e) => field.handleChange(e.target.value)}
+											aria-invalid={isInvalid}
+											placeholder="Phone number"
+										/>
+										{isInvalid && (
+											<FieldError errors={field.state.meta.errors} />
+										)}
+									</Field>
+								);
+							}}
 						/>
-						<DialogFooter>
-							<Button
-								type="button"
-								variant="outline"
-								onClick={() => setOpen(false)}
-							>
-								Cancel
-							</Button>
-							<Button type="submit" disabled={isLoading}>
-								{isLoading ? "Creating..." : "Create Manager"}
-							</Button>
-						</DialogFooter>
-					</form>
-				</Form>
+					</FieldGroup>
+					<DialogFooter>
+						<Button
+							type="button"
+							variant="outline"
+							onClick={() => setOpen(false)}
+						>
+							Cancel
+						</Button>
+						<Button type="submit" disabled={isLoading}>
+							{isLoading ? "Creating..." : "Create Manager"}
+						</Button>
+					</DialogFooter>
+				</form>
 			</DialogContent>
 		</Dialog>
 	);

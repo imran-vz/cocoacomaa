@@ -1,24 +1,22 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, useStore } from "@tanstack/react-form";
 import axios from "axios";
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-	Form,
-	FormControl,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
-} from "@/components/ui/form";
+	Field,
+	FieldDescription,
+	FieldError,
+	FieldGroup,
+	FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
 	Select,
@@ -40,15 +38,22 @@ const workshopSchema = z.object({
 	amount: z.string().min(1, "Amount is required"),
 	type: z.enum(["online", "offline"]),
 	maxBookings: z.string().min(1, "Max bookings is required"),
-	imageUrl: z.string().optional(),
-	status: z.enum(["active", "inactive"]).optional(),
+	imageUrl: z.string(),
+	status: z.enum(["active", "inactive"]),
 });
-
-type WorkshopFormValues = z.infer<typeof workshopSchema>;
 
 interface WorkshopFormProps {
 	mode: "create" | "edit";
-	initialData?: WorkshopFormValues & { id?: number };
+	initialData?: {
+		id?: number;
+		title: string;
+		description: string;
+		amount: string;
+		type: "online" | "offline";
+		maxBookings: string;
+		imageUrl?: string;
+		status?: "active" | "inactive";
+	};
 }
 
 export function WorkshopForm({ mode, initialData }: WorkshopFormProps) {
@@ -89,16 +94,94 @@ export function WorkshopForm({ mode, initialData }: WorkshopFormProps) {
 			...initialData,
 			amount: netPrice,
 			maxBookings: initialData.maxBookings?.toString() || "10",
+			imageUrl: initialData.imageUrl || "",
+			status: initialData.status || ("active" as const),
 		};
 	};
 
-	const form = useForm<WorkshopFormValues>({
-		resolver: zodResolver(workshopSchema),
+	const uploadImage = async (): Promise<string | null> => {
+		if (!selectedFile) return null;
+
+		setUploading(true);
+		try {
+			const response = await fetch(
+				`/api/upload?filename=${encodeURIComponent(selectedFile.name)}`,
+				{
+					method: "POST",
+					body: selectedFile,
+				},
+			);
+
+			if (!response.ok) {
+				throw new Error("Failed to upload image");
+			}
+
+			const { url } = await response.json();
+			return url;
+		} catch (error) {
+			console.error("Upload error:", error);
+			toast.error("Failed to upload image");
+			return null;
+		} finally {
+			setUploading(false);
+		}
+	};
+
+	const form = useForm({
 		defaultValues: getInitialData(),
+		validators: {
+			onSubmit: workshopSchema,
+		},
+		onSubmit: async ({ value }) => {
+			setIsSubmitting(true);
+
+			try {
+				let imageUrl = value.imageUrl;
+
+				// Upload new image if selected
+				if (selectedFile) {
+					const uploadedUrl = await uploadImage();
+					if (uploadedUrl) {
+						imageUrl = uploadedUrl;
+					} else {
+						// If upload failed, don't proceed
+						setIsSubmitting(false);
+						return;
+					}
+				}
+
+				const submissionData = {
+					...value,
+					amount: grossAmount.toString(), // Send gross amount instead of net
+					imageUrl,
+				};
+
+				if (mode === "edit" && initialData?.id) {
+					await axios.put(`/api/workshops/${initialData.id}`, submissionData);
+					toast.success("Workshop updated successfully!");
+				} else {
+					await axios.post("/api/workshops", submissionData);
+					toast.success("Workshop created successfully!");
+				}
+
+				router.push("/admin/workshops");
+			} catch (error) {
+				console.error("Error saving workshop:", error);
+				if (axios.isAxiosError(error)) {
+					toast.error(
+						error.response?.data?.message || "Failed to save workshop",
+					);
+				} else {
+					toast.error("Failed to save workshop");
+				}
+			} finally {
+				setIsSubmitting(false);
+			}
+		},
 	});
 
 	// Calculate gross amount when amount changes
-	const watchAmount = form.watch("amount");
+	const watchAmount = useStore(form.store, (state) => state.values.amount);
 	useEffect(() => {
 		const netPrice = parseFloat(watchAmount);
 		if (!Number.isNaN(netPrice) && netPrice > 0) {
@@ -141,78 +224,6 @@ export function WorkshopForm({ mode, initialData }: WorkshopFormProps) {
 		}
 	};
 
-	const uploadImage = async (): Promise<string | null> => {
-		if (!selectedFile) return null;
-
-		setUploading(true);
-		try {
-			const response = await fetch(
-				`/api/upload?filename=${encodeURIComponent(selectedFile.name)}`,
-				{
-					method: "POST",
-					body: selectedFile,
-				},
-			);
-
-			if (!response.ok) {
-				throw new Error("Failed to upload image");
-			}
-
-			const { url } = await response.json();
-			return url;
-		} catch (error) {
-			console.error("Upload error:", error);
-			toast.error("Failed to upload image");
-			return null;
-		} finally {
-			setUploading(false);
-		}
-	};
-
-	async function onSubmit(data: WorkshopFormValues) {
-		setIsSubmitting(true);
-
-		try {
-			let imageUrl = data.imageUrl;
-
-			// Upload new image if selected
-			if (selectedFile) {
-				const uploadedUrl = await uploadImage();
-				if (uploadedUrl) {
-					imageUrl = uploadedUrl;
-				} else {
-					// If upload failed, don't proceed
-					return;
-				}
-			}
-
-			const submissionData = {
-				...data,
-				amount: grossAmount.toString(), // Send gross amount instead of net
-				imageUrl,
-			};
-
-			if (mode === "edit" && initialData?.id) {
-				await axios.put(`/api/workshops/${initialData.id}`, submissionData);
-				toast.success("Workshop updated successfully!");
-			} else {
-				await axios.post("/api/workshops", submissionData);
-				toast.success("Workshop created successfully!");
-			}
-
-			router.push("/admin/workshops");
-		} catch (error) {
-			console.error("Error saving workshop:", error);
-			if (axios.isAxiosError(error)) {
-				toast.error(error.response?.data?.message || "Failed to save workshop");
-			} else {
-				toast.error("Failed to save workshop");
-			}
-		} finally {
-			setIsSubmitting(false);
-		}
-	}
-
 	return (
 		<div className="container mx-auto p-4 sm:p-6">
 			<div className="flex items-center gap-4 mb-6">
@@ -236,115 +247,175 @@ export function WorkshopForm({ mode, initialData }: WorkshopFormProps) {
 					<CardTitle>Workshop Details</CardTitle>
 				</CardHeader>
 				<CardContent>
-					<Form {...form}>
-						<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-							<FormField
-								control={form.control}
+					<form
+						onSubmit={(e) => {
+							e.preventDefault();
+							form.handleSubmit();
+						}}
+						className="space-y-6"
+					>
+						<FieldGroup>
+							<form.Field
 								name="title"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Title</FormLabel>
-										<FormControl>
-											<Input placeholder="Workshop title" {...field} />
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
+								// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+								children={(field) => {
+									const isInvalid =
+										field.state.meta.isTouched && !field.state.meta.isValid;
+									return (
+										<Field data-invalid={isInvalid}>
+											<FieldLabel htmlFor={field.name}>Title</FieldLabel>
+											<Input
+												id={field.name}
+												name={field.name}
+												value={field.state.value}
+												onBlur={field.handleBlur}
+												onChange={(e) => field.handleChange(e.target.value)}
+												aria-invalid={isInvalid}
+												placeholder="Workshop title"
+											/>
+											{isInvalid && (
+												<FieldError errors={field.state.meta.errors} />
+											)}
+										</Field>
+									);
+								}}
 							/>
 
-							<FormField
-								control={form.control}
+							<form.Field
 								name="description"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Description</FormLabel>
-										<FormControl>
+								// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+								children={(field) => {
+									const isInvalid =
+										field.state.meta.isTouched && !field.state.meta.isValid;
+									return (
+										<Field data-invalid={isInvalid}>
+											<FieldLabel htmlFor={field.name}>Description</FieldLabel>
 											<Textarea
+												id={field.name}
+												name={field.name}
+												value={field.state.value}
+												onBlur={field.handleBlur}
+												onChange={(e) => field.handleChange(e.target.value)}
+												aria-invalid={isInvalid}
 												placeholder="Describe what participants will learn..."
 												className="min-h-[100px]"
-												{...field}
 											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
+											{isInvalid && (
+												<FieldError errors={field.state.meta.errors} />
+											)}
+										</Field>
+									);
+								}}
 							/>
 
 							<div className="grid grid-cols-1 place-items-start md:grid-cols-3 gap-4">
-								<FormField
-									control={form.control}
+								<form.Field
 									name="amount"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>Net Amount (₹)</FormLabel>
-											<FormControl>
+									// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+									children={(field) => {
+										const isInvalid =
+											field.state.meta.isTouched && !field.state.meta.isValid;
+										return (
+											<Field data-invalid={isInvalid}>
+												<FieldLabel htmlFor={field.name}>
+													Net Amount (₹)
+												</FieldLabel>
 												<Input
+													id={field.name}
+													name={field.name}
 													type="number"
 													step="0.01"
 													min="0"
+													value={field.state.value}
+													onBlur={field.handleBlur}
+													onChange={(e) => field.handleChange(e.target.value)}
+													aria-invalid={isInvalid}
 													placeholder="Enter net amount"
-													{...field}
 												/>
-											</FormControl>
-											<p className="text-xs text-muted-foreground min-h-[20px]">
-												Gross Amount (with {config.paymentProcessingFee}% fee):
-												₹{grossAmount.toFixed(2)}
-											</p>
-											<FormMessage />
-										</FormItem>
-									)}
+												<FieldDescription className="min-h-[20px]">
+													Gross Amount (with {config.paymentProcessingFee}%
+													fee): ₹{grossAmount.toFixed(2)}
+												</FieldDescription>
+												{isInvalid && (
+													<FieldError errors={field.state.meta.errors} />
+												)}
+											</Field>
+										);
+									}}
 								/>
 
-								<FormField
-									control={form.control}
+								<form.Field
 									name="type"
-									render={({ field }) => (
-										<FormItem className="w-full">
-											<FormLabel>Type</FormLabel>
-											<Select
-												onValueChange={field.onChange}
-												defaultValue={field.value}
-											>
-												<FormControl>
-													<SelectTrigger>
+									// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+									children={(field) => {
+										const isInvalid =
+											field.state.meta.isTouched && !field.state.meta.isValid;
+										return (
+											<Field data-invalid={isInvalid} className="w-full">
+												<FieldLabel htmlFor={field.name}>Type</FieldLabel>
+												<Select
+													name={field.name}
+													value={field.state.value}
+													onValueChange={(value) =>
+														field.handleChange(value as "online" | "offline")
+													}
+												>
+													<SelectTrigger
+														id={field.name}
+														aria-invalid={isInvalid}
+													>
 														<SelectValue placeholder="Select workshop type" />
 													</SelectTrigger>
-												</FormControl>
-												<SelectContent>
-													<SelectItem value="online">Online</SelectItem>
-													<SelectItem value="offline">Offline</SelectItem>
-												</SelectContent>
-											</Select>
-											<FormMessage />
-										</FormItem>
-									)}
+													<SelectContent>
+														<SelectItem value="online">Online</SelectItem>
+														<SelectItem value="offline">Offline</SelectItem>
+													</SelectContent>
+												</Select>
+												{isInvalid && (
+													<FieldError errors={field.state.meta.errors} />
+												)}
+											</Field>
+										);
+									}}
 								/>
 
-								<FormField
-									control={form.control}
+								<form.Field
 									name="maxBookings"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>Max Bookings</FormLabel>
-											<FormControl>
+									// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+									children={(field) => {
+										const isInvalid =
+											field.state.meta.isTouched && !field.state.meta.isValid;
+										return (
+											<Field data-invalid={isInvalid}>
+												<FieldLabel htmlFor={field.name}>
+													Max Bookings
+												</FieldLabel>
 												<Input
+													id={field.name}
+													name={field.name}
 													type="number"
 													min="1"
+													value={field.state.value}
+													onBlur={field.handleBlur}
+													onChange={(e) => field.handleChange(e.target.value)}
+													aria-invalid={isInvalid}
 													placeholder="10"
-													{...field}
 												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
+												{isInvalid && (
+													<FieldError errors={field.state.meta.errors} />
+												)}
+											</Field>
+										);
+									}}
 								/>
 							</div>
 
 							<div className="space-y-4">
-								<FormLabel>Workshop Image</FormLabel>
+								<FieldLabel>Workshop Image</FieldLabel>
 								<div className="flex flex-col space-y-4">
 									{imagePreview && (
 										<div className="relative w-full max-w-sm">
+											{/** biome-ignore lint/a11y/useAltText: preview image */}
 											{/** biome-ignore lint/performance/noImgElement: this is only for preview */}
 											<img
 												src={imagePreview}
@@ -368,60 +439,70 @@ export function WorkshopForm({ mode, initialData }: WorkshopFormProps) {
 							</div>
 
 							{mode === "edit" && (
-								<FormField
-									control={form.control}
+								<form.Field
 									name="status"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>Status</FormLabel>
-											<Select
-												onValueChange={field.onChange}
-												defaultValue={field.value}
-											>
-												<FormControl>
-													<SelectTrigger>
+									// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+									children={(field) => {
+										const isInvalid =
+											field.state.meta.isTouched && !field.state.meta.isValid;
+										return (
+											<Field data-invalid={isInvalid}>
+												<FieldLabel htmlFor={field.name}>Status</FieldLabel>
+												<Select
+													name={field.name}
+													value={field.state.value}
+													onValueChange={(value) =>
+														field.handleChange(value as "active" | "inactive")
+													}
+												>
+													<SelectTrigger
+														id={field.name}
+														aria-invalid={isInvalid}
+													>
 														<SelectValue placeholder="Select status" />
 													</SelectTrigger>
-												</FormControl>
-												<SelectContent>
-													<SelectItem value="active">Active</SelectItem>
-													<SelectItem value="inactive">Inactive</SelectItem>
-													<SelectItem value="completed">Completed</SelectItem>
-												</SelectContent>
-											</Select>
-											<FormMessage />
-										</FormItem>
-									)}
+													<SelectContent>
+														<SelectItem value="active">Active</SelectItem>
+														<SelectItem value="inactive">Inactive</SelectItem>
+														<SelectItem value="completed">Completed</SelectItem>
+													</SelectContent>
+												</Select>
+												{isInvalid && (
+													<FieldError errors={field.state.meta.errors} />
+												)}
+											</Field>
+										);
+									}}
 								/>
 							)}
+						</FieldGroup>
 
-							<div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-								<Button
-									type="button"
-									variant="outline"
-									onClick={() => router.back()}
-									className="order-2 sm:order-1"
-								>
-									Cancel
-								</Button>
-								<Button
-									type="submit"
-									disabled={isSubmitting || uploading}
-									className="order-1 sm:order-2"
-								>
-									{uploading
-										? "Uploading image..."
-										: isSubmitting
-											? mode === "edit"
-												? "Updating..."
-												: "Creating..."
-											: mode === "edit"
-												? "Update Workshop"
-												: "Create Workshop"}
-								</Button>
-							</div>
-						</form>
-					</Form>
+						<div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+							<Button
+								type="button"
+								variant="outline"
+								onClick={() => router.back()}
+								className="order-2 sm:order-1"
+							>
+								Cancel
+							</Button>
+							<Button
+								type="submit"
+								disabled={isSubmitting || uploading}
+								className="order-1 sm:order-2"
+							>
+								{uploading
+									? "Uploading image..."
+									: isSubmitting
+										? mode === "edit"
+											? "Updating..."
+											: "Creating..."
+										: mode === "edit"
+											? "Update Workshop"
+											: "Create Workshop"}
+							</Button>
+						</div>
+					</form>
 				</CardContent>
 			</Card>
 		</div>

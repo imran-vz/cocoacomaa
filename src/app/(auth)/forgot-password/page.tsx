@@ -1,36 +1,48 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "@tanstack/react-form";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import type { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-	Form,
-	FormControl,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
-} from "@/components/ui/form";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 import { forgotPasswordSchema } from "@/lib/schema";
-
-type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
 export default function ForgotPasswordPage() {
 	const router = useRouter();
 	const { data: session } = authClient.useSession();
 
-	const form = useForm<ForgotPasswordFormValues>({
-		resolver: zodResolver(forgotPasswordSchema),
+	const form = useForm({
 		defaultValues: { email: "" },
+		validators: {
+			onSubmit: forgotPasswordSchema,
+		},
+		onSubmit: async ({ value }) => {
+			try {
+				const result = await authClient.requestPasswordReset({
+					email: value.email,
+					redirectTo: "/reset-password",
+				});
+
+				if (result.error) {
+					toast.error(result.error.message || "Something went wrong");
+					return;
+				}
+
+				toast.success(
+					"If this email exists, a password reset link will be sent to your inbox.",
+				);
+				// Don't redirect, let user know to check their email
+			} catch (error: unknown) {
+				console.error("Forgot password error:", error);
+				toast.error("Something went wrong");
+			}
+		},
 	});
 
 	// Redirect if already logged in
@@ -40,28 +52,6 @@ export default function ForgotPasswordPage() {
 			return;
 		}
 	}, [session?.user?.id, router]);
-
-	async function onSubmit(data: ForgotPasswordFormValues) {
-		try {
-			const result = await authClient.requestPasswordReset({
-				email: data.email,
-				redirectTo: "/reset-password",
-			});
-
-			if (result.error) {
-				toast.error(result.error.message || "Something went wrong");
-				return;
-			}
-
-			toast.success(
-				"If this email exists, a password reset link will be sent to your inbox.",
-			);
-			// Don't redirect, let user know to check their email
-		} catch (error: unknown) {
-			console.error("Forgot password error:", error);
-			toast.error("Something went wrong");
-		}
-	}
 
 	return (
 		<div className="min-h-[calc(100svh-10rem)] flex items-center justify-center px-2 py-8 bg-background">
@@ -78,42 +68,56 @@ export default function ForgotPasswordPage() {
 
 				<Card className="shadow-md border border-gray-200">
 					<CardContent className="pt-6">
-						<Form {...form}>
-							<form
-								onSubmit={form.handleSubmit(onSubmit)}
-								className="space-y-6"
-							>
-								<FormField
-									control={form.control}
-									name="email"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>Email</FormLabel>
-											<FormControl>
-												<Input
-													type="email"
-													placeholder="m@example.com"
-													className="h-12 text-base"
-													autoComplete="email"
-													{...field}
-												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
+						<form
+							onSubmit={(e) => {
+								e.preventDefault();
+								form.handleSubmit();
+							}}
+							className="space-y-6"
+						>
+							<form.Field
+								name="email"
+								// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+								children={(field) => {
+									const isInvalid =
+										field.state.meta.isTouched && !field.state.meta.isValid;
+									return (
+										<Field data-invalid={isInvalid}>
+											<FieldLabel htmlFor={field.name}>Email</FieldLabel>
+											<Input
+												id={field.name}
+												name={field.name}
+												type="email"
+												value={field.state.value}
+												onBlur={field.handleBlur}
+												onChange={(e) => field.handleChange(e.target.value)}
+												aria-invalid={isInvalid}
+												placeholder="m@example.com"
+												className="h-12 text-base"
+												autoComplete="email"
+											/>
+											{isInvalid && (
+												<FieldError errors={field.state.meta.errors} />
+											)}
+										</Field>
+									);
+								}}
+							/>
 
-								<Button
-									type="submit"
-									className="w-full h-12 text-base"
-									disabled={form.formState.isSubmitting}
-								>
-									{form.formState.isSubmitting
-										? "Sending reset link..."
-										: "Send reset link"}
-								</Button>
-							</form>
-						</Form>
+							<form.Subscribe
+								selector={(state) => state.isSubmitting}
+								// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+								children={(isSubmitting) => (
+									<Button
+										type="submit"
+										className="w-full h-12 text-base"
+										disabled={isSubmitting}
+									>
+										{isSubmitting ? "Sending reset link..." : "Send reset link"}
+									</Button>
+								)}
+							/>
+						</form>
 					</CardContent>
 				</Card>
 

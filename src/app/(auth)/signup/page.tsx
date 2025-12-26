@@ -1,12 +1,10 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "@tanstack/react-form";
 import { EyeIcon, EyeOffIcon, Info } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import type { z } from "zod";
 import { Icons } from "@/components/icons";
 import {
 	AlertDialog,
@@ -19,19 +17,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-	Form,
-	FormControl,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
-} from "@/components/ui/form";
+	Field,
+	FieldError,
+	FieldGroup,
+	FieldLabel,
+} from "@/components/ui/field";
 import { GoogleSignInButton } from "@/components/ui/google-signin-button";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 import { registerSchema } from "@/lib/schema";
-
-type SignupFormValues = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
 	const router = useRouter();
@@ -42,13 +36,42 @@ export default function RegisterPage() {
 	const [showPassword, setShowPassword] = useState(false);
 	const [showPhoneDialog, setShowPhoneDialog] = useState(false);
 
-	const form = useForm<SignupFormValues>({
-		resolver: zodResolver(registerSchema),
+	const form = useForm({
 		defaultValues: {
 			name: "",
 			email: "",
 			phone: "",
 			password: "",
+		},
+		validators: {
+			onSubmit: registerSchema,
+		},
+		onSubmit: async ({ value }) => {
+			try {
+				const result = await authClient.signUp.email({
+					email: value.email,
+					password: value.password,
+					name: value.name,
+					role: "customer",
+					phone: value.phone,
+					callbackURL: redirect || "/",
+				});
+
+				if (result.error) {
+					const errorMsg = result.error.message || "Registration failed";
+					toast.error(errorMsg);
+					return;
+				}
+
+				toast.success(
+					"Registration successful! Please check your email for verification.",
+				);
+				router.push(`/login${redirect ? `?redirect=${redirect}` : ""}`);
+				router.refresh();
+			} catch (error: unknown) {
+				console.error("Signup error:", error);
+				toast.error("Something went wrong");
+			}
 		},
 	});
 
@@ -70,34 +93,6 @@ export default function RegisterPage() {
 			});
 		}
 	}, [session?.user?.id, router, isPending, redirect]);
-
-	async function onSubmit(data: SignupFormValues) {
-		try {
-			const result = await authClient.signUp.email({
-				email: data.email,
-				password: data.password,
-				name: data.name,
-				role: "customer",
-				phone: data.phone,
-				callbackURL: redirect || "/",
-			});
-
-			if (result.error) {
-				const errorMsg = result.error.message || "Registration failed";
-				toast.error(errorMsg);
-				return;
-			}
-
-			toast.success(
-				"Registration successful! Please check your email for verification.",
-			);
-			router.push(`/login${redirect ? `?redirect=${redirect}` : ""}`);
-			router.refresh();
-		} catch (error: unknown) {
-			console.error("Signup error:", error);
-			toast.error("Something went wrong");
-		}
-	}
 
 	if (isPending) {
 		return (
@@ -139,116 +134,155 @@ export default function RegisterPage() {
 							</div>
 						</div>
 
-						<Form {...form}>
-							<form
-								onSubmit={form.handleSubmit(onSubmit)}
-								className="space-y-6"
-								aria-label="Sign up form"
-							>
-								<FormField
-									control={form.control}
+						<form
+							onSubmit={(e) => {
+								e.preventDefault();
+								form.handleSubmit();
+							}}
+							className="space-y-6"
+							aria-label="Sign up form"
+						>
+							<FieldGroup>
+								<form.Field
 									name="name"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>Name</FormLabel>
-											<FormControl>
+									// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+									children={(field) => {
+										const isInvalid =
+											field.state.meta.isTouched && !field.state.meta.isValid;
+										return (
+											<Field data-invalid={isInvalid}>
+												<FieldLabel htmlFor={field.name}>Name</FieldLabel>
 												<Input
+													id={field.name}
+													name={field.name}
+													value={field.state.value}
+													onBlur={field.handleBlur}
+													onChange={(e) => field.handleChange(e.target.value)}
+													aria-invalid={isInvalid}
 													placeholder="Your name"
 													className="h-12 text-base"
 													autoComplete="name"
-													{...field}
 												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
+												{isInvalid && (
+													<FieldError errors={field.state.meta.errors} />
+												)}
+											</Field>
+										);
+									}}
 								/>
 
-								<FormField
-									control={form.control}
+								<form.Field
 									name="email"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>Email</FormLabel>
-											<FormControl>
+									// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+									children={(field) => {
+										const isInvalid =
+											field.state.meta.isTouched && !field.state.meta.isValid;
+										return (
+											<Field data-invalid={isInvalid}>
+												<FieldLabel htmlFor={field.name}>Email</FieldLabel>
 												<Input
+													id={field.name}
+													name={field.name}
 													type="email"
+													value={field.state.value}
+													onBlur={field.handleBlur}
+													onChange={(e) => field.handleChange(e.target.value)}
+													aria-invalid={isInvalid}
 													placeholder="name@example.com"
 													className="h-12 text-base"
 													autoComplete="email"
-													{...field}
 												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
+												{isInvalid && (
+													<FieldError errors={field.state.meta.errors} />
+												)}
+											</Field>
+										);
+									}}
 								/>
 
-								<FormField
-									control={form.control}
+								<form.Field
 									name="phone"
-									render={({ field }) => (
-										<FormItem>
-											<div className="flex items-center gap-2">
-												<FormLabel>Phone Number</FormLabel>
-												<AlertDialog
-													open={showPhoneDialog}
-													onOpenChange={setShowPhoneDialog}
-												>
-													<AlertDialogTrigger asChild>
-														<button
-															type="button"
-															aria-label="Why do we need your phone number?"
-															className="text-blue-500 hover:text-blue-700 focus:outline-none"
-														>
-															<Info className="h-4 w-4" />
-														</button>
-													</AlertDialogTrigger>
-													<AlertDialogContent>
-														<AlertDialogTitle>
-															Why do we need your phone number?
-														</AlertDialogTitle>
-														<AlertDialogDescription>
-															Please enter a valid phone number. We'll use this
-															to get in touch with you for any order updates or
-															delivery-related queries.
-														</AlertDialogDescription>
-														<AlertDialogAction
-															onClick={() => setShowPhoneDialog(false)}
-														>
-															Got it
-														</AlertDialogAction>
-													</AlertDialogContent>
-												</AlertDialog>
-											</div>
-											<FormControl>
+									// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+									children={(field) => {
+										const isInvalid =
+											field.state.meta.isTouched && !field.state.meta.isValid;
+										return (
+											<Field data-invalid={isInvalid}>
+												<div className="flex items-center gap-2">
+													<FieldLabel htmlFor={field.name}>
+														Phone Number
+													</FieldLabel>
+													<AlertDialog
+														open={showPhoneDialog}
+														onOpenChange={setShowPhoneDialog}
+													>
+														<AlertDialogTrigger asChild>
+															<button
+																type="button"
+																aria-label="Why do we need your phone number?"
+																className="text-blue-500 hover:text-blue-700 focus:outline-none"
+															>
+																<Info className="h-4 w-4" />
+															</button>
+														</AlertDialogTrigger>
+														<AlertDialogContent>
+															<AlertDialogTitle>
+																Why do we need your phone number?
+															</AlertDialogTitle>
+															<AlertDialogDescription>
+																Please enter a valid phone number. We'll use
+																this to get in touch with you for any order
+																updates or delivery-related queries.
+															</AlertDialogDescription>
+															<AlertDialogAction
+																onClick={() => setShowPhoneDialog(false)}
+															>
+																Got it
+															</AlertDialogAction>
+														</AlertDialogContent>
+													</AlertDialog>
+												</div>
 												<Input
+													id={field.name}
+													name={field.name}
 													type="tel"
+													value={field.state.value}
+													onBlur={field.handleBlur}
+													onChange={(e) => field.handleChange(e.target.value)}
+													aria-invalid={isInvalid}
 													placeholder="Your phone number"
 													className="h-12 text-base"
 													autoComplete="tel"
-													{...field}
 												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
+												{isInvalid && (
+													<FieldError errors={field.state.meta.errors} />
+												)}
+											</Field>
+										);
+									}}
 								/>
 
-								<FormField
-									control={form.control}
+								<form.Field
 									name="password"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>Password</FormLabel>
-											<FormControl>
+									// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+									children={(field) => {
+										const isInvalid =
+											field.state.meta.isTouched && !field.state.meta.isValid;
+										return (
+											<Field data-invalid={isInvalid}>
+												<FieldLabel htmlFor={field.name}>Password</FieldLabel>
 												<div className="relative">
 													<Input
+														id={field.name}
+														name={field.name}
 														type={showPassword ? "text" : "password"}
+														value={field.state.value}
+														onBlur={field.handleBlur}
+														onChange={(e) => field.handleChange(e.target.value)}
+														aria-invalid={isInvalid}
 														placeholder="Create a password"
 														className="h-12 text-base pr-10"
 														autoComplete="new-password"
-														{...field}
 													/>
 													<button
 														type="button"
@@ -262,26 +296,32 @@ export default function RegisterPage() {
 														)}
 													</button>
 												</div>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
+												{isInvalid && (
+													<FieldError errors={field.state.meta.errors} />
+												)}
+											</Field>
+										);
+									}}
 								/>
+							</FieldGroup>
 
-								<Button
-									type="submit"
-									className="w-full h-12 text-base"
-									disabled={form.formState.isSubmitting}
-								>
-									{form.formState.isSubmitting && (
-										<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-									)}
-									{form.formState.isSubmitting
-										? "Creating account..."
-										: "Create account"}
-								</Button>
-							</form>
-						</Form>
+							<form.Subscribe
+								selector={(state) => state.isSubmitting}
+								// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+								children={(isSubmitting) => (
+									<Button
+										type="submit"
+										className="w-full h-12 text-base"
+										disabled={isSubmitting}
+									>
+										{isSubmitting && (
+											<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+										)}
+										{isSubmitting ? "Creating account..." : "Create account"}
+									</Button>
+								)}
+							/>
+						</form>
 					</CardContent>
 				</Card>
 

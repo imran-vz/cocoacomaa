@@ -54,7 +54,7 @@ export async function PATCH(
 		const { success, data, error } = updateStatusSchema.safeParse(body);
 		if (!success) {
 			return NextResponse.json(
-				{ error: "Invalid status", details: error.errors },
+				{ error: "Invalid status", details: error.issues },
 				{ status: 400 },
 			);
 		}

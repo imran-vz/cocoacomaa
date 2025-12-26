@@ -1,13 +1,11 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, useStore } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { CalendarIcon, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
 
 import { confirm } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
@@ -15,14 +13,11 @@ import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-	Form,
-	FormControl,
-	FormDescription,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
-} from "@/components/ui/form";
+	Field,
+	FieldDescription,
+	FieldError,
+	FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
 	Popover,
@@ -30,63 +25,39 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 
-const postalOrderSettingsSchema = z
-	.object({
-		name: z
-			.string()
-			.min(1, "Name is required")
-			.max(100, "Name must be less than 100 characters"),
-		orderDateRange: z
-			.object({
-				from: z.date({
-					error: (issue) =>
-						issue.input === undefined
-							? "Order start date is required"
-							: undefined,
-				}),
-				to: z.date({
-					error: (issue) =>
-						issue.input === undefined
-							? "Order end date is required"
-							: undefined,
-				}),
-			})
-			.refine((range) => range.from && range.to && range.from <= range.to, {
-				error: "Order end date must be on or after start date",
-			}),
-		dispatchDateRange: z
-			.object({
-				from: z.date({
-					error: (issue) =>
-						issue.input === undefined
-							? "Dispatch start date is required"
-							: undefined,
-				}),
-				to: z.date({
-					error: (issue) =>
-						issue.input === undefined
-							? "Dispatch end date is required"
-							: undefined,
-				}),
-			})
-			.refine((range) => range.from && range.to && range.from <= range.to, {
-				error: "Dispatch end date must be on or after start date",
-			}),
-		isActive: z.boolean(),
-	})
-	.refine(
-		(data) => {
-			// Check if periods don't overlap (order end must be before dispatch start)
-			if (data.orderDateRange.to >= data.dispatchDateRange.from) return false;
-			return true;
-		},
-		{
-			error:
-				"Order and dispatch periods must not overlap - order period must end before dispatch period starts",
-		},
-	);
+type PostalOrderSettingsFormData = {
+	name: string;
+	orderDateRange: { from: Date | undefined; to: Date | undefined };
+	dispatchDateRange: { from: Date | undefined; to: Date | undefined };
+	isActive: boolean;
+};
 
-type PostalOrderSettingsFormData = z.infer<typeof postalOrderSettingsSchema>;
+const validatePostalOrderSettings = (
+	data: PostalOrderSettingsFormData,
+): string | undefined => {
+	if (!data.name || data.name.length === 0) {
+		return "Name is required";
+	}
+	if (data.name.length > 100) {
+		return "Name must be less than 100 characters";
+	}
+	if (!data.orderDateRange.from || !data.orderDateRange.to) {
+		return "Order date range is required";
+	}
+	if (data.orderDateRange.from > data.orderDateRange.to) {
+		return "Order end date must be on or after start date";
+	}
+	if (!data.dispatchDateRange.from || !data.dispatchDateRange.to) {
+		return "Dispatch date range is required";
+	}
+	if (data.dispatchDateRange.from > data.dispatchDateRange.to) {
+		return "Dispatch end date must be on or after start date";
+	}
+	if (data.orderDateRange.to >= data.dispatchDateRange.from) {
+		return "Order and dispatch periods must not overlap - order period must end before dispatch period starts";
+	}
+	return undefined;
+};
 
 interface PostalOrderSettings {
 	id: number;
@@ -129,20 +100,6 @@ export function PostalOrderSettingsClient({
 		const parts = dateString.split("-").map(Number);
 		return new Date(parts[0], parts[1] - 1, parts[2]);
 	};
-
-	const form = useForm<PostalOrderSettingsFormData>({
-		resolver: zodResolver(postalOrderSettingsSchema),
-		defaultValues: {
-			name: "",
-			orderDateRange: { from: undefined, to: undefined },
-			dispatchDateRange: { from: undefined, to: undefined },
-			isActive: true,
-		},
-	});
-
-	// Watch both date ranges to enable cross-validation
-	const orderDateRange = form.watch("orderDateRange");
-	const dispatchDateRange = form.watch("dispatchDateRange");
 
 	const isDateInCurrentMonth = (date: Date) => {
 		// Convert to UTC for consistent comparison
@@ -192,28 +149,6 @@ export function PostalOrderSettingsClient({
 
 			return false;
 		});
-	};
-
-	// Disable dates for order period calendar
-	const isOrderDateDisabled = (date: Date) => {
-		// Disable if not in current month
-		if (!isDateInCurrentMonth(date)) return true;
-		// Disable if date is in dispatch period of current form
-		if (isDateInRange(date, dispatchDateRange)) return true;
-		// Disable if date is already used in existing slots
-		if (isDateUsedInExistingSlots(date)) return true;
-		return false;
-	};
-
-	// Disable dates for dispatch period calendar
-	const isDispatchDateDisabled = (date: Date) => {
-		// Disable if not in current month
-		if (!isDateInCurrentMonth(date)) return true;
-		// Disable if date is in order period of current form
-		if (isDateInRange(date, orderDateRange)) return true;
-		// Disable if date is already used in existing slots
-		if (isDateUsedInExistingSlots(date)) return true;
-		return false;
 	};
 
 	// Create settings mutation
@@ -299,64 +234,126 @@ export function PostalOrderSettingsClient({
 		},
 	});
 
-	const onSubmit = async (data: PostalOrderSettingsFormData) => {
-		try {
-			// Convert date ranges to UTC string format for API and add current month
-			const formattedData = {
-				name: data.name,
-				month: currentMonth,
-				orderStartDate: toUTCDateString(data.orderDateRange.from),
-				orderEndDate: toUTCDateString(data.orderDateRange.to),
-				dispatchStartDate: toUTCDateString(data.dispatchDateRange.from),
-				dispatchEndDate: toUTCDateString(data.dispatchDateRange.to),
-				isActive: data.isActive,
-			};
+	const form = useForm({
+		defaultValues: {
+			name: "",
+			orderDateRange: {
+				from: undefined as Date | undefined,
+				to: undefined as Date | undefined,
+			},
+			dispatchDateRange: {
+				from: undefined as Date | undefined,
+				to: undefined as Date | undefined,
+			},
+			isActive: true,
+		},
+		validators: {
+			onSubmit: ({ value }) => {
+				const error = validatePostalOrderSettings(value);
+				return error ? error : undefined;
+			},
+		},
+		onSubmit: async ({ value }) => {
+			try {
+				const data = value;
+				// Ensure all dates are defined (validated above)
+				if (
+					!data.orderDateRange.from ||
+					!data.orderDateRange.to ||
+					!data.dispatchDateRange.from ||
+					!data.dispatchDateRange.to
+				) {
+					toast.error("All dates are required");
+					return;
+				}
 
-			// Check if all dates are within the current month (UTC)
-			if (
-				!isDateInCurrentMonth(data.orderDateRange.from) ||
-				!isDateInCurrentMonth(data.orderDateRange.to) ||
-				!isDateInCurrentMonth(data.dispatchDateRange.from) ||
-				!isDateInCurrentMonth(data.dispatchDateRange.to)
-			) {
-				toast.error("All dates must be within the current month (UTC)");
-				return;
+				// Convert date ranges to UTC string format for API and add current month
+				const formattedData = {
+					name: data.name,
+					month: currentMonth,
+					orderStartDate: toUTCDateString(data.orderDateRange.from),
+					orderEndDate: toUTCDateString(data.orderDateRange.to),
+					dispatchStartDate: toUTCDateString(data.dispatchDateRange.from),
+					dispatchEndDate: toUTCDateString(data.dispatchDateRange.to),
+					isActive: data.isActive,
+				};
+
+				// Check if all dates are within the current month (UTC)
+				if (
+					!isDateInCurrentMonth(data.orderDateRange.from) ||
+					!isDateInCurrentMonth(data.orderDateRange.to) ||
+					!isDateInCurrentMonth(data.dispatchDateRange.from) ||
+					!isDateInCurrentMonth(data.dispatchDateRange.to)
+				) {
+					toast.error("All dates must be within the current month (UTC)");
+					return;
+				}
+
+				if (editingId) {
+					updateMutation.mutate({ id: editingId, ...formattedData });
+					setEditingId(null);
+				} else {
+					createMutation.mutate(formattedData);
+				}
+
+				form.reset();
+				toast.success(
+					editingId
+						? "Settings updated successfully"
+						: "Settings created successfully",
+				);
+			} catch (error) {
+				console.error(error);
+				toast.error("An unexpected error occurred");
 			}
+		},
+	});
 
-			if (editingId) {
-				updateMutation.mutate({ id: editingId, ...formattedData });
-				setEditingId(null);
-			} else {
-				createMutation.mutate(formattedData);
-			}
+	// Watch both date ranges to enable cross-validation
+	const orderDateRange = useStore(
+		form.store,
+		(state) => state.values.orderDateRange,
+	);
+	const dispatchDateRange = useStore(
+		form.store,
+		(state) => state.values.dispatchDateRange,
+	);
 
-			form.reset();
-			toast.success(
-				editingId
-					? "Settings updated successfully"
-					: "Settings created successfully",
-			);
-		} catch (error) {
-			console.error(error);
-			toast.error("An unexpected error occurred");
-		}
+	// Disable dates for order period calendar
+	const isOrderDateDisabled = (date: Date) => {
+		// Disable if not in current month
+		if (!isDateInCurrentMonth(date)) return true;
+		// Disable if date is in dispatch period of current form
+		if (isDateInRange(date, dispatchDateRange)) return true;
+		// Disable if date is already used in existing slots
+		if (isDateUsedInExistingSlots(date)) return true;
+		return false;
+	};
+
+	// Disable dates for dispatch period calendar
+	const isDispatchDateDisabled = (date: Date) => {
+		// Disable if not in current month
+		if (!isDateInCurrentMonth(date)) return true;
+		// Disable if date is in order period of current form
+		if (isDateInRange(date, orderDateRange)) return true;
+		// Disable if date is already used in existing slots
+		if (isDateUsedInExistingSlots(date)) return true;
+		return false;
 	};
 
 	const handleEdit = (setting: PostalOrderSettings) => {
 		setEditingId(setting.id);
 
-		form.reset({
-			name: setting.name,
-			orderDateRange: {
-				from: fromUTCDateString(setting.orderStartDate),
-				to: fromUTCDateString(setting.orderEndDate),
-			},
-			dispatchDateRange: {
-				from: fromUTCDateString(setting.dispatchStartDate),
-				to: fromUTCDateString(setting.dispatchEndDate),
-			},
-			isActive: setting.isActive,
+		form.setFieldValue("name", setting.name);
+		form.setFieldValue("orderDateRange", {
+			from: fromUTCDateString(setting.orderStartDate),
+			to: fromUTCDateString(setting.orderEndDate),
 		});
+		form.setFieldValue("dispatchDateRange", {
+			from: fromUTCDateString(setting.dispatchStartDate),
+			to: fromUTCDateString(setting.dispatchEndDate),
+		});
+		form.setFieldValue("isActive", setting.isActive);
 	};
 
 	const handleDelete = async (id: number) => {
@@ -403,186 +400,237 @@ export function PostalOrderSettingsClient({
 							</p>
 						</CardHeader>
 						<CardContent>
-							<Form {...form}>
-								<form
-									onSubmit={form.handleSubmit(onSubmit)}
-									className="space-y-6"
-								>
-									<FormField
-										control={form.control}
-										name="name"
-										render={({ field }) => (
-											<FormItem>
-												<FormLabel>Slot Name</FormLabel>
-												<FormControl>
-													<Input
-														placeholder="e.g., Early Month, Mid Month, Holiday Special"
-														{...field}
-													/>
-												</FormControl>
-												<FormDescription>
+							<form
+								onSubmit={(e) => {
+									e.preventDefault();
+									form.handleSubmit();
+								}}
+								className="space-y-6"
+							>
+								<form.Field
+									name="name"
+									// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+									children={(field) => {
+										const hasErrors =
+											field.state.meta.errors &&
+											field.state.meta.errors.length > 0;
+										return (
+											<Field data-invalid={hasErrors}>
+												<FieldLabel htmlFor={field.name}>Slot Name</FieldLabel>
+												<Input
+													id={field.name}
+													name={field.name}
+													value={field.state.value}
+													onBlur={field.handleBlur}
+													onChange={(e) => field.handleChange(e.target.value)}
+													placeholder="e.g., Early Month, Mid Month, Holiday Special"
+												/>
+												<FieldDescription>
 													A descriptive name for this order slot
-												</FormDescription>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
+												</FieldDescription>
+												{hasErrors && (
+													<FieldError errors={field.state.meta.errors} />
+												)}
+											</Field>
+										);
+									}}
+								/>
 
-									<FormField
-										control={form.control}
-										name="orderDateRange"
-										render={({ field }) => (
-											<FormItem className="flex flex-col">
-												<FormLabel>Order Period</FormLabel>
+								<form.Field
+									name="orderDateRange"
+									// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+									children={(field) => {
+										const hasErrors =
+											field.state.meta.errors &&
+											field.state.meta.errors.length > 0;
+										return (
+											<Field data-invalid={hasErrors} className="flex flex-col">
+												<FieldLabel>Order Period</FieldLabel>
 												<Popover>
 													<PopoverTrigger asChild>
-														<FormControl>
-															<Button
-																variant="outline"
-																className={`w-full justify-start text-left font-normal ${
-																	!field.value?.from && "text-muted-foreground"
-																}`}
-															>
-																<CalendarIcon className="mr-2 h-4 w-4" />
-																{field.value?.from ? (
-																	field.value.to ? (
-																		<>
-																			{format(field.value.from, "LLL dd, y")} -{" "}
-																			{format(field.value.to, "LLL dd, y")}
-																		</>
-																	) : (
-																		format(field.value.from, "LLL dd, y")
-																	)
+														<Button
+															variant="outline"
+															className={`w-full justify-start text-left font-normal ${
+																!field.state.value?.from &&
+																"text-muted-foreground"
+															}`}
+														>
+															<CalendarIcon className="mr-2 h-4 w-4" />
+															{field.state.value?.from ? (
+																field.state.value.to ? (
+																	<>
+																		{format(
+																			field.state.value.from,
+																			"LLL dd, y",
+																		)}{" "}
+																		-{" "}
+																		{format(field.state.value.to, "LLL dd, y")}
+																	</>
 																) : (
-																	"Pick a date range"
-																)}
-															</Button>
-														</FormControl>
+																	format(field.state.value.from, "LLL dd, y")
+																)
+															) : (
+																"Pick a date range"
+															)}
+														</Button>
 													</PopoverTrigger>
 													<PopoverContent className="w-auto p-0" align="start">
 														<Calendar
 															mode="range"
-															defaultMonth={field.value?.from}
-															selected={field.value}
-															onSelect={field.onChange}
+															defaultMonth={field.state.value?.from}
+															selected={field.state.value}
+															onSelect={(range) => {
+																field.handleChange({
+																	from: range?.from,
+																	to: range?.to,
+																});
+															}}
 															disabled={isOrderDateDisabled}
 															numberOfMonths={1}
 															autoFocus
 														/>
 													</PopoverContent>
 												</Popover>
-												<FormDescription>
+												<FieldDescription>
 													Select the date range when customers can place orders
 													(UTC). Dates selected for dispatch period will be
 													disabled.
-												</FormDescription>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
+												</FieldDescription>
+												{hasErrors && (
+													<FieldError errors={field.state.meta.errors} />
+												)}
+											</Field>
+										);
+									}}
+								/>
 
-									<FormField
-										control={form.control}
-										name="dispatchDateRange"
-										render={({ field }) => (
-											<FormItem className="flex flex-col">
-												<FormLabel>Dispatch Period</FormLabel>
+								<form.Field
+									name="dispatchDateRange"
+									// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+									children={(field) => {
+										const hasErrors =
+											field.state.meta.errors &&
+											field.state.meta.errors.length > 0;
+										return (
+											<Field data-invalid={hasErrors} className="flex flex-col">
+												<FieldLabel>Dispatch Period</FieldLabel>
 												<Popover>
 													<PopoverTrigger asChild>
-														<FormControl>
-															<Button
-																variant="outline"
-																className={`w-full justify-start text-left font-normal ${
-																	!field.value?.from && "text-muted-foreground"
-																}`}
-															>
-																<CalendarIcon className="mr-2 h-4 w-4" />
-																{field.value?.from ? (
-																	field.value.to ? (
-																		<>
-																			{format(field.value.from, "LLL dd, y")} -{" "}
-																			{format(field.value.to, "LLL dd, y")}
-																		</>
-																	) : (
-																		format(field.value.from, "LLL dd, y")
-																	)
+														<Button
+															variant="outline"
+															className={`w-full justify-start text-left font-normal ${
+																!field.state.value?.from &&
+																"text-muted-foreground"
+															}`}
+														>
+															<CalendarIcon className="mr-2 h-4 w-4" />
+															{field.state.value?.from ? (
+																field.state.value.to ? (
+																	<>
+																		{format(
+																			field.state.value.from,
+																			"LLL dd, y",
+																		)}{" "}
+																		-{" "}
+																		{format(field.state.value.to, "LLL dd, y")}
+																	</>
 																) : (
-																	"Pick a date range"
-																)}
-															</Button>
-														</FormControl>
+																	format(field.state.value.from, "LLL dd, y")
+																)
+															) : (
+																"Pick a date range"
+															)}
+														</Button>
 													</PopoverTrigger>
 													<PopoverContent className="w-auto p-0" align="start">
 														<Calendar
 															mode="range"
-															defaultMonth={field.value?.from}
-															selected={field.value}
-															onSelect={field.onChange}
+															defaultMonth={field.state.value?.from}
+															selected={field.state.value}
+															onSelect={(range) => {
+																field.handleChange({
+																	from: range?.from,
+																	to: range?.to,
+																});
+															}}
 															disabled={isDispatchDateDisabled}
 															numberOfMonths={1}
 															autoFocus
 														/>
 													</PopoverContent>
 												</Popover>
-												<FormDescription>
+												<FieldDescription>
 													Select the date range when orders will be dispatched
 													(UTC). Dates selected for order period will be
 													disabled.
-												</FormDescription>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
+												</FieldDescription>
+												{hasErrors && (
+													<FieldError errors={field.state.meta.errors} />
+												)}
+											</Field>
+										);
+									}}
+								/>
 
-									<FormField
-										control={form.control}
-										name="isActive"
-										render={({ field }) => (
-											<FormItem className="flex flex-row items-start space-x-3 space-y-0">
-												<FormControl>
-													<Checkbox
-														checked={field.value}
-														onCheckedChange={field.onChange}
-													/>
-												</FormControl>
-												<div className="space-y-1 leading-none">
-													<FormLabel>Active</FormLabel>
-													<FormDescription>
-														Enable this postal order slot
-													</FormDescription>
-												</div>
-											</FormItem>
-										)}
-									/>
+								<form.Field
+									name="isActive"
+									// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+									children={(field) => (
+										<Field className="flex flex-row items-start space-x-3 space-y-0">
+											<Checkbox
+												id={field.name}
+												checked={field.state.value}
+												onCheckedChange={(checked) =>
+													field.handleChange(checked === true)
+												}
+											/>
+											<div className="space-y-1 leading-none">
+												<FieldLabel htmlFor={field.name}>Active</FieldLabel>
+												<FieldDescription>
+													Enable this postal order slot
+												</FieldDescription>
+											</div>
+										</Field>
+									)}
+								/>
 
-									<div className="flex gap-3">
-										<Button
-											type="submit"
-											disabled={
-												createMutation.isPending || updateMutation.isPending
-											}
-											className="flex-1"
-										>
-											{createMutation.isPending || updateMutation.isPending
-												? editingId
-													? "Updating..."
-													: "Creating..."
-												: editingId
-													? "Update Settings"
-													: "Create Settings"}
-										</Button>
-										{editingId && (
+								<form.Subscribe
+									selector={(state) => state.isSubmitting}
+									// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+									children={(isSubmitting) => (
+										<div className="flex gap-3">
 											<Button
-												type="button"
-												variant="outline"
-												onClick={handleCancel}
+												type="submit"
+												disabled={
+													isSubmitting ||
+													createMutation.isPending ||
+													updateMutation.isPending
+												}
+												className="flex-1"
 											>
-												Cancel
+												{isSubmitting ||
+												createMutation.isPending ||
+												updateMutation.isPending
+													? editingId
+														? "Updating..."
+														: "Creating..."
+													: editingId
+														? "Update Settings"
+														: "Create Settings"}
 											</Button>
-										)}
-									</div>
-								</form>
-							</Form>
+											{editingId && (
+												<Button
+													type="button"
+													variant="outline"
+													onClick={handleCancel}
+												>
+													Cancel
+												</Button>
+											)}
+										</div>
+									)}
+								/>
+							</form>
 						</CardContent>
 					</Card>
 

@@ -1,13 +1,12 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, useStore } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { format } from "date-fns";
 import { CalendarIcon, Clock, Edit2, Package, Trash2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useId, useMemo, useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 
@@ -17,14 +16,11 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-	Form,
-	FormControl,
-	FormDescription,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
-} from "@/components/ui/form";
+	Field,
+	FieldDescription,
+	FieldError,
+	FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import OrderRestrictionBanner from "@/components/ui/order-restriction-banner";
@@ -163,7 +159,7 @@ const createCheckoutFormSchema = (
 			? z.date().optional()
 			: z
 					.date({
-						error: "Please select a pickup date.",
+						message: "Please select a pickup date.",
 					})
 					.refine(
 						(date) => {
@@ -304,46 +300,189 @@ export default function CheckoutPage({
 		!isPhoneFieldEnabled,
 	);
 
-	const form = useForm<CheckoutFormValues>({
-		resolver: zodResolver(checkoutFormSchema),
+	const form = useForm({
 		defaultValues: {
 			name: name ?? "",
 			email: email ?? "",
 			phone: phone ?? "",
 			confirmPhone: phone ?? "",
+			pickupDate: undefined as Date | undefined,
 			pickupTime: "",
 			notes: "",
-			orderType: isPostalBrownies ? "postal-brownies" : "cake-orders",
-			addressMode: isPostalBrownies ? "new" : undefined,
-			selectedAddressId: undefined,
+			orderType: (isPostalBrownies ? "postal-brownies" : "cake-orders") as
+				| "cake-orders"
+				| "postal-brownies",
+			addressMode: (isPostalBrownies ? "new" : undefined) as
+				| "existing"
+				| "new"
+				| undefined,
+			selectedAddressId: undefined as number | undefined,
 			addressLine1: "",
 			addressLine2: "",
 			city: "",
 			state: "",
 			zip: "",
 		},
+		validators: {
+			onSubmit: ({ value }) => {
+				const result = checkoutFormSchema.safeParse(value);
+				if (!result.success) {
+					return result.error.issues.map((issue) => ({
+						message: issue.message,
+						path: issue.path,
+					}));
+				}
+				return undefined;
+			},
+		},
+		onSubmit: async ({ value }) => {
+			if (!isOrderingAllowed) {
+				const isSystemDisabled = !settings?.isActive;
+
+				if (isSystemDisabled) {
+					toast.error("Cake order system is currently disabled");
+				} else {
+					toast.error("Cake orders are only accepted on allowed days");
+				}
+				return;
+			}
+
+			try {
+				setIsProcessing(true);
+
+				// Update phone number if it has changed and field was enabled
+				if (isPhoneFieldEnabled && value.phone !== originalPhone) {
+					setProcessingStep("Updating contact information...");
+					try {
+						await updateUserPhone(value.phone);
+					} catch (error) {
+						console.error("Failed to update phone number:", error);
+						toast.error("Failed to update phone number. Please try again.");
+						setIsProcessing(false);
+						setProcessingStep("");
+						return;
+					}
+				}
+
+				let orderData: RazorpayOrderData;
+				let orderId: string;
+
+				// Check if we have an existing order ID
+				if (existingOrderId) {
+					setProcessingStep("Retrieving existing order...");
+
+					// Try to get existing order data
+					const existingOrderResponse = await fetch(
+						`/api/orders/${existingOrderId}`,
+						{
+							method: "GET",
+							headers: { "Content-Type": "application/json" },
+						},
+					);
+
+					if (existingOrderResponse.ok) {
+						const existingOrderData = await existingOrderResponse.json();
+						if (
+							existingOrderData.success &&
+							existingOrderData.order.status !== "paid"
+						) {
+							// Reuse existing order
+							orderData = existingOrderData.order;
+							orderId = existingOrderId;
+							setProcessingStep("Preparing payment...");
+						} else {
+							throw new Error("Existing order is no longer valid");
+						}
+					} else {
+						throw new Error("Could not retrieve existing order");
+					}
+				} else {
+					setProcessingStep("Creating your order...");
+
+					// Create new order in database and get Razorpay order
+					const orderResponse = await fetch("/api/orders", {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify({
+							name: value.name,
+							email: value.email,
+							phone: value.phone,
+							pickupDate: value.pickupDate
+								? value.pickupDate.toISOString()
+								: undefined,
+							pickupTime: value.pickupTime || undefined,
+							notes: value.notes ?? "",
+							items: items.map((item) => ({
+								id: item.id,
+								name: item.name,
+								price: item.price,
+								quantity: item.quantity,
+								category: item.category,
+							})),
+							orderType: hasSpecials
+								? "specials"
+								: isPostalBrownies
+									? "postal-brownies"
+									: "cake-orders",
+							total: finalTotal, // Include delivery cost for postal brownies
+							deliveryCost: deliveryCost, // Send delivery cost separately for transparency
+							// Include selected address ID for postal brownies
+							selectedAddressId: isPostalBrownies
+								? value.selectedAddressId
+								: undefined,
+						}),
+					});
+
+					if (!orderResponse.ok) {
+						const errorData = await orderResponse.json();
+						throw new Error(errorData.error || "Failed to create order");
+					}
+
+					const newOrderData = await orderResponse.json();
+
+					if (!newOrderData.success) {
+						throw new Error(newOrderData.error || "Failed to create order");
+					}
+
+					orderData = newOrderData;
+					orderId = newOrderData.orderId;
+
+					// Add order ID to URL params
+					const url = new URL(window.location.href);
+					url.searchParams.set("orderId", orderId);
+					router.replace(`${url.pathname}?${url.searchParams.toString()}`);
+					setExistingOrderId(orderId);
+
+					setProcessingStep("Preparing payment...");
+				}
+
+				// Initiate payment
+				await handlePayment(value, orderId, orderData);
+			} catch (error) {
+				console.error("Error processing order:", error);
+				const errorMessage =
+					error instanceof Error
+						? error.message
+						: "Failed to process order. Please try again.";
+				toast.error(errorMessage);
+				setIsProcessing(false);
+				setProcessingStep("");
+			}
+		},
 	});
 
-	const addressMode = useWatch({
-		control: form.control,
-		name: "addressMode",
-	});
-
-	// Watch new address form fields for dynamic pricing
-	const newAddressCity = useWatch({
-		control: form.control,
-		name: "city",
-	});
-
-	const newAddressZip = useWatch({
-		control: form.control,
-		name: "zip",
-	});
-
-	const selectedAddressId = useWatch({
-		control: form.control,
-		name: "selectedAddressId",
-	});
+	// Watch form values
+	const addressMode = useStore(form.store, (state) => state.values.addressMode);
+	const newAddressCity = useStore(form.store, (state) => state.values.city);
+	const newAddressZip = useStore(form.store, (state) => state.values.zip);
+	const selectedAddressId = useStore(
+		form.store,
+		(state) => state.values.selectedAddressId,
+	);
+	const pickupDate = useStore(form.store, (state) => state.values.pickupDate);
+	const pickupTime = useStore(form.store, (state) => state.values.pickupTime);
 
 	// Calculate delivery cost and check for Bengaluru discount
 	const { deliveryCost, isDiscountApplied } = isPostalBrownies
@@ -387,8 +526,6 @@ export default function CheckoutPage({
 
 	const finalTotal = Number(total) + deliveryCost;
 
-	type CheckoutFormValues = z.infer<typeof checkoutFormSchema>;
-
 	// Load Razorpay script
 	useEffect(() => {
 		const script = document.createElement("script");
@@ -416,7 +553,7 @@ export default function CheckoutPage({
 		setOriginalPhone(phone || "");
 		// Also set confirmPhone when initializing
 		if (!isEmpty) {
-			form.setValue("confirmPhone", phone);
+			form.setFieldValue("confirmPhone", phone);
 		}
 	}, [phone, form]);
 
@@ -424,15 +561,15 @@ export default function CheckoutPage({
 	useEffect(() => {
 		if (isPostalBrownies) {
 			if (addresses.length > 0 && !addressMode) {
-				form.setValue("addressMode", "existing");
+				form.setFieldValue("addressMode", "existing");
 				// If only one address, auto-select it
 				if (addresses.length === 1 && !selectedAddressId) {
-					form.setValue("selectedAddressId", addresses[0].id);
+					form.setFieldValue("selectedAddressId", addresses[0].id);
 				}
 			} else if (addresses.length === 0 && addressMode === "existing") {
 				// If no addresses left and in existing mode, switch to new mode
-				form.setValue("addressMode", "new");
-				form.setValue("selectedAddressId", undefined);
+				form.setFieldValue("addressMode", "new");
+				form.setFieldValue("selectedAddressId", undefined);
 			}
 		}
 	}, [isPostalBrownies, addresses, form, addressMode, selectedAddressId]);
@@ -440,11 +577,11 @@ export default function CheckoutPage({
 	// Handle address creation separately
 	const handleCreateAddress = async () => {
 		const addressData = {
-			addressLine1: form.getValues("addressLine1") || "",
-			addressLine2: form.getValues("addressLine2") || "",
-			city: form.getValues("city") || "",
-			state: form.getValues("state") || "",
-			zip: form.getValues("zip") || "",
+			addressLine1: form.getFieldValue("addressLine1") || "",
+			addressLine2: form.getFieldValue("addressLine2") || "",
+			city: form.getFieldValue("city") || "",
+			state: form.getFieldValue("state") || "",
+			zip: form.getFieldValue("zip") || "",
 		};
 
 		// Validate address fields using Zod schema
@@ -463,15 +600,15 @@ export default function CheckoutPage({
 			);
 
 			// Select the newly created address and switch to existing mode
-			form.setValue("selectedAddressId", newAddress.id);
-			form.setValue("addressMode", "existing");
+			form.setFieldValue("selectedAddressId", newAddress.id);
+			form.setFieldValue("addressMode", "existing");
 
 			// Clear the new address form fields
-			form.setValue("addressLine1", "");
-			form.setValue("addressLine2", "");
-			form.setValue("city", "");
-			form.setValue("state", "");
-			form.setValue("zip", "");
+			form.setFieldValue("addressLine1", "");
+			form.setFieldValue("addressLine2", "");
+			form.setFieldValue("city", "");
+			form.setFieldValue("state", "");
+			form.setFieldValue("zip", "");
 
 			toast.success("Address created and selected successfully!");
 		} catch (error) {
@@ -497,7 +634,7 @@ export default function CheckoutPage({
 
 			// If the deleted address was selected, clear the selection
 			if (selectedAddressId === addressId) {
-				form.setValue("selectedAddressId", undefined);
+				form.setFieldValue("selectedAddressId", undefined);
 			}
 		} catch (error) {
 			console.error("Error deleting address:", error);
@@ -532,8 +669,8 @@ export default function CheckoutPage({
 	const handlePhoneEditSave = async (newPhone: string) => {
 		try {
 			await updateUserPhone(newPhone);
-			form.setValue("phone", newPhone);
-			form.setValue("confirmPhone", newPhone);
+			form.setFieldValue("phone", newPhone);
+			form.setFieldValue("confirmPhone", newPhone);
 			setOriginalPhone(newPhone);
 			setIsPhoneFieldEnabled(false);
 		} catch (error) {
@@ -543,7 +680,11 @@ export default function CheckoutPage({
 	};
 
 	const handlePayment = async (
-		orderData: CheckoutFormValues,
+		orderData: {
+			name: string;
+			email: string;
+			phone: string;
+		},
 		orderId: string,
 		razorpayOrderData: RazorpayOrderData,
 	) => {
@@ -626,143 +767,6 @@ export default function CheckoutPage({
 		razorpay.open();
 	};
 
-	const onSubmit = async (data: CheckoutFormValues) => {
-		if (!isOrderingAllowed) {
-			const isSystemDisabled = !settings?.isActive;
-
-			if (isSystemDisabled) {
-				toast.error("Cake order system is currently disabled");
-			} else {
-				toast.error("Cake orders are only accepted on allowed days");
-			}
-			return;
-		}
-
-		try {
-			setIsProcessing(true);
-
-			// Update phone number if it has changed and field was enabled
-			if (isPhoneFieldEnabled && data.phone !== originalPhone) {
-				setProcessingStep("Updating contact information...");
-				try {
-					await updateUserPhone(data.phone);
-				} catch (error) {
-					console.error("Failed to update phone number:", error);
-					toast.error("Failed to update phone number. Please try again.");
-					setIsProcessing(false);
-					setProcessingStep("");
-					return;
-				}
-			}
-
-			let orderData: RazorpayOrderData;
-			let orderId: string;
-
-			// Check if we have an existing order ID
-			if (existingOrderId) {
-				setProcessingStep("Retrieving existing order...");
-
-				// Try to get existing order data
-				const existingOrderResponse = await fetch(
-					`/api/orders/${existingOrderId}`,
-					{
-						method: "GET",
-						headers: { "Content-Type": "application/json" },
-					},
-				);
-
-				if (existingOrderResponse.ok) {
-					const existingOrderData = await existingOrderResponse.json();
-					if (
-						existingOrderData.success &&
-						existingOrderData.order.status !== "paid"
-					) {
-						// Reuse existing order
-						orderData = existingOrderData.order;
-						orderId = existingOrderId;
-						setProcessingStep("Preparing payment...");
-					} else {
-						throw new Error("Existing order is no longer valid");
-					}
-				} else {
-					throw new Error("Could not retrieve existing order");
-				}
-			} else {
-				setProcessingStep("Creating your order...");
-
-				// Create new order in database and get Razorpay order
-				const orderResponse = await fetch("/api/orders", {
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({
-						name: data.name,
-						email: data.email,
-						phone: data.phone,
-						pickupDate: data.pickupDate
-							? data.pickupDate.toISOString()
-							: undefined,
-						pickupTime: data.pickupTime || undefined,
-						notes: data.notes ?? "",
-						items: items.map((item) => ({
-							id: item.id,
-							name: item.name,
-							price: item.price,
-							quantity: item.quantity,
-							category: item.category,
-						})),
-						orderType: hasSpecials
-							? "specials"
-							: isPostalBrownies
-								? "postal-brownies"
-								: "cake-orders",
-						total: finalTotal, // Include delivery cost for postal brownies
-						deliveryCost: deliveryCost, // Send delivery cost separately for transparency
-						// Include selected address ID for postal brownies
-						selectedAddressId: isPostalBrownies
-							? data.selectedAddressId
-							: undefined,
-					}),
-				});
-
-				if (!orderResponse.ok) {
-					const errorData = await orderResponse.json();
-					throw new Error(errorData.error || "Failed to create order");
-				}
-
-				const newOrderData = await orderResponse.json();
-
-				if (!newOrderData.success) {
-					throw new Error(newOrderData.error || "Failed to create order");
-				}
-
-				orderData = newOrderData;
-				orderId = newOrderData.orderId;
-
-				// Add order ID to URL params
-				const url = new URL(window.location.href);
-				url.searchParams.set("orderId", orderId);
-				router.replace(`${url.pathname}?${url.searchParams.toString()}`);
-				setExistingOrderId(orderId);
-
-				setProcessingStep("Preparing payment...");
-			}
-
-			// Initiate payment
-			await handlePayment(data, orderId, orderData);
-		} catch (error) {
-			console.error("Error processing order:", error);
-			const errorMessage =
-				error instanceof Error
-					? error.message
-					: "Failed to process order. Please try again.";
-			toast.error(errorMessage);
-			setIsProcessing(false);
-			setProcessingStep("");
-		}
-	};
-
 	if (items.length === 0) {
 		return (
 			<div className="container mx-auto py-4 sm:py-6 lg:py-8 px-4">
@@ -824,150 +828,214 @@ export default function CheckoutPage({
 						</CardTitle>
 					</CardHeader>
 					<CardContent className="pt-0">
-						<Form {...form}>
-							<form
-								onSubmit={form.handleSubmit(onSubmit)}
-								className={`space-y-4 sm:space-y-6 ${isProcessing ? "opacity-50 pointer-events-none" : ""}`}
-							>
-								{/* Hidden orderType field */}
-								<FormField
-									control={form.control}
-									name="orderType"
-									render={({ field }) => (
-										<input
-											type="hidden"
-											{...field}
-											value={
-												isPostalBrownies ? "postal-brownies" : "cake-orders"
-											}
-										/>
-									)}
-								/>
-								<FormField
-									control={form.control}
-									name="name"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel className="text-sm sm:text-base">
+						<form
+							onSubmit={(e) => {
+								e.preventDefault();
+								form.handleSubmit();
+							}}
+							className={`space-y-4 sm:space-y-6 ${isProcessing ? "opacity-50 pointer-events-none" : ""}`}
+						>
+							{/* Hidden orderType field */}
+							<input
+								type="hidden"
+								name="orderType"
+								value={isPostalBrownies ? "postal-brownies" : "cake-orders"}
+							/>
+
+							<form.Field
+								name="name"
+								// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+								children={(field) => {
+									const hasErrors =
+										field.state.meta.errors &&
+										field.state.meta.errors.length > 0;
+									return (
+										<Field data-invalid={hasErrors}>
+											<FieldLabel
+												htmlFor={field.name}
+												className="text-sm sm:text-base"
+											>
 												Full Name
-											</FormLabel>
-											<FormControl>
-												<Input
-													placeholder="Enter your full name"
-													{...field}
-													className="text-sm sm:text-base"
-													disabled
-													readOnly
-													tabIndex={-1}
+											</FieldLabel>
+											<Input
+												id={field.name}
+												name={field.name}
+												value={field.state.value}
+												onBlur={field.handleBlur}
+												onChange={(e) => field.handleChange(e.target.value)}
+												placeholder="Enter your full name"
+												className="text-sm sm:text-base"
+												disabled
+												readOnly
+												tabIndex={-1}
+											/>
+											{hasErrors && (
+												<FieldError
+													errors={field.state.meta.errors}
+													className="text-xs sm:text-sm"
 												/>
-											</FormControl>
-											<FormMessage className="text-xs sm:text-sm" />
-										</FormItem>
-									)}
-								/>
+											)}
+										</Field>
+									);
+								}}
+							/>
 
-								<FormField
-									control={form.control}
-									name="email"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel className="text-sm sm:text-base">
+							<form.Field
+								name="email"
+								// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+								children={(field) => {
+									const hasErrors =
+										field.state.meta.errors &&
+										field.state.meta.errors.length > 0;
+									return (
+										<Field data-invalid={hasErrors}>
+											<FieldLabel
+												htmlFor={field.name}
+												className="text-sm sm:text-base"
+											>
 												Email Address
-											</FormLabel>
-											<FormControl>
-												<Input
-													type="email"
-													placeholder="Enter your email address"
-													{...field}
-													className="text-sm sm:text-base"
-													readOnly
-													disabled
-													tabIndex={-1}
+											</FieldLabel>
+											<Input
+												id={field.name}
+												name={field.name}
+												type="email"
+												value={field.state.value}
+												onBlur={field.handleBlur}
+												onChange={(e) => field.handleChange(e.target.value)}
+												placeholder="Enter your email address"
+												className="text-sm sm:text-base"
+												readOnly
+												disabled
+												tabIndex={-1}
+											/>
+											{hasErrors && (
+												<FieldError
+													errors={field.state.meta.errors}
+													className="text-xs sm:text-sm"
 												/>
-											</FormControl>
-											<FormMessage className="text-xs sm:text-sm" />
-										</FormItem>
-									)}
-								/>
-
-								{/* Phone fields - Show differently based on whether user has phone */}
-								{isPhoneFieldEnabled ? (
-									// First-time user or user with no phone - show both fields
-									<>
-										<FormField
-											control={form.control}
-											name="phone"
-											render={({ field }) => (
-												<FormItem>
-													<FormLabel className="text-sm sm:text-base">
-														Phone Number
-													</FormLabel>
-													<FormControl>
-														<Input
-															type="tel"
-															placeholder="Enter your phone number"
-															{...field}
-															className="text-sm sm:text-base"
-															readOnly={isProcessing}
-															disabled={isProcessing}
-														/>
-													</FormControl>
-													<FormMessage className="text-xs sm:text-sm" />
-												</FormItem>
 											)}
-										/>
+										</Field>
+									);
+								}}
+							/>
 
-										<FormField
-											control={form.control}
-											name="confirmPhone"
-											render={({ field }) => (
-												<FormItem>
-													<FormLabel className="text-sm sm:text-base">
-														Confirm Phone Number
-													</FormLabel>
-													<FormControl>
-														<Input
-															type="tel"
-															placeholder="Re-enter your phone number"
-															{...field}
-															className="text-sm sm:text-base"
-															readOnly={isProcessing}
-															disabled={isProcessing}
-															onPaste={(e) => {
-																e.preventDefault();
-																return false;
-															}}
-														/>
-													</FormControl>
-													<FormDescription className="text-xs sm:text-sm">
-														Please re-enter your phone number to confirm
-													</FormDescription>
-													<FormMessage className="text-xs sm:text-sm" />
-												</FormItem>
-											)}
-										/>
-									</>
-								) : (
-									// Repeat user with phone - show phone with edit button
-									<FormField
-										control={form.control}
+							{/* Phone fields - Show differently based on whether user has phone */}
+							{isPhoneFieldEnabled ? (
+								// First-time user or user with no phone - show both fields
+								<>
+									<form.Field
 										name="phone"
-										render={({ field }) => (
-											<FormItem>
-												<FormLabel className="text-sm sm:text-base">
-													Phone Number
-												</FormLabel>
-												<div className="flex gap-2">
-													<FormControl>
-														<Input
-															type="tel"
-															{...field}
-															className="text-sm sm:text-base"
-															readOnly
-															disabled
-															tabIndex={-1}
+										// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+										children={(field) => {
+											const hasErrors =
+												field.state.meta.errors &&
+												field.state.meta.errors.length > 0;
+											return (
+												<Field data-invalid={hasErrors}>
+													<FieldLabel
+														htmlFor={field.name}
+														className="text-sm sm:text-base"
+													>
+														Phone Number
+													</FieldLabel>
+													<Input
+														id={field.name}
+														name={field.name}
+														type="tel"
+														value={field.state.value}
+														onBlur={field.handleBlur}
+														onChange={(e) => field.handleChange(e.target.value)}
+														placeholder="Enter your phone number"
+														className="text-sm sm:text-base"
+														readOnly={isProcessing}
+														disabled={isProcessing}
+													/>
+													{hasErrors && (
+														<FieldError
+															errors={field.state.meta.errors}
+															className="text-xs sm:text-sm"
 														/>
-													</FormControl>
+													)}
+												</Field>
+											);
+										}}
+									/>
+
+									<form.Field
+										name="confirmPhone"
+										// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+										children={(field) => {
+											const hasErrors =
+												field.state.meta.errors &&
+												field.state.meta.errors.length > 0;
+											return (
+												<Field data-invalid={hasErrors}>
+													<FieldLabel
+														htmlFor={field.name}
+														className="text-sm sm:text-base"
+													>
+														Confirm Phone Number
+													</FieldLabel>
+													<Input
+														id={field.name}
+														name={field.name}
+														type="tel"
+														value={field.state.value ?? ""}
+														onBlur={field.handleBlur}
+														onChange={(e) => field.handleChange(e.target.value)}
+														placeholder="Re-enter your phone number"
+														className="text-sm sm:text-base"
+														readOnly={isProcessing}
+														disabled={isProcessing}
+														onPaste={(e) => {
+															e.preventDefault();
+															return false;
+														}}
+													/>
+													<FieldDescription className="text-xs sm:text-sm">
+														Please re-enter your phone number to confirm
+													</FieldDescription>
+													{hasErrors && (
+														<FieldError
+															errors={field.state.meta.errors}
+															className="text-xs sm:text-sm"
+														/>
+													)}
+												</Field>
+											);
+										}}
+									/>
+								</>
+							) : (
+								// Repeat user with phone - show phone with edit button
+								<form.Field
+									name="phone"
+									// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+									children={(field) => {
+										const hasErrors =
+											field.state.meta.errors &&
+											field.state.meta.errors.length > 0;
+										return (
+											<Field data-invalid={hasErrors}>
+												<FieldLabel
+													htmlFor={field.name}
+													className="text-sm sm:text-base"
+												>
+													Phone Number
+												</FieldLabel>
+												<div className="flex gap-2">
+													<Input
+														id={field.name}
+														name={field.name}
+														type="tel"
+														value={field.state.value}
+														onBlur={field.handleBlur}
+														onChange={(e) => field.handleChange(e.target.value)}
+														className="text-sm sm:text-base"
+														readOnly
+														disabled
+														tabIndex={-1}
+													/>
 													<Button
 														type="button"
 														variant="outline"
@@ -979,344 +1047,472 @@ export default function CheckoutPage({
 														<Edit2 className="h-4 w-4" />
 													</Button>
 												</div>
-												<FormMessage className="text-xs sm:text-sm" />
-											</FormItem>
-										)}
-									/>
-								)}
+												{hasErrors && (
+													<FieldError
+														errors={field.state.meta.errors}
+														className="text-xs sm:text-sm"
+													/>
+												)}
+											</Field>
+										);
+									}}
+								/>
+							)}
 
-								{!hasSpecials && (
-									<FormField
-										control={form.control}
-										name="notes"
-										render={({ field }) => (
-											<FormItem>
-												<FormLabel className="text-sm sm:text-base">
+							{!hasSpecials && (
+								<form.Field
+									name="notes"
+									// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+									children={(field) => {
+										const hasErrors =
+											field.state.meta.errors &&
+											field.state.meta.errors.length > 0;
+										return (
+											<Field data-invalid={hasErrors}>
+												<FieldLabel
+													htmlFor={field.name}
+													className="text-sm sm:text-base"
+												>
 													{isPostalBrownies
 														? "Message (Optional)"
 														: "Message on Cake"}
-												</FormLabel>
-												<FormControl>
-													<Input
-														placeholder={
-															isPostalBrownies
-																? "Special delivery instructions or notes"
-																: "Keep it short and sweet"
-														}
-														{...field}
-														className="text-sm sm:text-base"
-														maxLength={isPostalBrownies ? 250 : 25}
-													/>
-												</FormControl>
-												<FormDescription className="text-xs sm:text-sm text-muted-foreground">
+												</FieldLabel>
+												<Input
+													id={field.name}
+													name={field.name}
+													value={field.state.value ?? ""}
+													onBlur={field.handleBlur}
+													onChange={(e) => field.handleChange(e.target.value)}
+													placeholder={
+														isPostalBrownies
+															? "Special delivery instructions or notes"
+															: "Keep it short and sweet"
+													}
+													className="text-sm sm:text-base"
+													maxLength={isPostalBrownies ? 250 : 25}
+												/>
+												<FieldDescription className="text-xs sm:text-sm text-muted-foreground">
 													Maximum {isPostalBrownies ? 250 : 25} characters
-												</FormDescription>
-												<FormMessage className="text-xs sm:text-sm" />
-											</FormItem>
-										)}
-									/>
-								)}
+												</FieldDescription>
+												{hasErrors && (
+													<FieldError
+														errors={field.state.meta.errors}
+														className="text-xs sm:text-sm"
+													/>
+												)}
+											</Field>
+										);
+									}}
+								/>
+							)}
 
-								{/* Address Fields - Only for postal brownies */}
-								{isPostalBrownies && (
-									<div className="space-y-3 sm:space-y-4 lg:space-y-6">
-										<div className="border-t pt-3 sm:pt-4 lg:pt-6">
-											<h3 className="text-sm sm:text-base lg:text-lg font-semibold mb-2 sm:mb-3 lg:mb-4 flex items-center gap-2">
-												<Package className="h-4 w-4 sm:h-4 sm:w-4 lg:h-5 lg:w-5 shrink-0" />
-												<span>Delivery Address</span>
-											</h3>
-											<p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 leading-relaxed">
-												Please provide the complete delivery address for your
-												postal brownie order.
-											</p>
-										</div>
+							{/* Address Fields - Only for postal brownies */}
+							{isPostalBrownies && (
+								<div className="space-y-3 sm:space-y-4 lg:space-y-6">
+									<div className="border-t pt-3 sm:pt-4 lg:pt-6">
+										<h3 className="text-sm sm:text-base lg:text-lg font-semibold mb-2 sm:mb-3 lg:mb-4 flex items-center gap-2">
+											<Package className="h-4 w-4 sm:h-4 sm:w-4 lg:h-5 lg:w-5 shrink-0" />
+											<span>Delivery Address</span>
+										</h3>
+										<p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 leading-relaxed">
+											Please provide the complete delivery address for your
+											postal brownie order.
+										</p>
+									</div>
 
-										{/* Address Mode Selection */}
-										<FormField
-											control={form.control}
-											name="addressMode"
-											render={({ field }) => (
-												<FormItem>
-													<FormControl>
-														<RadioGroup
-															onValueChange={field.onChange}
-															defaultValue={field.value}
-															value={field.value}
-															className="grid grid-cols-1 sm:grid-cols-2 gap-2"
-															disabled={addressesLoading}
-														>
-															{addresses.length > 0 && (
-																<div className="flex items-center space-x-2 p-3 border rounded-lg">
-																	<RadioGroupItem
-																		value="existing"
-																		id={existingId}
-																	/>
-																	<Label
-																		htmlFor={existingId}
-																		className="text-sm cursor-pointer flex-1"
-																	>
-																		Select saved address
-																	</Label>
-																</div>
-															)}
+									{/* Address Mode Selection */}
+									<form.Field
+										name="addressMode"
+										// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+										children={(field) => {
+											const hasErrors =
+												field.state.meta.errors &&
+												field.state.meta.errors.length > 0;
+											return (
+												<Field data-invalid={hasErrors}>
+													<RadioGroup
+														onValueChange={(value) =>
+															field.handleChange(value as "existing" | "new")
+														}
+														value={field.state.value}
+														className="grid grid-cols-1 sm:grid-cols-2 gap-2"
+														disabled={addressesLoading}
+													>
+														{addresses.length > 0 && (
 															<div className="flex items-center space-x-2 p-3 border rounded-lg">
-																<RadioGroupItem value="new" id={newId} />
+																<RadioGroupItem
+																	value="existing"
+																	id={existingId}
+																/>
 																<Label
-																	htmlFor={newId}
+																	htmlFor={existingId}
 																	className="text-sm cursor-pointer flex-1"
 																>
-																	Add new address
+																	Select saved address
 																</Label>
 															</div>
-														</RadioGroup>
-													</FormControl>
-													<FormMessage className="text-xs sm:text-sm" />
-												</FormItem>
-											)}
-										/>
+														)}
+														<div className="flex items-center space-x-2 p-3 border rounded-lg">
+															<RadioGroupItem value="new" id={newId} />
+															<Label
+																htmlFor={newId}
+																className="text-sm cursor-pointer flex-1"
+															>
+																Add new address
+															</Label>
+														</div>
+													</RadioGroup>
+													{hasErrors && (
+														<FieldError
+															errors={field.state.meta.errors}
+															className="text-xs sm:text-sm"
+														/>
+													)}
+												</Field>
+											);
+										}}
+									/>
 
-										{/* Existing Address Selection */}
-										{addressMode === "existing" && (
-											<FormField
-												control={form.control}
-												name="selectedAddressId"
-												render={({ field }) => (
-													<FormItem>
-														<FormLabel className="text-sm sm:text-base">
+									{/* Existing Address Selection */}
+									{addressMode === "existing" && (
+										<form.Field
+											name="selectedAddressId"
+											// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+											children={(field) => {
+												const hasErrors =
+													field.state.meta.errors &&
+													field.state.meta.errors.length > 0;
+												return (
+													<Field data-invalid={hasErrors}>
+														<FieldLabel className="text-sm sm:text-base">
 															Choose Address
-														</FormLabel>
-														<FormControl>
-															{addresses.length === 0 ? (
-																<div className="text-center py-8 text-muted-foreground">
-																	<p className="text-sm">
-																		No saved addresses found
-																	</p>
-																	<p className="text-xs mt-1">
-																		Add a new address to continue
-																	</p>
-																</div>
-															) : (
-																<RadioGroup
-																	onValueChange={(value) =>
-																		field.onChange(Number.parseInt(value))
-																	}
-																	defaultValue={field.value?.toString()}
-																	className="space-y-2"
-																>
-																	{addresses.map((address) => (
-																		<div
-																			key={address.id}
-																			className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-muted/50"
+														</FieldLabel>
+														{addresses.length === 0 ? (
+															<div className="text-center py-8 text-muted-foreground">
+																<p className="text-sm">
+																	No saved addresses found
+																</p>
+																<p className="text-xs mt-1">
+																	Add a new address to continue
+																</p>
+															</div>
+														) : (
+															<RadioGroup
+																onValueChange={(value) =>
+																	field.handleChange(Number.parseInt(value))
+																}
+																value={field.state.value?.toString()}
+																className="space-y-2"
+															>
+																{addresses.map((address) => (
+																	<div
+																		key={address.id}
+																		className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-muted/50"
+																	>
+																		<RadioGroupItem
+																			value={address.id.toString()}
+																			id={`address-${address.id}`}
+																			className="mt-1"
+																		/>
+																		<Label
+																			htmlFor={`address-${address.id}`}
+																			className="text-sm cursor-pointer flex-1 leading-relaxed"
 																		>
-																			<RadioGroupItem
-																				value={address.id.toString()}
-																				id={`address-${address.id}`}
-																				className="mt-1"
-																			/>
-																			<Label
-																				htmlFor={`address-${address.id}`}
-																				className="text-sm cursor-pointer flex-1 leading-relaxed"
-																			>
-																				<div className="space-y-1">
-																					<div className="font-medium">
-																						{address.addressLine1}
-																					</div>
-																					{address.addressLine2 && (
-																						<div className="text-muted-foreground">
-																							{address.addressLine2}
-																						</div>
-																					)}
-																					<div className="text-muted-foreground">
-																						{address.city}, {address.state}{" "}
-																						{address.zip}
-																					</div>
+																			<div className="space-y-1">
+																				<div className="font-medium">
+																					{address.addressLine1}
 																				</div>
-																			</Label>
-																			<Button
-																				type="button"
-																				variant="ghost"
-																				size="sm"
-																				onClick={() => {
-																					handleDeleteAddress(address.id);
-																				}}
-																				disabled={
-																					deleteAddressMutation.isPending
-																				}
-																				title="Delete address"
-																			>
-																				{deleteAddressMutation.isPending ? (
-																					<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600" />
-																				) : (
-																					<Trash2 className="h-4 w-4 text-primary" />
+																				{address.addressLine2 && (
+																					<div className="text-muted-foreground">
+																						{address.addressLine2}
+																					</div>
 																				)}
-																			</Button>
-																		</div>
-																	))}
-																</RadioGroup>
-															)}
-														</FormControl>
-														<FormMessage className="text-xs sm:text-sm" />
-													</FormItem>
-												)}
-											/>
-										)}
+																				<div className="text-muted-foreground">
+																					{address.city}, {address.state}{" "}
+																					{address.zip}
+																				</div>
+																			</div>
+																		</Label>
+																		<Button
+																			type="button"
+																			variant="ghost"
+																			size="sm"
+																			onClick={() => {
+																				handleDeleteAddress(address.id);
+																			}}
+																			disabled={deleteAddressMutation.isPending}
+																			title="Delete address"
+																		>
+																			{deleteAddressMutation.isPending ? (
+																				<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600" />
+																			) : (
+																				<Trash2 className="h-4 w-4 text-primary" />
+																			)}
+																		</Button>
+																	</div>
+																))}
+															</RadioGroup>
+														)}
+														{hasErrors && (
+															<FieldError
+																errors={field.state.meta.errors}
+																className="text-xs sm:text-sm"
+															/>
+														)}
+													</Field>
+												);
+											}}
+										/>
+									)}
 
-										{/* New Address Form */}
-										{addressMode === "new" && (
-											<div className="space-y-3 sm:space-y-4 lg:space-y-6">
-												<div className="grid grid-cols-1 gap-3 sm:gap-4 lg:gap-6">
-													<FormField
-														control={form.control}
-														name="addressLine1"
-														render={({ field }) => (
-															<FormItem>
-																<FormLabel className="text-sm sm:text-base">
+									{/* New Address Form */}
+									{addressMode === "new" && (
+										<div className="space-y-3 sm:space-y-4 lg:space-y-6">
+											<div className="grid grid-cols-1 gap-3 sm:gap-4 lg:gap-6">
+												<form.Field
+													name="addressLine1"
+													// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+													children={(field) => {
+														const hasErrors =
+															field.state.meta.errors &&
+															field.state.meta.errors.length > 0;
+														return (
+															<Field data-invalid={hasErrors}>
+																<FieldLabel
+																	htmlFor={field.name}
+																	className="text-sm sm:text-base"
+																>
 																	Address Line 1 *
-																</FormLabel>
-																<FormControl>
-																	<Input
-																		placeholder="Street address, building number"
-																		{...field}
-																		className="text-sm sm:text-base"
+																</FieldLabel>
+																<Input
+																	id={field.name}
+																	name={field.name}
+																	value={field.state.value ?? ""}
+																	onBlur={field.handleBlur}
+																	onChange={(e) =>
+																		field.handleChange(e.target.value)
+																	}
+																	placeholder="Street address, building number"
+																	className="text-sm sm:text-base"
+																/>
+																{hasErrors && (
+																	<FieldError
+																		errors={field.state.meta.errors}
+																		className="text-xs sm:text-sm"
 																	/>
-																</FormControl>
-																<FormMessage className="text-xs sm:text-sm" />
-															</FormItem>
-														)}
-													/>
+																)}
+															</Field>
+														);
+													}}
+												/>
 
-													<FormField
-														control={form.control}
-														name="addressLine2"
-														render={({ field }) => (
-															<FormItem>
-																<FormLabel className="text-sm sm:text-base">
+												<form.Field
+													name="addressLine2"
+													// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+													children={(field) => {
+														const hasErrors =
+															field.state.meta.errors &&
+															field.state.meta.errors.length > 0;
+														return (
+															<Field data-invalid={hasErrors}>
+																<FieldLabel
+																	htmlFor={field.name}
+																	className="text-sm sm:text-base"
+																>
 																	Address Line 2
-																</FormLabel>
-																<FormControl>
-																	<Input
-																		placeholder="Apartment, suite, unit (optional)"
-																		{...field}
-																		className="text-sm sm:text-base"
+																</FieldLabel>
+																<Input
+																	id={field.name}
+																	name={field.name}
+																	value={field.state.value ?? ""}
+																	onBlur={field.handleBlur}
+																	onChange={(e) =>
+																		field.handleChange(e.target.value)
+																	}
+																	placeholder="Apartment, suite, unit (optional)"
+																	className="text-sm sm:text-base"
+																/>
+																{hasErrors && (
+																	<FieldError
+																		errors={field.state.meta.errors}
+																		className="text-xs sm:text-sm"
 																	/>
-																</FormControl>
-																<FormMessage className="text-xs sm:text-sm" />
-															</FormItem>
-														)}
-													/>
+																)}
+															</Field>
+														);
+													}}
+												/>
 
-													<div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-														<FormField
-															control={form.control}
-															name="city"
-															render={({ field }) => (
-																<FormItem>
-																	<FormLabel className="text-sm sm:text-base">
+												<div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+													<form.Field
+														name="city"
+														// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+														children={(field) => {
+															const hasErrors =
+																field.state.meta.errors &&
+																field.state.meta.errors.length > 0;
+															return (
+																<Field data-invalid={hasErrors}>
+																	<FieldLabel
+																		htmlFor={field.name}
+																		className="text-sm sm:text-base"
+																	>
 																		City *
-																	</FormLabel>
-																	<FormControl>
-																		<Input
-																			placeholder="City"
-																			{...field}
-																			className="text-sm sm:text-base"
-																		/>
-																	</FormControl>
-																	<FormMessage className="text-xs sm:text-sm" />
-																</FormItem>
-															)}
-														/>
-
-														<FormField
-															control={form.control}
-															name="state"
-															render={({ field }) => (
-																<FormItem>
-																	<FormLabel className="text-sm sm:text-base">
-																		State *
-																	</FormLabel>
-																	<FormControl>
-																		<Input
-																			placeholder="State"
-																			{...field}
-																			className="text-sm sm:text-base"
-																		/>
-																	</FormControl>
-																	<FormMessage className="text-xs sm:text-sm" />
-																</FormItem>
-															)}
-														/>
-													</div>
-
-													<FormField
-														control={form.control}
-														name="zip"
-														render={({ field }) => (
-															<FormItem>
-																<FormLabel className="text-sm sm:text-base">
-																	ZIP Code *
-																</FormLabel>
-																<FormControl>
+																	</FieldLabel>
 																	<Input
-																		placeholder="ZIP Code"
-																		{...field}
+																		id={field.name}
+																		name={field.name}
+																		value={field.state.value ?? ""}
+																		onBlur={field.handleBlur}
+																		onChange={(e) =>
+																			field.handleChange(e.target.value)
+																		}
+																		placeholder="City"
 																		className="text-sm sm:text-base"
 																	/>
-																</FormControl>
-																<FormMessage className="text-xs sm:text-sm" />
-															</FormItem>
-														)}
+																	{hasErrors && (
+																		<FieldError
+																			errors={field.state.meta.errors}
+																			className="text-xs sm:text-sm"
+																		/>
+																	)}
+																</Field>
+															);
+														}}
 													/>
 
-													{/* Create Address Button */}
-													<div className="pt-4">
-														<Button
-															type="button"
-															variant="outline"
-															onClick={handleCreateAddress}
-															disabled={isCreatingAddress}
-															className="w-full"
-														>
-															{isCreatingAddress ? (
-																<>
-																	<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2" />
-																	Creating Address...
-																</>
-															) : (
-																"Create & Save Address"
-															)}
-														</Button>
-														<p className="text-xs text-muted-foreground mt-2 text-center">
-															Address will be saved and automatically selected
-															for this order
-														</p>
-													</div>
+													<form.Field
+														name="state"
+														// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+														children={(field) => {
+															const hasErrors =
+																field.state.meta.errors &&
+																field.state.meta.errors.length > 0;
+															return (
+																<Field data-invalid={hasErrors}>
+																	<FieldLabel
+																		htmlFor={field.name}
+																		className="text-sm sm:text-base"
+																	>
+																		State *
+																	</FieldLabel>
+																	<Input
+																		id={field.name}
+																		name={field.name}
+																		value={field.state.value ?? ""}
+																		onBlur={field.handleBlur}
+																		onChange={(e) =>
+																			field.handleChange(e.target.value)
+																		}
+																		placeholder="State"
+																		className="text-sm sm:text-base"
+																	/>
+																	{hasErrors && (
+																		<FieldError
+																			errors={field.state.meta.errors}
+																			className="text-xs sm:text-sm"
+																		/>
+																	)}
+																</Field>
+															);
+														}}
+													/>
+												</div>
+
+												<form.Field
+													name="zip"
+													// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+													children={(field) => {
+														const hasErrors =
+															field.state.meta.errors &&
+															field.state.meta.errors.length > 0;
+														return (
+															<Field data-invalid={hasErrors}>
+																<FieldLabel
+																	htmlFor={field.name}
+																	className="text-sm sm:text-base"
+																>
+																	ZIP Code *
+																</FieldLabel>
+																<Input
+																	id={field.name}
+																	name={field.name}
+																	value={field.state.value ?? ""}
+																	onBlur={field.handleBlur}
+																	onChange={(e) =>
+																		field.handleChange(e.target.value)
+																	}
+																	placeholder="ZIP Code"
+																	className="text-sm sm:text-base"
+																/>
+																{hasErrors && (
+																	<FieldError
+																		errors={field.state.meta.errors}
+																		className="text-xs sm:text-sm"
+																	/>
+																)}
+															</Field>
+														);
+													}}
+												/>
+
+												{/* Create Address Button */}
+												<div className="pt-4">
+													<Button
+														type="button"
+														variant="outline"
+														onClick={handleCreateAddress}
+														disabled={isCreatingAddress}
+														className="w-full"
+													>
+														{isCreatingAddress ? (
+															<>
+																<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2" />
+																Creating Address...
+															</>
+														) : (
+															"Create & Save Address"
+														)}
+													</Button>
+													<p className="text-xs text-muted-foreground mt-2 text-center">
+														Address will be saved and automatically selected for
+														this order
+													</p>
 												</div>
 											</div>
-										)}
-									</div>
-								)}
-
-								{/* Pickup Date Selection for Specials Orders */}
-								{!isPostalBrownies && hasSpecials && specialsSettings && (
-									<div className="space-y-3 sm:space-y-4 lg:space-y-6">
-										<div className="border-t pt-3 sm:pt-4 lg:pt-6">
-											<h3 className="text-sm sm:text-base lg:text-lg font-semibold mb-2 sm:mb-3 lg:mb-4 flex items-center gap-2">
-												<CalendarIcon className="h-4 w-4 sm:h-4 sm:w-4 lg:h-5 lg:w-5 shrink-0" />
-												<span>Pickup Date Selection</span>
-											</h3>
-											<p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 leading-relaxed">
-												Select your preferred pickup date from the available
-												range. Pickup time: {specialsSettings.pickupStartTime} -{" "}
-												{specialsSettings.pickupEndTime}
-											</p>
 										</div>
-										<div className="space-y-3 sm:space-y-4 lg:space-y-6">
-											<FormField
-												control={form.control}
-												name="pickupDate"
-												render={({ field }) => (
-													<FormItem className="flex flex-col">
-														<FormLabel className="text-sm sm:text-base font-medium">
+									)}
+								</div>
+							)}
+
+							{/* Pickup Date Selection for Specials Orders */}
+							{!isPostalBrownies && hasSpecials && specialsSettings && (
+								<div className="space-y-3 sm:space-y-4 lg:space-y-6">
+									<div className="border-t pt-3 sm:pt-4 lg:pt-6">
+										<h3 className="text-sm sm:text-base lg:text-lg font-semibold mb-2 sm:mb-3 lg:mb-4 flex items-center gap-2">
+											<CalendarIcon className="h-4 w-4 sm:h-4 sm:w-4 lg:h-5 lg:w-5 shrink-0" />
+											<span>Pickup Date Selection</span>
+										</h3>
+										<p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 leading-relaxed">
+											Select your preferred pickup date from the available
+											range. Pickup time: {specialsSettings.pickupStartTime} -{" "}
+											{specialsSettings.pickupEndTime}
+										</p>
+									</div>
+									<div className="space-y-3 sm:space-y-4 lg:space-y-6">
+										<form.Field
+											name="pickupDate"
+											// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+											children={(field) => {
+												const hasErrors =
+													field.state.meta.errors &&
+													field.state.meta.errors.length > 0;
+												return (
+													<Field
+														data-invalid={hasErrors}
+														className="flex flex-col"
+													>
+														<FieldLabel className="text-sm sm:text-base font-medium">
 															Pickup Date (Available:{" "}
 															{formatLocalDate(
 																new Date(specialsSettings.pickupStartDate),
@@ -1326,24 +1522,23 @@ export default function CheckoutPage({
 																new Date(specialsSettings.pickupEndDate),
 															)}
 															)
-														</FormLabel>
+														</FieldLabel>
 														<Popover>
 															<PopoverTrigger asChild>
-																<FormControl>
-																	<Button
-																		variant="outline"
-																		className={`w-full h-10 sm:h-11 px-3 py-2 text-left font-normal text-sm sm:text-base justify-between ${
-																			!field.value && "text-muted-foreground"
-																		}`}
-																	>
-																		<span className="truncate">
-																			{field.value
-																				? formatLocalDate(field.value)
-																				: "Select a pickup date"}
-																		</span>
-																		<CalendarIcon className="h-4 w-4 opacity-50 shrink-0 ml-2" />
-																	</Button>
-																</FormControl>
+																<Button
+																	variant="outline"
+																	className={`w-full h-10 sm:h-11 px-3 py-2 text-left font-normal text-sm sm:text-base justify-between ${
+																		!field.state.value &&
+																		"text-muted-foreground"
+																	}`}
+																>
+																	<span className="truncate">
+																		{field.state.value
+																			? formatLocalDate(field.state.value)
+																			: "Select a pickup date"}
+																	</span>
+																	<CalendarIcon className="h-4 w-4 opacity-50 shrink-0 ml-2" />
+																</Button>
 															</PopoverTrigger>
 															<PopoverContent
 																className="w-auto p-0 z-50"
@@ -1353,8 +1548,8 @@ export default function CheckoutPage({
 															>
 																<Calendar
 																	mode="single"
-																	selected={field.value}
-																	onSelect={field.onChange}
+																	selected={field.state.value}
+																	onSelect={field.handleChange}
 																	disabled={(date) => {
 																		const startDate = new Date(
 																			specialsSettings.pickupStartDate,
@@ -1376,56 +1571,68 @@ export default function CheckoutPage({
 																/>
 															</PopoverContent>
 														</Popover>
-														<FormMessage className="text-xs sm:text-sm" />
-													</FormItem>
-												)}
-											/>
-										</div>
+														{hasErrors && (
+															<FieldError
+																errors={field.state.meta.errors}
+																className="text-xs sm:text-sm"
+															/>
+														)}
+													</Field>
+												);
+											}}
+										/>
 									</div>
-								)}
+								</div>
+							)}
 
-								{/* Pickup Date and Time - Only for non-postal orders */}
-								{!isPostalBrownies && !hasSpecials && (
+							{/* Pickup Date and Time - Only for non-postal orders */}
+							{!isPostalBrownies && !hasSpecials && (
+								<div className="space-y-3 sm:space-y-4 lg:space-y-6">
+									<div className="border-t pt-3 sm:pt-4 lg:pt-6">
+										<h3 className="text-sm sm:text-base lg:text-lg font-semibold mb-2 sm:mb-3 lg:mb-4 flex items-center gap-2">
+											<CalendarIcon className="h-4 w-4 sm:h-4 sm:w-4 lg:h-5 lg:w-5 shrink-0" />
+											<span>Pickup Schedule</span>
+										</h3>
+										<p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 leading-relaxed">
+											Select your preferred pickup date and time. Available
+											Wednesday to Sunday, 12PM to 6PM. Minimum {maxLeadTime}{" "}
+											day{maxLeadTime > 1 ? "s" : ""} advance booking required
+											based on your cart items.
+										</p>
+									</div>
+
 									<div className="space-y-3 sm:space-y-4 lg:space-y-6">
-										<div className="border-t pt-3 sm:pt-4 lg:pt-6">
-											<h3 className="text-sm sm:text-base lg:text-lg font-semibold mb-2 sm:mb-3 lg:mb-4 flex items-center gap-2">
-												<CalendarIcon className="h-4 w-4 sm:h-4 sm:w-4 lg:h-5 lg:w-5 shrink-0" />
-												<span>Pickup Schedule</span>
-											</h3>
-											<p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 leading-relaxed">
-												Select your preferred pickup date and time. Available
-												Wednesday to Sunday, 12PM to 6PM. Minimum {maxLeadTime}{" "}
-												day{maxLeadTime > 1 ? "s" : ""} advance booking required
-												based on your cart items.
-											</p>
-										</div>
-
-										<div className="space-y-3 sm:space-y-4 lg:space-y-6">
-											<FormField
-												control={form.control}
-												name="pickupDate"
-												render={({ field }) => (
-													<FormItem className="flex flex-col">
-														<FormLabel className="text-sm sm:text-base font-medium">
+										<form.Field
+											name="pickupDate"
+											// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+											children={(field) => {
+												const hasErrors =
+													field.state.meta.errors &&
+													field.state.meta.errors.length > 0;
+												return (
+													<Field
+														data-invalid={hasErrors}
+														className="flex flex-col"
+													>
+														<FieldLabel className="text-sm sm:text-base font-medium">
 															Pickup Date
-														</FormLabel>
+														</FieldLabel>
 														<Popover>
 															<PopoverTrigger asChild>
-																<FormControl>
-																	<Button
-																		variant="outline"
-																		className={`w-full h-10 sm:h-11 px-3 py-2 text-left font-normal text-sm sm:text-base justify-between ${
-																			!field.value && "text-muted-foreground"
-																		}`}
-																	>
-																		<span className="truncate">
-																			{field.value
-																				? formatLocalDate(field.value)
-																				: "Pick a date"}
-																		</span>
-																		<CalendarIcon className="h-4 w-4 opacity-50 shrink-0 ml-2" />
-																	</Button>
-																</FormControl>
+																<Button
+																	variant="outline"
+																	className={`w-full h-10 sm:h-11 px-3 py-2 text-left font-normal text-sm sm:text-base justify-between ${
+																		!field.state.value &&
+																		"text-muted-foreground"
+																	}`}
+																>
+																	<span className="truncate">
+																		{field.state.value
+																			? formatLocalDate(field.state.value)
+																			: "Pick a date"}
+																	</span>
+																	<CalendarIcon className="h-4 w-4 opacity-50 shrink-0 ml-2" />
+																</Button>
 															</PopoverTrigger>
 															<PopoverContent
 																className="w-auto p-0 z-50"
@@ -1435,8 +1642,8 @@ export default function CheckoutPage({
 															>
 																<Calendar
 																	mode="single"
-																	selected={field.value}
-																	onSelect={field.onChange}
+																	selected={field.state.value}
+																	onSelect={field.handleChange}
 																	disabled={(date) =>
 																		isDateDisabled(date, maxLeadTime)
 																	}
@@ -1445,28 +1652,36 @@ export default function CheckoutPage({
 																/>
 															</PopoverContent>
 														</Popover>
-														<FormMessage className="text-xs sm:text-sm" />
-													</FormItem>
-												)}
-											/>
+														{hasErrors && (
+															<FieldError
+																errors={field.state.meta.errors}
+																className="text-xs sm:text-sm"
+															/>
+														)}
+													</Field>
+												);
+											}}
+										/>
 
-											<FormField
-												control={form.control}
-												name="pickupTime"
-												render={({ field }) => (
-													<FormItem>
-														<FormLabel className="text-sm sm:text-base font-medium">
+										<form.Field
+											name="pickupTime"
+											// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+											children={(field) => {
+												const hasErrors =
+													field.state.meta.errors &&
+													field.state.meta.errors.length > 0;
+												return (
+													<Field data-invalid={hasErrors}>
+														<FieldLabel className="text-sm sm:text-base font-medium">
 															Pickup Time
-														</FormLabel>
+														</FieldLabel>
 														<Select
-															onValueChange={field.onChange}
-															defaultValue={field.value}
+															onValueChange={field.handleChange}
+															value={field.state.value}
 														>
-															<FormControl>
-																<SelectTrigger className="w-full h-10 sm:h-11 text-sm sm:text-base">
-																	<SelectValue placeholder="Select time" />
-																</SelectTrigger>
-															</FormControl>
+															<SelectTrigger className="w-full h-10 sm:h-11 text-sm sm:text-base">
+																<SelectValue placeholder="Select time" />
+															</SelectTrigger>
 															<SelectContent className="max-h-50 sm:max-h-75">
 																{timeSlots.map((slot) => (
 																	<SelectItem
@@ -1479,94 +1694,100 @@ export default function CheckoutPage({
 																))}
 															</SelectContent>
 														</Select>
-														<FormMessage className="text-xs sm:text-sm" />
-													</FormItem>
-												)}
-											/>
-										</div>
+														{hasErrors && (
+															<FieldError
+																errors={field.state.meta.errors}
+																className="text-xs sm:text-sm"
+															/>
+														)}
+													</Field>
+												);
+											}}
+										/>
+									</div>
 
-										{/* Quick Summary for Mobile */}
-										{(form.watch("pickupDate") || form.watch("pickupTime")) && (
-											<div className="bg-muted/50 rounded-lg p-3 sm:p-4 lg:hidden">
-												<div className="flex items-center gap-2 mb-2">
-													<Clock className="h-4 w-4 text-muted-foreground shrink-0" />
-													<span className="text-sm font-medium">
-														Selected Pickup
-													</span>
-												</div>
-												<div className="space-y-1">
-													{form.watch("pickupDate") && (
-														<p className="text-xs text-muted-foreground">
-															📅{" "}
-															{format(
-																form.watch("pickupDate") as Date,
-																"EEEE, MMM d, yyyy",
-															)}
-														</p>
-													)}
-													{form.watch("pickupTime") && (
-														<p className="text-xs text-muted-foreground">
-															🕐{" "}
-															{
-																timeSlots.find(
-																	(t) => t.value === form.watch("pickupTime"),
-																)?.label
-															}
-														</p>
-													)}
-												</div>
+									{/* Quick Summary for Mobile */}
+									{(pickupDate || pickupTime) && (
+										<div className="bg-muted/50 rounded-lg p-3 sm:p-4 lg:hidden">
+											<div className="flex items-center gap-2 mb-2">
+												<Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+												<span className="text-sm font-medium">
+													Selected Pickup
+												</span>
 											</div>
-										)}
-									</div>
-								)}
+											<div className="space-y-1">
+												{pickupDate && (
+													<p className="text-xs text-muted-foreground">
+														📅 {format(pickupDate, "EEEE, MMM d, yyyy")}
+													</p>
+												)}
+												{pickupTime && (
+													<p className="text-xs text-muted-foreground">
+														🕐{" "}
+														{
+															timeSlots.find((t) => t.value === pickupTime)
+																?.label
+														}
+													</p>
+												)}
+											</div>
+										</div>
+									)}
+								</div>
+							)}
 
-								<Button
-									type="submit"
-									className="w-full text-sm sm:text-base cursor-pointer"
-									disabled={
-										!isOrderingAllowed ||
-										form.formState.isSubmitting ||
-										isProcessing ||
-										(isPostalBrownies && addressMode === "new") ||
-										(isPostalBrownies && !selectedAddressId)
-									}
-									size="lg"
-									variant={!isOrderingAllowed ? "secondary" : "default"}
-								>
-									{!isOrderingAllowed
-										? "Orders Unavailable"
-										: form.formState.isSubmitting || isProcessing
-											? "Processing..."
-											: isPostalBrownies && addressMode === "new"
-												? "Create Address First"
-												: isPostalBrownies && !selectedAddressId
-													? "Select Address to Continue"
-													: "Place Order & Pay"}
-								</Button>
-
-								{/* Helper text for postal brownies and order restrictions */}
-								{(isPostalBrownies || !isOrderingAllowed) && (
-									<div className="text-center mt-2">
-										{!isOrderingAllowed ? (
-											<p className="text-xs text-muted-foreground">
-												{!settings?.isActive
-													? "Cake order system is currently disabled"
-													: "Orders are only accepted on allowed days"}
-											</p>
-										) : isPostalBrownies && addressMode === "new" ? (
-											<p className="text-xs text-muted-foreground">
-												Please create and save your address before placing the
-												order
-											</p>
-										) : isPostalBrownies && !selectedAddressId ? (
-											<p className="text-xs text-muted-foreground">
-												Please select a delivery address to continue
-											</p>
-										) : null}
-									</div>
+							<form.Subscribe
+								selector={(state) => state.isSubmitting}
+								// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+								children={(formIsSubmitting) => (
+									<Button
+										type="submit"
+										className="w-full text-sm sm:text-base cursor-pointer"
+										disabled={
+											!isOrderingAllowed ||
+											formIsSubmitting ||
+											isProcessing ||
+											(isPostalBrownies && addressMode === "new") ||
+											(isPostalBrownies && !selectedAddressId)
+										}
+										size="lg"
+										variant={!isOrderingAllowed ? "secondary" : "default"}
+									>
+										{!isOrderingAllowed
+											? "Orders Unavailable"
+											: formIsSubmitting || isProcessing
+												? "Processing..."
+												: isPostalBrownies && addressMode === "new"
+													? "Create Address First"
+													: isPostalBrownies && !selectedAddressId
+														? "Select Address to Continue"
+														: "Place Order & Pay"}
+									</Button>
 								)}
-							</form>
-						</Form>
+							/>
+
+							{/* Helper text for postal brownies and order restrictions */}
+							{(isPostalBrownies || !isOrderingAllowed) && (
+								<div className="text-center mt-2">
+									{!isOrderingAllowed ? (
+										<p className="text-xs text-muted-foreground">
+											{!settings?.isActive
+												? "Cake order system is currently disabled"
+												: "Orders are only accepted on allowed days"}
+										</p>
+									) : isPostalBrownies && addressMode === "new" ? (
+										<p className="text-xs text-muted-foreground">
+											Please create and save your address before placing the
+											order
+										</p>
+									) : isPostalBrownies && !selectedAddressId ? (
+										<p className="text-xs text-muted-foreground">
+											Please select a delivery address to continue
+										</p>
+									) : null}
+								</div>
+							)}
+						</form>
 					</CardContent>
 				</Card>
 
@@ -1683,7 +1904,7 @@ export default function CheckoutPage({
 							</div>
 
 							{/* Pickup Info Display - For specials orders */}
-							{!isPostalBrownies && hasSpecials && form.watch("pickupDate") && (
+							{!isPostalBrownies && hasSpecials && pickupDate && (
 								<div className="border-t pt-3 sm:pt-4">
 									<div className="flex items-center gap-2 mb-2">
 										<Clock className="h-4 w-4 text-muted-foreground" />
@@ -1692,7 +1913,7 @@ export default function CheckoutPage({
 										</span>
 									</div>
 									<p className="text-sm sm:text-base text-muted-foreground">
-										{formatLocalDate(form.watch("pickupDate") as Date)} at{" "}
+										{formatLocalDate(pickupDate)} at{" "}
 										{specialsSettings?.pickupStartTime} -{" "}
 										{specialsSettings?.pickupEndTime}
 									</p>
@@ -1702,7 +1923,7 @@ export default function CheckoutPage({
 							{/* Pickup Info Display - Only for non-postal orders and non-specials */}
 							{!isPostalBrownies &&
 								!hasSpecials &&
-								(form.watch("pickupDate") || form.watch("pickupTime")) && (
+								(pickupDate || pickupTime) && (
 									<div className="border-t pt-3 sm:pt-4">
 										<div className="flex items-center gap-2 mb-2">
 											<Clock className="h-4 w-4 text-muted-foreground" />
@@ -1710,27 +1931,22 @@ export default function CheckoutPage({
 												Pickup Details
 											</span>
 										</div>
-										{form.watch("pickupDate") && (
+										{pickupDate && (
 											<p className="text-xs sm:text-sm text-muted-foreground">
-												Date:{" "}
-												{formatLocalDate(form.watch("pickupDate") as Date)}
+												Date: {formatLocalDate(pickupDate)}
 											</p>
 										)}
-										{form.watch("pickupTime") && (
+										{pickupTime && (
 											<p className="text-xs sm:text-sm text-muted-foreground">
 												Time:{" "}
-												{
-													timeSlots.find(
-														(t) => t.value === form.watch("pickupTime"),
-													)?.label
-												}
+												{timeSlots.find((t) => t.value === pickupTime)?.label}
 											</p>
 										)}
 									</div>
 								)}
 
 							{/* Delivery Address Display - Only for postal brownies */}
-							{isPostalBrownies && form.watch("selectedAddressId") && (
+							{isPostalBrownies && selectedAddressId && (
 								<div className="border-t pt-3 sm:pt-4">
 									<div className="flex items-center gap-2 mb-2">
 										<Package className="h-4 w-4 text-muted-foreground" />
@@ -1740,7 +1956,7 @@ export default function CheckoutPage({
 									</div>
 									{(() => {
 										const selectedAddress = addresses.find(
-											(addr) => addr.id === form.watch("selectedAddressId"),
+											(addr) => addr.id === selectedAddressId,
 										);
 										const currentSlot = getCurrentActiveSlot();
 
@@ -1809,7 +2025,7 @@ export default function CheckoutPage({
 			<PhoneEditDialog
 				isOpen={isPhoneEditDialogOpen}
 				onClose={() => setIsPhoneEditDialogOpen(false)}
-				currentPhone={form.getValues("phone")}
+				currentPhone={form.getFieldValue("phone")}
 				onSave={handlePhoneEditSave}
 			/>
 		</div>

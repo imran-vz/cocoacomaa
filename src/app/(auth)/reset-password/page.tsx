@@ -1,41 +1,36 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "@tanstack/react-form";
 import { ArrowLeft, EyeIcon, EyeOffIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-	Form,
-	FormControl,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
-} from "@/components/ui/form";
+	Field,
+	FieldError,
+	FieldGroup,
+	FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 
 const resetPasswordSchema = z
 	.object({
 		password: z.string().min(6, {
-			error: "Password must be at least 6 characters.",
+			message: "Password must be at least 6 characters.",
 		}),
 		confirmPassword: z.string().min(6, {
-			error: "Please confirm your password.",
+			message: "Please confirm your password.",
 		}),
 	})
 	.refine((data) => data.password === data.confirmPassword, {
 		path: ["confirmPassword"],
-		error: "Passwords don't match.",
+		message: "Passwords don't match.",
 	});
-
-type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 
 export default function ResetPasswordPage() {
 	const router = useRouter();
@@ -45,11 +40,39 @@ export default function ResetPasswordPage() {
 	const searchParams = useSearchParams();
 	const token = searchParams.get("token");
 
-	const form = useForm<ResetPasswordFormValues>({
-		resolver: zodResolver(resetPasswordSchema),
+	const form = useForm({
 		defaultValues: {
 			password: "",
 			confirmPassword: "",
+		},
+		validators: {
+			onSubmit: resetPasswordSchema,
+		},
+		onSubmit: async ({ value }) => {
+			if (!token) {
+				toast.error("Invalid or expired reset link");
+				return;
+			}
+
+			try {
+				const result = await authClient.resetPassword({
+					newPassword: value.password,
+					token,
+				});
+
+				if (result.error) {
+					toast.error(result.error.message || "Failed to reset password");
+					return;
+				}
+
+				toast.success(
+					"Password reset successfully! Please log in with your new password.",
+				);
+				router.push("/login");
+			} catch (error: unknown) {
+				console.error("Reset password error:", error);
+				toast.error("Something went wrong");
+			}
 		},
 	});
 
@@ -65,33 +88,6 @@ export default function ResetPasswordPage() {
 			return;
 		}
 	}, [session?.user?.id, router, token]);
-
-	async function onSubmit(data: ResetPasswordFormValues) {
-		if (!token) {
-			toast.error("Invalid or expired reset link");
-			return;
-		}
-
-		try {
-			const result = await authClient.resetPassword({
-				newPassword: data.password,
-				token,
-			});
-
-			if (result.error) {
-				toast.error(result.error.message || "Failed to reset password");
-				return;
-			}
-
-			toast.success(
-				"Password reset successfully! Please log in with your new password.",
-			);
-			router.push("/login");
-		} catch (error: unknown) {
-			console.error("Reset password error:", error);
-			toast.error("Something went wrong");
-		}
-	}
 
 	if (!token) {
 		return null; // Will redirect in useEffect
@@ -111,25 +107,37 @@ export default function ResetPasswordPage() {
 
 				<Card className="shadow-md border border-gray-200">
 					<CardContent className="pt-6">
-						<Form {...form}>
-							<form
-								onSubmit={form.handleSubmit(onSubmit)}
-								className="space-y-6"
-							>
-								<FormField
-									control={form.control}
+						<form
+							onSubmit={(e) => {
+								e.preventDefault();
+								form.handleSubmit();
+							}}
+							className="space-y-6"
+						>
+							<FieldGroup>
+								<form.Field
 									name="password"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>New Password</FormLabel>
-											<FormControl>
+									// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+									children={(field) => {
+										const isInvalid =
+											field.state.meta.isTouched && !field.state.meta.isValid;
+										return (
+											<Field data-invalid={isInvalid}>
+												<FieldLabel htmlFor={field.name}>
+													New Password
+												</FieldLabel>
 												<div className="relative">
 													<Input
+														id={field.name}
+														name={field.name}
 														type={showPassword ? "text" : "password"}
+														value={field.state.value}
+														onBlur={field.handleBlur}
+														onChange={(e) => field.handleChange(e.target.value)}
+														aria-invalid={isInvalid}
 														placeholder="Enter new password"
 														className="h-12 text-base pr-10"
 														autoComplete="new-password"
-														{...field}
 													/>
 													<button
 														type="button"
@@ -142,26 +150,37 @@ export default function ResetPasswordPage() {
 														{showPassword ? <EyeOffIcon /> : <EyeIcon />}
 													</button>
 												</div>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
+												{isInvalid && (
+													<FieldError errors={field.state.meta.errors} />
+												)}
+											</Field>
+										);
+									}}
 								/>
 
-								<FormField
-									control={form.control}
+								<form.Field
 									name="confirmPassword"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>Confirm New Password</FormLabel>
-											<FormControl>
+									// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+									children={(field) => {
+										const isInvalid =
+											field.state.meta.isTouched && !field.state.meta.isValid;
+										return (
+											<Field data-invalid={isInvalid}>
+												<FieldLabel htmlFor={field.name}>
+													Confirm New Password
+												</FieldLabel>
 												<div className="relative">
 													<Input
+														id={field.name}
+														name={field.name}
 														type={showConfirmPassword ? "text" : "password"}
+														value={field.state.value}
+														onBlur={field.handleBlur}
+														onChange={(e) => field.handleChange(e.target.value)}
+														aria-invalid={isInvalid}
 														placeholder="Confirm new password"
 														className="h-12 text-base pr-10"
 														autoComplete="new-password"
-														{...field}
 													/>
 													<button
 														type="button"
@@ -178,23 +197,29 @@ export default function ResetPasswordPage() {
 														{showConfirmPassword ? <EyeOffIcon /> : <EyeIcon />}
 													</button>
 												</div>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
+												{isInvalid && (
+													<FieldError errors={field.state.meta.errors} />
+												)}
+											</Field>
+										);
+									}}
 								/>
+							</FieldGroup>
 
-								<Button
-									type="submit"
-									className="w-full h-12 text-base"
-									disabled={form.formState.isSubmitting}
-								>
-									{form.formState.isSubmitting
-										? "Resetting..."
-										: "Reset Password"}
-								</Button>
-							</form>
-						</Form>
+							<form.Subscribe
+								selector={(state) => state.isSubmitting}
+								// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+								children={(isSubmitting) => (
+									<Button
+										type="submit"
+										className="w-full h-12 text-base"
+										disabled={isSubmitting}
+									>
+										{isSubmitting ? "Resetting..." : "Reset Password"}
+									</Button>
+								)}
+							/>
+						</form>
 					</CardContent>
 				</Card>
 

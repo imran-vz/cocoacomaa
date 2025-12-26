@@ -1,8 +1,7 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "@tanstack/react-form";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -15,14 +14,12 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import {
-	Form,
-	FormControl,
-	FormDescription,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
-} from "@/components/ui/form";
+	Field,
+	FieldDescription,
+	FieldError,
+	FieldGroup,
+	FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { validatePhoneNumber } from "@/lib/phone-validation";
 
@@ -43,8 +40,6 @@ const phoneEditSchema = z
 		path: ["confirmPhone"],
 	});
 
-type PhoneEditFormValues = z.infer<typeof phoneEditSchema>;
-
 interface PhoneEditDialogProps {
 	isOpen: boolean;
 	onClose: () => void;
@@ -60,27 +55,28 @@ export function PhoneEditDialog({
 }: PhoneEditDialogProps) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	const form = useForm<PhoneEditFormValues>({
-		resolver: zodResolver(phoneEditSchema),
+	const form = useForm({
 		defaultValues: {
 			phone: currentPhone || "",
 			confirmPhone: "",
 		},
+		validators: {
+			onSubmit: phoneEditSchema,
+		},
+		onSubmit: async ({ value }) => {
+			try {
+				setIsSubmitting(true);
+				await onSave(value.phone);
+				toast.success("Phone number updated successfully");
+				onClose();
+			} catch (error) {
+				console.error("Error updating phone number:", error);
+				toast.error("Failed to update phone number. Please try again.");
+			} finally {
+				setIsSubmitting(false);
+			}
+		},
 	});
-
-	const handleSubmit = async (data: PhoneEditFormValues) => {
-		try {
-			setIsSubmitting(true);
-			await onSave(data.phone);
-			toast.success("Phone number updated successfully");
-			onClose();
-		} catch (error) {
-			console.error("Error updating phone number:", error);
-			toast.error("Failed to update phone number. Please try again.");
-		} finally {
-			setIsSubmitting(false);
-		}
-	};
 
 	const handleOpenChange = (open: boolean) => {
 		if (!open && !isSubmitting) {
@@ -100,71 +96,94 @@ export function PhoneEditDialog({
 					</DialogDescription>
 				</DialogHeader>
 
-				<Form {...form}>
-					<form
-						onSubmit={form.handleSubmit(handleSubmit)}
-						className="space-y-4"
-					>
-						<FormField
-							control={form.control}
+				<form
+					onSubmit={(e) => {
+						e.preventDefault();
+						form.handleSubmit();
+					}}
+					className="space-y-4"
+				>
+					<FieldGroup>
+						<form.Field
 							name="phone"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Phone Number</FormLabel>
-									<FormControl>
+							// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+							children={(field) => {
+								const isInvalid =
+									field.state.meta.isTouched && !field.state.meta.isValid;
+								return (
+									<Field data-invalid={isInvalid}>
+										<FieldLabel htmlFor={field.name}>Phone Number</FieldLabel>
 										<Input
+											id={field.name}
+											name={field.name}
 											type="tel"
+											value={field.state.value}
+											onBlur={field.handleBlur}
+											onChange={(e) => field.handleChange(e.target.value)}
+											aria-invalid={isInvalid}
 											placeholder="Enter your phone number"
-											{...field}
 											disabled={isSubmitting}
 										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
+										{isInvalid && (
+											<FieldError errors={field.state.meta.errors} />
+										)}
+									</Field>
+								);
+							}}
 						/>
 
-						<FormField
-							control={form.control}
+						<form.Field
 							name="confirmPhone"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Confirm Phone Number</FormLabel>
-									<FormControl>
+							// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+							children={(field) => {
+								const isInvalid =
+									field.state.meta.isTouched && !field.state.meta.isValid;
+								return (
+									<Field data-invalid={isInvalid}>
+										<FieldLabel htmlFor={field.name}>
+											Confirm Phone Number
+										</FieldLabel>
 										<Input
+											id={field.name}
+											name={field.name}
 											type="tel"
+											value={field.state.value}
+											onBlur={field.handleBlur}
+											onChange={(e) => field.handleChange(e.target.value)}
+											aria-invalid={isInvalid}
 											placeholder="Re-enter your phone number"
-											{...field}
 											disabled={isSubmitting}
 											onPaste={(e) => {
 												e.preventDefault();
 												return false;
 											}}
 										/>
-									</FormControl>
-									<FormDescription>
-										Please re-enter your phone number to confirm
-									</FormDescription>
-									<FormMessage />
-								</FormItem>
-							)}
+										<FieldDescription>
+											Please re-enter your phone number to confirm
+										</FieldDescription>
+										{isInvalid && (
+											<FieldError errors={field.state.meta.errors} />
+										)}
+									</Field>
+								);
+							}}
 						/>
+					</FieldGroup>
 
-						<DialogFooter>
-							<Button
-								type="button"
-								variant="outline"
-								onClick={() => handleOpenChange(false)}
-								disabled={isSubmitting}
-							>
-								Cancel
-							</Button>
-							<Button type="submit" disabled={isSubmitting}>
-								{isSubmitting ? "Updating..." : "Update"}
-							</Button>
-						</DialogFooter>
-					</form>
-				</Form>
+					<DialogFooter>
+						<Button
+							type="button"
+							variant="outline"
+							onClick={() => handleOpenChange(false)}
+							disabled={isSubmitting}
+						>
+							Cancel
+						</Button>
+						<Button type="submit" disabled={isSubmitting}>
+							{isSubmitting ? "Updating..." : "Update"}
+						</Button>
+					</DialogFooter>
+				</form>
 			</DialogContent>
 		</Dialog>
 	);
