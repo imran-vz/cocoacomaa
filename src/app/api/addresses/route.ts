@@ -9,11 +9,19 @@ import { db } from "@/lib/db";
 import { addresses } from "@/lib/db/schema";
 
 const createAddressSchema = z.object({
-	addressLine1: z.string().min(2, { message: "Address line 1 is required" }),
+	addressLine1: z.string().min(2, {
+		error: "Address line 1 is required",
+	}),
 	addressLine2: z.string().optional(),
-	city: z.string().min(2, { message: "City is required" }),
-	state: z.string().min(2, { message: "State is required" }),
-	zip: z.string().min(5, { message: "ZIP code must be at least 5 characters" }),
+	city: z.string().min(2, {
+		error: "City is required",
+	}),
+	state: z.string().min(2, {
+		error: "State is required",
+	}),
+	zip: z.string().min(5, {
+		error: "ZIP code must be at least 5 characters",
+	}),
 });
 
 // GET - Fetch user's addresses

@@ -42,7 +42,10 @@ import { cn, formatCurrency } from "@/lib/utils";
 const brownieComboSchema = z.object({
 	selectedCombo: z
 		.string({
-			required_error: "Please select a brownie combo.",
+			error: (issue) =>
+				issue.input === undefined
+					? "Please select a brownie combo."
+					: undefined,
 		})
 		.min(1),
 });

@@ -23,16 +23,16 @@ import { authClient } from "@/lib/auth-client";
 
 const resetPasswordSchema = z
 	.object({
-		password: z
-			.string()
-			.min(6, { message: "Password must be at least 6 characters." }),
-		confirmPassword: z
-			.string()
-			.min(6, { message: "Please confirm your password." }),
+		password: z.string().min(6, {
+			error: "Password must be at least 6 characters.",
+		}),
+		confirmPassword: z.string().min(6, {
+			error: "Please confirm your password.",
+		}),
 	})
 	.refine((data) => data.password === data.confirmPassword, {
-		message: "Passwords don't match.",
 		path: ["confirmPassword"],
+		error: "Passwords don't match.",
 	});
 
 type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;

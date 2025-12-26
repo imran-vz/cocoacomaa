@@ -39,7 +39,7 @@ const updateSpecialsSettingsSchema = z
 			return startDate <= endDate;
 		},
 		{
-			message: "Pickup end date must be on or after start date",
+			error: "Pickup end date must be on or after start date",
 		},
 	);
 

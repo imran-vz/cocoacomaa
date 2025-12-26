@@ -9,15 +9,21 @@ import { db } from "@/lib/db";
 import { postalCombos } from "@/lib/db/schema";
 
 const createPostalComboSchema = z.object({
-	name: z.string().min(2, { message: "Name is required" }),
-	description: z.string().min(10, { message: "Description is required" }),
-	price: z.number().min(0, { message: "Price must be positive" }),
-	imageUrl: z.string().url().optional(),
-	items: z
-		.array(z.string())
-		.min(1, { message: "At least one item is required" }),
-	status: z.enum(["available", "unavailable"]).default("available"),
-	containsEgg: z.boolean().default(false),
+	name: z.string().min(2, {
+		error: "Name is required",
+	}),
+	description: z.string().min(10, {
+		error: "Description is required",
+	}),
+	price: z.number().min(0, {
+		error: "Price must be positive",
+	}),
+	imageUrl: z.url().optional(),
+	items: z.array(z.string()).min(1, {
+		error: "At least one item is required",
+	}),
+	status: z.enum(["available", "unavailable"]).prefault("available"),
+	containsEgg: z.boolean().prefault(false),
 });
 
 // GET - Fetch all postal combos

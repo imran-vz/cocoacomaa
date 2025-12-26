@@ -1,38 +1,52 @@
 import z from "zod";
 
 export const registerSchema = z.object({
-	name: z.string().min(1, { message: "Name is required." }),
-	email: z.string().email({ message: "Invalid email address." }),
-	password: z
-		.string()
-		.min(6, { message: "Password must be at least 6 characters." }),
+	name: z.string().min(1, {
+		error: "Name is required.",
+	}),
+	email: z.email({
+		error: "Invalid email address.",
+	}),
+	password: z.string().min(6, {
+		error: "Password must be at least 6 characters.",
+	}),
 	phone: z
 		.string()
-		.min(10, { message: "Phone number must be at least 10 digits." })
-		.regex(/^[0-9]+$/, { message: "Phone number must contain only numbers." })
-		.max(10, { message: "Phone number must be at most 10 digits." }),
+		.min(10, {
+			error: "Phone number must be at least 10 digits.",
+		})
+		.regex(/^[0-9]+$/, {
+			error: "Phone number must contain only numbers.",
+		})
+		.max(10, {
+			error: "Phone number must be at most 10 digits.",
+		}),
 });
 
 export const loginSchema = z.object({
-	email: z.string().email({ message: "Please enter a valid email address." }),
-	password: z.string().min(1, { message: "Password is required." }),
+	email: z.email({
+		error: "Please enter a valid email address.",
+	}),
+	password: z.string().min(1, {
+		error: "Password is required.",
+	}),
 });
 
 export const checkoutFormSchemaDB = z
 	.object({
 		name: z.string().min(2, {
-			message: "Name must be at least 2 characters.",
+			error: "Name must be at least 2 characters.",
 		}),
-		email: z.string().email({
-			message: "Please enter a valid email address.",
+		email: z.email({
+			error: "Please enter a valid email address.",
 		}),
 		phone: z
 			.string()
 			.min(10, {
-				message: "Phone number must be at least 10 digits.",
+				error: "Phone number must be at least 10 digits.",
 			})
 			.regex(/^[0-9+\-\s()]+$/, {
-				message: "Please enter a valid phone number.",
+				error: "Please enter a valid phone number.",
 			}),
 		pickupDate: z
 			.string()
@@ -45,7 +59,9 @@ export const checkoutFormSchemaDB = z
 						return false;
 					}
 				},
-				{ message: "Please select a valid pickup date." },
+				{
+					error: "Please select a valid pickup date.",
+				},
 			)
 			.refine(
 				(val) => {
@@ -59,7 +75,7 @@ export const checkoutFormSchemaDB = z
 					}
 				},
 				{
-					message:
+					error:
 						"Pickup is not available on Mondays and Tuesdays. Please select Wednesday through Sunday.",
 				},
 			)
@@ -67,13 +83,13 @@ export const checkoutFormSchemaDB = z
 		pickupTime: z
 			.string()
 			.min(1, {
-				message: "Please select a pickup time.",
+				error: "Please select a pickup time.",
 			})
 			.optional(),
 		notes: z
 			.string()
 			.max(250, {
-				message: "Notes must be less than 250 characters.",
+				error: "Notes must be less than 250 characters.",
 			})
 			.optional(),
 		items: z.array(
@@ -112,8 +128,8 @@ export const checkoutFormSchemaDB = z
 			return data.pickupDate && data.pickupTime;
 		},
 		{
-			message: "Pickup date and time are required for regular cake orders",
 			path: ["pickupDate"],
+			error: "Pickup date and time are required for regular cake orders",
 		},
 	)
 	.refine(
@@ -130,30 +146,36 @@ export const checkoutFormSchemaDB = z
 			return true;
 		},
 		{
-			message: "Please select an address",
 			path: ["selectedAddressId"],
+			error: "Please select an address",
 		},
 	);
 
 export const forgotPasswordSchema = z.object({
-	email: z.string().email({ message: "Please enter a valid email address." }),
+	email: z.email({
+		error: "Please enter a valid email address.",
+	}),
 });
 
 export const resetPasswordSchema = z
 	.object({
 		token: z
 			.string()
-			.min(6, { message: "Please enter a valid 6-digit OTP." })
+			.min(6, {
+				error: "Please enter a valid 6-digit OTP.",
+			})
 			.max(6),
-		email: z.string().email({ message: "Please enter a valid email address." }),
-		password: z
-			.string()
-			.min(6, { message: "Password must be at least 6 characters." }),
-		confirmPassword: z
-			.string()
-			.min(6, { message: "Please confirm your password." }),
+		email: z.email({
+			error: "Please enter a valid email address.",
+		}),
+		password: z.string().min(6, {
+			error: "Password must be at least 6 characters.",
+		}),
+		confirmPassword: z.string().min(6, {
+			error: "Please confirm your password.",
+		}),
 	})
 	.refine((data) => data.password === data.confirmPassword, {
-		message: "Passwords don't match.",
 		path: ["confirmPassword"],
+		error: "Passwords don't match.",
 	});

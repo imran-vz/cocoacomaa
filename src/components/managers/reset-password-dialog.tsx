@@ -37,8 +37,8 @@ const resetPasswordSchema = z
 		confirmPassword: z.string(),
 	})
 	.refine((data) => data.newPassword === data.confirmPassword, {
-		message: "Passwords don't match",
 		path: ["confirmPassword"],
+		error: "Passwords don't match",
 	});
 
 type ResetPasswordForm = z.infer<typeof resetPasswordSchema>;
@@ -104,7 +104,7 @@ export function ResetPasswordDialog({
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>{children}</DialogTrigger>
-			<DialogContent className="sm:max-w-[425px]">
+			<DialogContent className="sm:max-w-106.25">
 				<DialogHeader>
 					<DialogTitle>Reset Manager Password</DialogTitle>
 					<DialogDescription>

@@ -8,7 +8,7 @@ import { users } from "@/lib/db/schema";
 
 const createManagerSchema = z.object({
 	name: z.string().min(1, "Name is required"),
-	email: z.string().email("Valid email is required"),
+	email: z.email("Valid email is required"),
 	phone: z.string().optional(),
 });
 

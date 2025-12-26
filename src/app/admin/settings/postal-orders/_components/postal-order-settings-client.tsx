@@ -38,19 +38,39 @@ const postalOrderSettingsSchema = z
 			.max(100, "Name must be less than 100 characters"),
 		orderDateRange: z
 			.object({
-				from: z.date({ required_error: "Order start date is required" }),
-				to: z.date({ required_error: "Order end date is required" }),
+				from: z.date({
+					error: (issue) =>
+						issue.input === undefined
+							? "Order start date is required"
+							: undefined,
+				}),
+				to: z.date({
+					error: (issue) =>
+						issue.input === undefined
+							? "Order end date is required"
+							: undefined,
+				}),
 			})
 			.refine((range) => range.from && range.to && range.from <= range.to, {
-				message: "Order end date must be on or after start date",
+				error: "Order end date must be on or after start date",
 			}),
 		dispatchDateRange: z
 			.object({
-				from: z.date({ required_error: "Dispatch start date is required" }),
-				to: z.date({ required_error: "Dispatch end date is required" }),
+				from: z.date({
+					error: (issue) =>
+						issue.input === undefined
+							? "Dispatch start date is required"
+							: undefined,
+				}),
+				to: z.date({
+					error: (issue) =>
+						issue.input === undefined
+							? "Dispatch end date is required"
+							: undefined,
+				}),
 			})
 			.refine((range) => range.from && range.to && range.from <= range.to, {
-				message: "Dispatch end date must be on or after start date",
+				error: "Dispatch end date must be on or after start date",
 			}),
 		isActive: z.boolean(),
 	})
@@ -61,7 +81,7 @@ const postalOrderSettingsSchema = z
 			return true;
 		},
 		{
-			message:
+			error:
 				"Order and dispatch periods must not overlap - order period must end before dispatch period starts",
 		},
 	);

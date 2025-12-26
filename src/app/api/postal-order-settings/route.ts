@@ -14,10 +14,10 @@ const postalOrderSettingsSchema = z
 			.min(1, "Name is required")
 			.max(100, "Name must be less than 100 characters"),
 		month: z.string().regex(/^\d{4}-\d{2}$/, "Month must be in YYYY-MM format"),
-		orderStartDate: z.string().date("Invalid order start date"),
-		orderEndDate: z.string().date("Invalid order end date"),
-		dispatchStartDate: z.string().date("Invalid dispatch start date"),
-		dispatchEndDate: z.string().date("Invalid dispatch end date"),
+		orderStartDate: z.iso.date("Invalid order start date"),
+		orderEndDate: z.iso.date("Invalid order end date"),
+		dispatchStartDate: z.iso.date("Invalid dispatch start date"),
+		dispatchEndDate: z.iso.date("Invalid dispatch end date"),
 		isActive: z.boolean(),
 	})
 	.refine(
@@ -62,7 +62,7 @@ const postalOrderSettingsSchema = z
 			);
 		},
 		{
-			message:
+			error:
 				"Invalid date ranges: order and dispatch periods must not overlap, all dates must be within the specified month, order end date must be on or after start date, and dispatch end date must be on or after start date",
 		},
 	);

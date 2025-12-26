@@ -10,8 +10,12 @@ import { users } from "@/lib/db/schema";
 const updateProfileSchema = z.object({
 	phone: z
 		.string()
-		.min(10, { message: "Phone number must be at least 10 digits." })
-		.regex(/^[0-9+\-\s()]+$/, { message: "Please enter a valid phone number." })
+		.min(10, {
+			error: "Phone number must be at least 10 digits.",
+		})
+		.regex(/^[0-9+\-\s()]+$/, {
+			error: "Please enter a valid phone number.",
+		})
 		.optional(),
 });
 

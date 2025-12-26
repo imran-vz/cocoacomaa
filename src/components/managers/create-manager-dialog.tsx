@@ -27,7 +27,7 @@ import { Input } from "@/components/ui/input";
 
 const createManagerSchema = z.object({
 	name: z.string().min(1, "Name is required"),
-	email: z.string().email("Valid email is required"),
+	email: z.email("Valid email is required"),
 	phone: z.string().optional(),
 });
 
@@ -83,7 +83,7 @@ export function CreateManagerDialog({ children }: CreateManagerDialogProps) {
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>{children}</DialogTrigger>
-			<DialogContent className="sm:max-w-[425px]">
+			<DialogContent className="sm:max-w-106.25">
 				<DialogHeader>
 					<DialogTitle>Create Manager</DialogTitle>
 					<DialogDescription>
