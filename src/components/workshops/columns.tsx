@@ -2,7 +2,7 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { CheckCircle2, Edit, MoreHorizontal, Trash2 } from "lucide-react";
+import { CheckCircle2, Copy, Edit, MoreHorizontal, Trash2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -19,6 +19,7 @@ import {
 import {
 	useCompleteWorkshop,
 	useDeleteWorkshop,
+	useDuplicateWorkshop,
 	type WorkshopWithSlotData,
 } from "@/hooks/use-workshops";
 import { formatCurrency } from "@/lib/utils";
@@ -78,6 +79,27 @@ const CompleteAction = ({
 		<DropdownMenuItem onClick={handleComplete} disabled={isPending}>
 			<CheckCircle2 className="mr-2 h-4 w-4" />
 			Mark as Completed
+		</DropdownMenuItem>
+	);
+};
+
+const DuplicateAction = ({ id, title }: { id: number; title: string }) => {
+	const { mutate: duplicateWorkshop, isPending } = useDuplicateWorkshop();
+
+	const handleDuplicate = async () => {
+		const confirmed = await confirm({
+			title: "Duplicate Workshop",
+			description: `Are you sure you want to duplicate "${title}"? The new workshop will be marked as inactive.`,
+		});
+		if (!confirmed) return;
+
+		duplicateWorkshop(id);
+	};
+
+	return (
+		<DropdownMenuItem onClick={handleDuplicate} disabled={isPending}>
+			<Copy className="mr-2 h-4 w-4" />
+			Duplicate
 		</DropdownMenuItem>
 	);
 };
@@ -202,6 +224,7 @@ export const columns: ColumnDef<WorkshopWithSlotData>[] = [
 								Edit
 							</Link>
 						</DropdownMenuItem>
+						<DuplicateAction id={workshop.id} title={workshop.title} />
 						<CompleteAction
 							id={workshop.id}
 							title={workshop.title}

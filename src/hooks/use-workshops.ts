@@ -45,6 +45,19 @@ const completeWorkshop = async (id: number): Promise<void> => {
 	}
 };
 
+const duplicateWorkshop = async (id: number): Promise<WorkshopWithSlotData> => {
+	const response = await fetch(`/api/workshops/${id}/duplicate`, {
+		method: "POST",
+	});
+
+	if (!response.ok) {
+		throw new Error("Failed to duplicate workshop");
+	}
+
+	const data = await response.json();
+	return data.data;
+};
+
 export const useWorkshops = (initialData?: WorkshopWithSlotData[]) => {
 	return useQuery({
 		queryKey: ["admin-workshops"],
@@ -94,6 +107,25 @@ export const useCompleteWorkshop = () => {
 		onError: (error) => {
 			console.error("Error marking workshop as completed:", error);
 			toast.error("Failed to mark workshop as completed");
+		},
+	});
+};
+
+export const useDuplicateWorkshop = () => {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: duplicateWorkshop,
+		onSuccess: (newWorkshop) => {
+			queryClient.setQueryData(
+				["admin-workshops"],
+				(old: WorkshopWithSlotData[] = []) => [newWorkshop, ...old],
+			);
+			toast.success("Workshop duplicated successfully");
+		},
+		onError: (error) => {
+			console.error("Error duplicating workshop:", error);
+			toast.error("Failed to duplicate workshop");
 		},
 	});
 };
