@@ -163,7 +163,7 @@ const createCheckoutFormSchema = (
 			? z.date().optional()
 			: z
 					.date({
-						required_error: "Please select a pickup date.",
+						error: "Please select a pickup date.",
 					})
 					.refine(
 						(date) => {
@@ -450,7 +450,7 @@ export default function CheckoutPage({
 		// Validate address fields using Zod schema
 		const validation = addressSchema.safeParse(addressData);
 		if (!validation.success) {
-			const errors = validation.error.errors;
+			const errors = validation.error.issues;
 			const errorMessage = errors.map((error) => error.message).join(", ");
 			toast.error(errorMessage);
 			return;
@@ -1467,7 +1467,7 @@ export default function CheckoutPage({
 																	<SelectValue placeholder="Select time" />
 																</SelectTrigger>
 															</FormControl>
-															<SelectContent className="max-h-[200px] sm:max-h-[300px]">
+															<SelectContent className="max-h-50 sm:max-h-75">
 																{timeSlots.map((slot) => (
 																	<SelectItem
 																		key={slot.value}
