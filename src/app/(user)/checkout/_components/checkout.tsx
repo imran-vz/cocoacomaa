@@ -15,7 +15,7 @@ import { confirm } from "@/components/confirm-dialog";
 import { FadeIn } from "@/components/fade-in";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
 	Field,
 	FieldDescription,
@@ -764,7 +764,7 @@ export default function CheckoutPage({
 	}
 
 	return (
-		<div className="container mx-auto py-4 sm:py-6 lg:py-8 px-4 relative">
+		<div className="container mx-auto py-3 sm:py-6 lg:py-8 px-3 sm:px-4 relative pb-24 lg:pb-8">
 			{/* Loading Overlay */}
 			<ProcessingOverlay
 				isProcessing={isProcessing}
@@ -772,7 +772,7 @@ export default function CheckoutPage({
 			/>
 
 			<FadeIn>
-				<h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 lg:mb-8">
+				<h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-3 sm:mb-6 lg:mb-8">
 					Checkout
 				</h1>
 			</FadeIn>
@@ -782,22 +782,17 @@ export default function CheckoutPage({
 
 			<FadeIn
 				delay={0.1}
-				className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8"
+				className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6 lg:gap-8"
 			>
 				{/* Customer Information */}
 				<Card className="order-2 lg:order-1">
-					<CardHeader className="pb-4 sm:pb-6">
-						<CardTitle className="text-lg sm:text-xl">
-							Customer Information
-						</CardTitle>
-					</CardHeader>
-					<CardContent className="pt-0">
+					<CardContent className="pt-4 sm:pt-6">
 						<form
 							onSubmit={(e) => {
 								e.preventDefault();
 								form.handleSubmit();
 							}}
-							className={`space-y-4 sm:space-y-6 ${isProcessing ? "opacity-50 pointer-events-none" : ""}`}
+							className={`space-y-3 sm:space-y-5 ${isProcessing ? "opacity-50 pointer-events-none" : ""}`}
 						>
 							{/* Hidden orderType field */}
 							<input
@@ -806,84 +801,20 @@ export default function CheckoutPage({
 								value={isPostalBrownies ? "postal-brownies" : "cake-orders"}
 							/>
 
-							<form.Field
-								name="name"
-								// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
-								children={(field) => {
-									const hasErrors =
-										field.state.meta.errors &&
-										field.state.meta.errors.length > 0;
-									return (
-										<Field data-invalid={hasErrors}>
-											<FieldLabel
-												htmlFor={field.name}
-												className="text-sm sm:text-base"
-											>
-												Full Name
-											</FieldLabel>
-											<Input
-												id={field.name}
-												name={field.name}
-												value={field.state.value}
-												onBlur={field.handleBlur}
-												onChange={(e) => field.handleChange(e.target.value)}
-												placeholder="Enter your full name"
-												className="text-sm sm:text-base"
-												disabled
-												readOnly
-												tabIndex={-1}
-											/>
-											{hasErrors && (
-												<FieldError
-													errors={field.state.meta.errors}
-													className="text-xs sm:text-sm"
-												/>
-											)}
-										</Field>
-									);
-								}}
-							/>
+							{/* Compact contact display — replaces disabled inputs */}
+							<div className="rounded-lg border bg-muted/30 p-3 sm:p-4">
+								<div className="flex items-center justify-between mb-2">
+									<span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+										Contact
+									</span>
+								</div>
+								<div className="space-y-1">
+									<p className="text-sm font-medium">{name}</p>
+									<p className="text-sm text-muted-foreground">{email}</p>
+								</div>
+							</div>
 
-							<form.Field
-								name="email"
-								// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
-								children={(field) => {
-									const hasErrors =
-										field.state.meta.errors &&
-										field.state.meta.errors.length > 0;
-									return (
-										<Field data-invalid={hasErrors}>
-											<FieldLabel
-												htmlFor={field.name}
-												className="text-sm sm:text-base"
-											>
-												Email Address
-											</FieldLabel>
-											<Input
-												id={field.name}
-												name={field.name}
-												type="email"
-												value={field.state.value}
-												onBlur={field.handleBlur}
-												onChange={(e) => field.handleChange(e.target.value)}
-												placeholder="Enter your email address"
-												className="text-sm sm:text-base"
-												readOnly
-												disabled
-												tabIndex={-1}
-											/>
-											{hasErrors && (
-												<FieldError
-													errors={field.state.meta.errors}
-													className="text-xs sm:text-sm"
-												/>
-											)}
-										</Field>
-									);
-								}}
-							/>
-
-							{/* Phone fields - Show differently based on whether user has phone */}
+							{/* Phone — compact display for returning users, full input for new */}
 							{isPhoneFieldEnabled ? (
 								// First-time user or user with no phone - show both fields
 								<>
@@ -971,56 +902,30 @@ export default function CheckoutPage({
 									/>
 								</>
 							) : (
-								// Repeat user with phone - show phone with edit button
-								<form.Field
-									name="phone"
-									// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
-									children={(field) => {
-										const hasErrors =
-											field.state.meta.errors &&
-											field.state.meta.errors.length > 0;
-										return (
-											<Field data-invalid={hasErrors}>
-												<FieldLabel
-													htmlFor={field.name}
-													className="text-sm sm:text-base"
-												>
-													Phone Number
-												</FieldLabel>
-												<div className="flex gap-2">
-													<Input
-														id={field.name}
-														name={field.name}
-														type="tel"
-														value={field.state.value}
-														onBlur={field.handleBlur}
-														onChange={(e) => field.handleChange(e.target.value)}
-														className="text-sm sm:text-base"
-														readOnly
-														disabled
-														tabIndex={-1}
-													/>
-													<Button
-														type="button"
-														variant="outline"
-														size="icon"
-														onClick={() => setIsPhoneEditDialogOpen(true)}
-														disabled={isProcessing}
-														title="Edit phone number"
-													>
-														<Edit2 className="h-4 w-4" />
-													</Button>
-												</div>
-												{hasErrors && (
-													<FieldError
-														errors={field.state.meta.errors}
-														className="text-xs sm:text-sm"
-													/>
-												)}
-											</Field>
-										);
-									}}
-								/>
+								// Returning user — compact phone display with edit
+								<div className="rounded-lg border bg-muted/30 p-3 sm:p-4">
+									<div className="flex items-center justify-between">
+										<div>
+											<span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+												Phone
+											</span>
+											<p className="text-sm font-medium mt-0.5">
+												{form.getFieldValue("phone")}
+											</p>
+										</div>
+										<Button
+											type="button"
+											variant="ghost"
+											size="sm"
+											onClick={() => setIsPhoneEditDialogOpen(true)}
+											disabled={isProcessing}
+											className="text-xs h-7"
+										>
+											<Edit2 className="h-3 w-3 mr-1" />
+											Edit
+										</Button>
+									</div>
+								</div>
 							)}
 
 							{!hasSpecials && (
@@ -1787,6 +1692,37 @@ export default function CheckoutPage({
 				currentPhone={form.getFieldValue("phone")}
 				onSave={handlePhoneEditSave}
 			/>
+
+			{/* Sticky Mobile Pay Bar */}
+			<div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t shadow-lg p-3 z-40 lg:hidden">
+				<div className="container mx-auto flex items-center justify-between gap-3">
+					<div className="flex flex-col min-w-0">
+						<span className="text-xs text-muted-foreground">Total</span>
+						<span className="text-lg font-bold">
+							₹{finalTotal.toLocaleString("en-IN")}
+						</span>
+					</div>
+					<Button
+						type="button"
+						onClick={() => form.handleSubmit()}
+						disabled={
+							!isOrderingAllowed ||
+							isProcessing ||
+							(isPostalBrownies && addressMode === "new") ||
+							(isPostalBrownies && !selectedAddressId)
+						}
+						size="lg"
+						className="flex-1 max-w-50 cursor-pointer"
+						variant={!isOrderingAllowed ? "secondary" : "default"}
+					>
+						{!isOrderingAllowed
+							? "Unavailable"
+							: isProcessing
+								? "Processing..."
+								: "Place Order & Pay"}
+					</Button>
+				</div>
+			</div>
 		</div>
 	);
 }
