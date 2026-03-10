@@ -7,7 +7,7 @@ import {
 	requireAuth,
 	requireSessionId,
 } from "@/lib/auth-utils";
-import { verifyPayment, type OrderType } from "@/lib/payment/payment-service";
+import { type OrderType, verifyPayment } from "@/lib/payment/payment-service";
 
 interface VerifyPaymentRequest {
 	razorpay_order_id: string;

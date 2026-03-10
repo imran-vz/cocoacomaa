@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { RazorpayOptions, RazorpayResponse } from "@/types/razorpay";
+import type { RazorpayOptions } from "@/types/razorpay";
 
 declare global {
 	interface Window {
