@@ -10,55 +10,55 @@ Cocoa Comaa is a Next.js 15 e-commerce application for ordering custom desserts 
 
 ### Package Management
 
-- **Package Manager**: pnpm (version 10.7.0)
+- **Package Manager**: bun run (version 10.7.0)
 - **Node Requirements**: Node.js >=22
 
 ### Core Development Commands
 
 ```bash
 # Development server with Turbopack
-pnpm dev
+bun run dev
 
 # Production build
-pnpm build
+bun run build
 
 # Start production server
-pnpm start
+bun run start
 
 # Code quality
-pnpm lint              # Check code with Biome
-pnpm lint:fix          # Fix linting issues automatically
-pnpm format            # Format code with Biome
+bun run lint              # Check code with Biome
+bun run lint:fix          # Fix linting issues automatically
+bun run format            # Format code with Biome
 ```
 
 ### Database Operations (Drizzle ORM)
 
 ```bash
 # Push schema changes to database
-pnpm db:push
+bun run db:push
 
 # Open Drizzle Studio (database GUI)
-pnpm db:studio
+bun run db:studio
 
 # Seed database with initial data
-pnpm db:seed
+bun run db:seed
 
 # Create admin user
-pnpm create-admin
+bun run create-admin
 
 # Create manager user (read-only access)
-pnpm create-manager
+bun run create-manager
 ```
 
 ### Email Development
 
 ```bash
 # Start email development server
-pnpm email:dev
+bun run email:dev
 
 # Test email functionality
-pnpm test:email
-pnpm test:status-email
+bun run test:email
+bun run test:status-email
 ```
 
 ## Architecture Overview
@@ -67,7 +67,7 @@ pnpm test:status-email
 
 - **Frontend**: Next.js 15 with App Router, React 19, TypeScript
 - **Database**: PostgreSQL with Drizzle ORM
-- **Authentication**: NextAuth.js v5 (beta)
+- **Authentication**: Better Auth (Google OAuth + email/password)
 - **Styling**: Tailwind CSS v4 with Shadcn UI
 - **Payment**: Razorpay integration
 - **Email**: React Email with Resend
@@ -138,13 +138,23 @@ The application uses Drizzle ORM with PostgreSQL. Key entities include:
 - `biome.json` - Code formatting and linting rules (tab indentation, double quotes)
 - `src/auth.ts` & `src/auth.config.ts` - Authentication configuration
 
+### Payment Architecture
+
+- `src/lib/razorpay.ts` - Singleton Razorpay client (all server-side routes use this)
+- `src/lib/payment/payment-service.ts` - Centralized payment logic:
+  - Razorpay order creation
+  - Payment signature verification (client-side + webhook)
+  - Webhook event handlers (payment.captured, payment.failed, order.paid)
+  - Confirmation email dispatch
+- All order types (cake-orders, postal-brownies, specials, workshop) route through the shared service
+
 ## Development Workflow
 
-1. **Database Changes**: After schema changes, run `pnpm db:push` to update the database
-2. **Code Quality**: Run `pnpm lint:fix` before committing
-3. **Testing Emails**: Use `pnpm email:dev` to preview email templates
-4. **Admin Access**: Create admin users with `pnpm create-admin` script
-5. **Manager Access**: Create manager users with `pnpm create-manager` script (read-only orders)
+1. **Database Changes**: After schema changes, run `bun run db:push` to update the database
+2. **Code Quality**: Run `bun run lint:fix` before committing
+3. **Testing Emails**: Use `bun run email:dev` to preview email templates
+4. **Admin Access**: Create admin users with `bun run create-admin` script
+5. **Manager Access**: Create manager users with `bun run create-manager` script (read-only orders)
 
 ## Important Notes
 

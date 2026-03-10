@@ -1,10 +1,10 @@
-import crypto from "node:crypto";
 import { and, eq, isNotNull, sql } from "drizzle-orm";
 import { headers } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { workshopOrders, workshops } from "@/lib/db/schema";
+import { verifyPaymentSignatureOnly } from "@/lib/payment/payment-service";
 
 interface VerifyPaymentRequest {
 	razorpay_order_id: string;
@@ -31,15 +31,14 @@ export async function POST(request: NextRequest) {
 			orderId,
 		} = body;
 
-		// Verify payment signature
-		const hmac = crypto.createHmac(
-			"sha256",
-			process.env.RAZORPAY_KEY_SECRET || "",
-		);
-		hmac.update(`${razorpay_order_id}|${razorpay_payment_id}`);
-		const generated_signature = hmac.digest("hex");
-
-		if (generated_signature !== razorpay_signature) {
+		// Verify payment signature using shared service
+		try {
+			verifyPaymentSignatureOnly(
+				razorpay_order_id,
+				razorpay_payment_id,
+				razorpay_signature,
+			);
+		} catch {
 			return NextResponse.json(
 				{ success: false, message: "Payment verification failed" },
 				{ status: 400 },

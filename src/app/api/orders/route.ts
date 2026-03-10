@@ -1,19 +1,33 @@
 import { eq } from "drizzle-orm";
+import { headers } from "next/headers";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import Razorpay from "razorpay";
 
+import { auth } from "@/lib/auth";
+import {
+	createUnauthorizedResponse,
+	requireAuth,
+	requireSessionId,
+} from "@/lib/auth-utils";
+import { validateCsrfToken } from "@/lib/csrf";
 import { db } from "@/lib/db";
 import { orderItems, orders, users } from "@/lib/db/schema";
+import {
+	createRazorpayOrder,
+	type OrderType,
+} from "@/lib/payment/payment-service";
 import { checkoutFormSchemaDB } from "@/lib/schema";
-
-const razorpay = new Razorpay({
-	key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
-	key_secret: process.env.RAZORPAY_KEY_SECRET || "",
-});
 
 export async function POST(request: NextRequest) {
 	try {
+		// Authenticate the request
+		const session = await auth.api.getSession({ headers: await headers() });
+		requireAuth(session);
+		const userId = requireSessionId(session);
+
+		// Validate CSRF token
+		await validateCsrfToken(request);
+
 		const { success, data, error } = checkoutFormSchemaDB.safeParse(
 			await request.json(),
 		);
@@ -23,9 +37,6 @@ export async function POST(request: NextRequest) {
 		}
 
 		const {
-			name,
-			email,
-			phone,
 			pickupDate,
 			pickupTime,
 			items,
@@ -51,9 +62,7 @@ export async function POST(request: NextRequest) {
 			);
 
 			if (currentSpecialsSettings?.isActive && pickupDate) {
-				// Use customer-selected date within the allowed range
 				pickupDateObj = new Date(pickupDate);
-				// Use the start time for the pickup date/time
 				const [hours, minutes] =
 					currentSpecialsSettings.pickupStartTime.split(":");
 				pickupDateObj.setHours(
@@ -64,7 +73,6 @@ export async function POST(request: NextRequest) {
 				);
 			}
 		} else if (pickupDate && pickupTime) {
-			// For regular orders, use customer-selected pickup date/time
 			pickupDateObj = new Date(pickupDate);
 			const [hours, minutes] = pickupTime.split(":");
 			pickupDateObj.setHours(
@@ -77,49 +85,44 @@ export async function POST(request: NextRequest) {
 
 		// Start transaction
 		const result = await db.transaction(async (tx) => {
-			// Check if customer already exists
+			// Verify user exists
 			const user = await tx
 				.select()
 				.from(users)
-				.where(eq(users.email, email))
+				.where(eq(users.id, userId))
 				.limit(1);
 
 			if (user.length === 0) {
-				// Create new customer
 				throw new Error("User not found");
 			}
 
-			const userId = user[0].id;
-			// Update customer info if different
+			// Update customer info
 			await tx
 				.update(users)
-				.set({ name, phone, role: "customer", updatedAt: new Date() })
+				.set({ name: data.name, phone: data.phone, updatedAt: new Date() })
 				.where(eq(users.id, userId));
 
 			// Create order
 			const newOrder = await tx
 				.insert(orders)
 				.values({
-					userId: userId,
+					userId,
 					total: total.toString(),
 					deliveryCost: (deliveryCost || 0).toString(),
-					notes: notes,
+					notes,
 					status: "pending",
 					paymentStatus: "pending",
 					pickupDateTime: pickupDateObj || null,
-					orderType: orderType,
-					// Address fields for postal brownies
+					orderType,
 					addressId: selectedAddressId,
 				})
 				.returning({ id: orders.id });
 
 			const orderId = newOrder[0].id;
 
-			// Create order items - handle both desserts and postal combos
+			// Create order items
 			const orderItemsData = items.map((item) => {
-				// Determine item type based on order type and item structure
 				const isPostalCombo = orderType === "postal-brownies";
-
 				return {
 					orderId,
 					itemType: isPostalCombo
@@ -135,41 +138,36 @@ export async function POST(request: NextRequest) {
 
 			await tx.insert(orderItems).values(orderItemsData);
 
-			return { orderId, userId };
+			return { orderId };
 		});
 
-		// Create Razorpay order
-		const razorpayOrder = await razorpay.orders.create({
-			amount: Math.round(total * 100), // Amount in paise
-			currency: "INR",
-			receipt: `order_${result.orderId}`,
+		// Create Razorpay order using shared service
+		const razorpayResult = await createRazorpayOrder({
+			orderId: result.orderId,
+			amount: total,
+			orderType: orderType as OrderType,
 			notes: {
-				orderId: result.orderId.toString(),
-				userId: result.userId.toString(),
+				userId,
 				pickupDatetime: pickupDateObj ? pickupDateObj.toISOString() : "",
-				orderType: orderType,
 			},
 		});
-
-		// Update order with Razorpay order ID
-		await db
-			.update(orders)
-			.set({
-				razorpayOrderId: razorpayOrder.id,
-				paymentStatus: "created",
-				status: "payment_pending",
-				updatedAt: new Date(),
-			})
-			.where(eq(orders.id, result.orderId));
 
 		return NextResponse.json({
 			success: true,
 			orderId: result.orderId,
-			razorpayOrderId: razorpayOrder.id,
-			amount: razorpayOrder.amount,
-			currency: razorpayOrder.currency,
+			razorpayOrderId: razorpayResult.razorpayOrderId,
+			amount: razorpayResult.amount,
+			currency: razorpayResult.currency,
 		});
 	} catch (error) {
+		if (error instanceof Error) {
+			if (error.message.includes("Unauthorized")) {
+				return createUnauthorizedResponse(error.message);
+			}
+			if (error.message.includes("CSRF")) {
+				return NextResponse.json({ error: error.message }, { status: 403 });
+			}
+		}
 		console.error("Error creating order:", error);
 		return NextResponse.json(
 			{ error: "Failed to create order" },

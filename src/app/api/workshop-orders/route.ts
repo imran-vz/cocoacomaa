@@ -1,18 +1,13 @@
 import { and, eq, isNotNull, sql } from "drizzle-orm";
 import { headers } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
-import Razorpay from "razorpay";
 import { auth } from "@/lib/auth";
 import { calculateNetAmount } from "@/lib/calculateGrossAmount";
 import { config } from "@/lib/config";
 import { db } from "@/lib/db";
 import { workshopOrders, workshops } from "@/lib/db/schema";
 import { getMyWorkshopOrders } from "@/lib/db/workshop-order";
-
-const razorpay = new Razorpay({
-	key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
-	key_secret: process.env.RAZORPAY_KEY_SECRET || "",
-});
+import { createRazorpayOrder } from "@/lib/payment/payment-service";
 
 export async function GET(request: NextRequest) {
 	try {
@@ -183,35 +178,24 @@ export async function POST(request: NextRequest) {
 			})
 			.returning();
 
-		// Create Razorpay order
-		const razorpayOrder = await razorpay.orders.create({
-			amount: Math.round(grossAmount * 100), // Convert to paise
-			currency: "INR",
-			receipt: `workshop_${order.id}`,
+		// Create Razorpay order using shared service
+		const razorpayResult = await createRazorpayOrder({
+			orderId: order.id,
+			amount: grossAmount,
+			orderType: "workshop",
 			notes: {
-				orderId: order.id.toString(),
 				userId: session.user.id.toString(),
 				workshopId: workshopId.toString(),
 				slots: actualSlots.toString(),
-				orderType: "workshop",
 			},
 		});
-
-		// Update order with Razorpay order ID
-		await db
-			.update(workshopOrders)
-			.set({
-				razorpayOrderId: razorpayOrder.id,
-				paymentStatus: "created",
-			})
-			.where(eq(workshopOrders.id, order.id));
 
 		return NextResponse.json({
 			success: true,
 			orderId: order.id,
-			razorpayOrderId: razorpayOrder.id,
-			amount: Number(workshop.amount) * 100,
-			currency: "INR",
+			razorpayOrderId: razorpayResult.razorpayOrderId,
+			amount: razorpayResult.amount,
+			currency: razorpayResult.currency,
 		});
 	} catch (error) {
 		console.error("Error creating workshop order:", error);

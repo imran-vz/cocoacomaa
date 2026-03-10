@@ -1,7 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
-import Razorpay from "razorpay";
 
 import { auth } from "@/lib/auth";
 import {
@@ -12,11 +11,10 @@ import {
 import { validateCsrfToken } from "@/lib/csrf";
 import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
-
-const razorpay = new Razorpay({
-	key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
-	key_secret: process.env.RAZORPAY_KEY_SECRET || "",
-});
+import {
+	createRazorpayOrder,
+	type OrderType,
+} from "@/lib/payment/payment-service";
 
 export async function POST(request: NextRequest) {
 	try {
@@ -39,36 +37,23 @@ export async function POST(request: NextRequest) {
 			return NextResponse.json({ error: "Order not found" }, { status: 404 });
 		}
 
-		// Create Razorpay order
-		const razorpayOrder = await razorpay.orders.create({
-			amount: Math.round(Number(order.total) * 100), // Amount in paise
-			currency: "INR",
-			receipt: `order_${order.id}`,
+		// Create Razorpay order using shared service
+		const result = await createRazorpayOrder({
+			orderId: order.id,
+			amount: Number(order.total),
+			orderType: order.orderType as OrderType,
 			notes: {
-				orderId: order.id.toString(),
-				userId: order.userId.toString(),
+				userId: order.userId,
 				pickupDatetime: order.pickupDateTime?.toISOString() || "",
-				orderType: order.orderType,
 			},
 		});
-
-		// Update order with Razorpay order ID
-		await db
-			.update(orders)
-			.set({
-				razorpayOrderId: razorpayOrder.id,
-				paymentStatus: "created",
-				status: "payment_pending",
-				updatedAt: new Date(),
-			})
-			.where(eq(orders.id, order.id));
 
 		return NextResponse.json({
 			success: true,
 			orderId: order.id,
-			razorpayOrderId: razorpayOrder.id,
-			amount: razorpayOrder.amount,
-			currency: razorpayOrder.currency,
+			razorpayOrderId: result.razorpayOrderId,
+			amount: result.amount,
+			currency: result.currency,
 		});
 	} catch (error) {
 		if (error instanceof Error) {
