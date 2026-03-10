@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useId, useState } from "react";
 import { toast } from "sonner";
 
+import { ProcessingOverlay } from "@/components/checkout/processing-overlay";
 import { FadeIn } from "@/components/fade-in";
 import { StaggerContainer, StaggerItem } from "@/components/stagger-container";
 import { Badge } from "@/components/ui/badge";
@@ -30,19 +31,9 @@ import {
 } from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useRazorpay } from "@/hooks/use-razorpay";
 import { cn, formatCurrency } from "@/lib/utils";
 import type { RazorpayOptions, RazorpayResponse } from "@/types/razorpay";
-
-declare global {
-	interface Window {
-		Razorpay: new (
-			options: RazorpayOptions,
-		) => {
-			open: () => void;
-			on: (event: string, callback: (error: Error) => void) => void;
-		};
-	}
-}
 
 interface Workshop {
 	id: number;
@@ -73,6 +64,7 @@ export default function WorkshopsClientPage({
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const phoneInputId = useId();
+	const { openCheckout } = useRazorpay();
 	const [isProcessing, setIsProcessing] = useState(false);
 	const [processingWorkshopId, setProcessingWorkshopId] = useState<
 		number | null
@@ -327,14 +319,7 @@ export default function WorkshopsClientPage({
 			theme: { color: "#551303" },
 		};
 
-		const razorpay = new window.Razorpay(options);
-		razorpay.on("payment.failed", (error) => {
-			console.error("Payment failed:", error);
-			toast.error("Payment failed. Please try again.");
-			setIsProcessing(false);
-			setProcessingWorkshopId(null);
-		});
-		razorpay.open();
+		openCheckout(options);
 	};
 
 	const updatePhoneNumber = async () => {
@@ -387,37 +372,16 @@ export default function WorkshopsClientPage({
 		}
 	}, [workshops, selectedSlots]);
 
-	// Load Razorpay script
-	useEffect(() => {
-		const script = document.createElement("script");
-		script.src = "https://checkout.razorpay.com/v1/checkout.js";
-		script.async = true;
-		document.body.appendChild(script);
-
-		return () => {
-			if (document.body.contains(script)) {
-				document.body.removeChild(script);
-			}
-		};
-	}, []);
+	// Razorpay script loading is handled by the useRazorpay hook
 
 	return (
 		<div className="container mx-auto sm:px-6 min-h-[calc(100svh-11rem)] py-4 sm:py-6 lg:py-8 px-4">
 			<div className="max-w-6xl mx-auto">
 				{/* Loading Overlay */}
-				{isProcessing && (
-					<div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
-						<div className="bg-white rounded-lg p-6 sm:p-8 max-w-sm mx-4 text-center shadow-xl">
-							<div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-primary mx-auto mb-4" />
-							<h3 className="text-lg sm:text-xl font-semibold mb-2">
-								Processing Registration
-							</h3>
-							<p className="text-sm sm:text-base text-muted-foreground">
-								Please wait while we process your workshop registration...
-							</p>
-						</div>
-					</div>
-				)}
+				<ProcessingOverlay
+					isProcessing={isProcessing}
+					stepDescription="Please wait while we process your workshop registration..."
+				/>
 				<FadeIn>
 					<h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 lg:mb-8">
 						Workshops

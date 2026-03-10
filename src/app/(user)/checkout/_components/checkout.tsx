@@ -3,41 +3,23 @@
 import { useForm, useStore } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { format } from "date-fns";
-import { CalendarIcon, Clock, Edit2, Package, Trash2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import * as z from "zod";
+import { AddressSelector } from "@/components/checkout/address-selector";
+import { ContactInfoForm } from "@/components/checkout/contact-info-form";
 import { OrderSummary } from "@/components/checkout/order-summary";
+import {
+	PickupScheduler,
+	TIME_SLOTS,
+} from "@/components/checkout/pickup-scheduler";
 import { ProcessingOverlay } from "@/components/checkout/processing-overlay";
 import { confirm } from "@/components/confirm-dialog";
 import { FadeIn } from "@/components/fade-in";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-	Field,
-	FieldDescription,
-	FieldError,
-	FieldLabel,
-} from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import OrderRestrictionBanner from "@/components/ui/order-restriction-banner";
-import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from "@/components/ui/popover";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
 import {
 	useAddresses,
 	useCreateAddress,
@@ -53,7 +35,7 @@ import {
 	calculateDeliveryCost,
 	isBengaluruAddress,
 } from "@/lib/delivery-pricing";
-import { formatLocalDate, formatYearMonth } from "@/lib/format-timestamp";
+import { formatYearMonth } from "@/lib/format-timestamp";
 import { validatePhoneNumber } from "@/lib/phone-validation";
 import type {
 	RazorpayOptions,
@@ -61,6 +43,8 @@ import type {
 	RazorpayResponse,
 } from "@/types/razorpay";
 import { PhoneEditDialog } from "./phone-edit-dialog";
+
+// ─── Types ──────────────────────────────────────────────────────
 
 interface Dessert {
 	id: number;
@@ -74,54 +58,14 @@ interface Dessert {
 
 // Window.Razorpay type is declared in use-razorpay.ts
 
-// Fetch desserts function
+// ─── Data fetching ──────────────────────────────────────────────
+
 const fetchDesserts = async (): Promise<Dessert[]> => {
 	const response = await axios.get("/api/desserts");
 	return response.data;
 };
 
-// Generate available time slots from 12pm to 6pm
-const timeSlots = [
-	{ value: "12:00", label: "12:00 PM" },
-	{ value: "12:30", label: "12:30 PM" },
-	{ value: "13:00", label: "1:00 PM" },
-	{ value: "13:30", label: "1:30 PM" },
-	{ value: "14:00", label: "2:00 PM" },
-	{ value: "14:30", label: "2:30 PM" },
-	{ value: "15:00", label: "3:00 PM" },
-	{ value: "15:30", label: "3:30 PM" },
-	{ value: "16:00", label: "4:00 PM" },
-	{ value: "16:30", label: "4:30 PM" },
-	{ value: "17:00", label: "5:00 PM" },
-	{ value: "17:30", label: "5:30 PM" },
-	{ value: "18:00", label: "6:00 PM" },
-];
-
-// Calculate date constraints based on lead time
-const getDateConstraints = (leadTimeDays: number = 3) => {
-	const today = new Date();
-	const minDate = new Date(today);
-	minDate.setDate(today.getDate() + leadTimeDays); // Minimum based on lead time
-
-	const maxDate = new Date(today);
-	maxDate.setDate(today.getDate() + 33); // Maximum 33 days from today
-
-	return { minDate, maxDate };
-};
-
-// Check if date is disabled (Monday, Tuesday, or outside range)
-const isDateDisabled = (date: Date, leadTimeDays: number = 3) => {
-	const { minDate, maxDate } = getDateConstraints(leadTimeDays);
-	const dayOfWeek = date.getDay();
-
-	// Disable if before min date or after max date
-	if (date < minDate || date > maxDate) {
-		return true;
-	}
-
-	// Disable Monday (1) and Tuesday (2)
-	return dayOfWeek === 1 || dayOfWeek === 2;
-};
+// ─── Form schema ────────────────────────────────────────────────
 
 const createCheckoutFormSchema = (
 	isPostalBrownies: boolean,
@@ -221,6 +165,8 @@ const addressSchema = z.object({
 	}),
 });
 
+// ─── Component ──────────────────────────────────────────────────
+
 type CheckoutPageProps = {
 	user: {
 		email: string;
@@ -242,8 +188,6 @@ export default function CheckoutPage({
 	const [isPhoneFieldEnabled, setIsPhoneFieldEnabled] = useState(false);
 	const [originalPhone, setOriginalPhone] = useState("");
 	const [isPhoneEditDialogOpen, setIsPhoneEditDialogOpen] = useState(false);
-	const existingId = useId();
-	const newId = useId();
 	const { areOrdersAllowed: ordersAllowed, settings } = useCakeOrderSettings();
 	const { settings: specialsSettings } = useSpecialsSettings();
 
@@ -557,6 +501,8 @@ export default function CheckoutPage({
 		}
 	}, [isPostalBrownies, addresses, form, addressMode, selectedAddressId]);
 
+	// ─── Handlers ──────────────────────────────────────────────
+
 	// Handle address creation separately
 	const handleCreateAddress = async () => {
 		const addressData = {
@@ -743,6 +689,8 @@ export default function CheckoutPage({
 		openRazorpayCheckout(options);
 	};
 
+	// ─── Render ─────────────────────────────────────────────────
+
 	if (items.length === 0) {
 		return (
 			<div className="container mx-auto py-4 sm:py-6 lg:py-8 px-4">
@@ -801,808 +749,53 @@ export default function CheckoutPage({
 								value={isPostalBrownies ? "postal-brownies" : "cake-orders"}
 							/>
 
-							{/* Compact contact display — replaces disabled inputs */}
-							<div className="rounded-lg border bg-muted/30 p-3 sm:p-4">
-								<div className="flex items-center justify-between mb-2">
-									<span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-										Contact
-									</span>
-								</div>
-								<div className="space-y-1">
-									<p className="text-sm font-medium">{name}</p>
-									<p className="text-sm text-muted-foreground">{email}</p>
-								</div>
-							</div>
-
-							{/* Phone — compact display for returning users, full input for new */}
-							{isPhoneFieldEnabled ? (
-								// First-time user or user with no phone - show both fields
-								<>
-									<form.Field
-										name="phone"
-										// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
-										children={(field) => {
-											const hasErrors =
-												field.state.meta.errors &&
-												field.state.meta.errors.length > 0;
-											return (
-												<Field data-invalid={hasErrors}>
-													<FieldLabel
-														htmlFor={field.name}
-														className="text-sm sm:text-base"
-													>
-														Phone Number
-													</FieldLabel>
-													<Input
-														id={field.name}
-														name={field.name}
-														type="tel"
-														value={field.state.value}
-														onBlur={field.handleBlur}
-														onChange={(e) => field.handleChange(e.target.value)}
-														placeholder="Enter your phone number"
-														className="text-sm sm:text-base"
-														readOnly={isProcessing}
-														disabled={isProcessing}
-													/>
-													{hasErrors && (
-														<FieldError
-															errors={field.state.meta.errors}
-															className="text-xs sm:text-sm"
-														/>
-													)}
-												</Field>
-											);
-										}}
-									/>
-
-									<form.Field
-										name="confirmPhone"
-										// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
-										children={(field) => {
-											const hasErrors =
-												field.state.meta.errors &&
-												field.state.meta.errors.length > 0;
-											return (
-												<Field data-invalid={hasErrors}>
-													<FieldLabel
-														htmlFor={field.name}
-														className="text-sm sm:text-base"
-													>
-														Confirm Phone Number
-													</FieldLabel>
-													<Input
-														id={field.name}
-														name={field.name}
-														type="tel"
-														value={field.state.value ?? ""}
-														onBlur={field.handleBlur}
-														onChange={(e) => field.handleChange(e.target.value)}
-														placeholder="Re-enter your phone number"
-														className="text-sm sm:text-base"
-														readOnly={isProcessing}
-														disabled={isProcessing}
-														onPaste={(e) => {
-															e.preventDefault();
-															return false;
-														}}
-													/>
-													<FieldDescription className="text-xs sm:text-sm">
-														Please re-enter your phone number to confirm
-													</FieldDescription>
-													{hasErrors && (
-														<FieldError
-															errors={field.state.meta.errors}
-															className="text-xs sm:text-sm"
-														/>
-													)}
-												</Field>
-											);
-										}}
-									/>
-								</>
-							) : (
-								// Returning user — compact phone display with edit
-								<div className="rounded-lg border bg-muted/30 p-3 sm:p-4">
-									<div className="flex items-center justify-between">
-										<div>
-											<span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-												Phone
-											</span>
-											<p className="text-sm font-medium mt-0.5">
-												{form.getFieldValue("phone")}
-											</p>
-										</div>
-										<Button
-											type="button"
-											variant="ghost"
-											size="sm"
-											onClick={() => setIsPhoneEditDialogOpen(true)}
-											disabled={isProcessing}
-											className="text-xs h-7"
-										>
-											<Edit2 className="h-3 w-3 mr-1" />
-											Edit
-										</Button>
-									</div>
-								</div>
-							)}
-
-							{!hasSpecials && (
-								<form.Field
-									name="notes"
-									// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
-									children={(field) => {
-										const hasErrors =
-											field.state.meta.errors &&
-											field.state.meta.errors.length > 0;
-										return (
-											<Field data-invalid={hasErrors}>
-												<FieldLabel
-													htmlFor={field.name}
-													className="text-sm sm:text-base"
-												>
-													{isPostalBrownies
-														? "Message (Optional)"
-														: "Message on Cake"}
-												</FieldLabel>
-												<Input
-													id={field.name}
-													name={field.name}
-													value={field.state.value ?? ""}
-													onBlur={field.handleBlur}
-													onChange={(e) => field.handleChange(e.target.value)}
-													placeholder={
-														isPostalBrownies
-															? "Special delivery instructions or notes"
-															: "Keep it short and sweet"
-													}
-													className="text-sm sm:text-base"
-													maxLength={isPostalBrownies ? 250 : 25}
-												/>
-												<FieldDescription className="text-xs sm:text-sm text-muted-foreground">
-													Maximum {isPostalBrownies ? 250 : 25} characters
-												</FieldDescription>
-												{hasErrors && (
-													<FieldError
-														errors={field.state.meta.errors}
-														className="text-xs sm:text-sm"
-													/>
-												)}
-											</Field>
-										);
-									}}
-								/>
-							)}
+							{/* Contact Info Section */}
+							<ContactInfoForm
+								name={name}
+								email={email}
+								isPhoneFieldEnabled={isPhoneFieldEnabled}
+								isProcessing={isProcessing}
+								form={form}
+								hasSpecials={hasSpecials}
+								isPostalBrownies={isPostalBrownies}
+								onOpenPhoneEdit={() => setIsPhoneEditDialogOpen(true)}
+							/>
 
 							{/* Address Fields - Only for postal brownies */}
 							{isPostalBrownies && (
-								<div className="space-y-3 sm:space-y-4 lg:space-y-6">
-									<div className="border-t pt-3 sm:pt-4 lg:pt-6">
-										<h3 className="text-sm sm:text-base lg:text-lg font-semibold mb-2 sm:mb-3 lg:mb-4 flex items-center gap-2">
-											<Package className="h-4 w-4 sm:h-4 sm:w-4 lg:h-5 lg:w-5 shrink-0" />
-											<span>Delivery Address</span>
-										</h3>
-										<p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 leading-relaxed">
-											Please provide the complete delivery address for your
-											postal brownie order.
-										</p>
-									</div>
-
-									{/* Address Mode Selection */}
-									<form.Field
-										name="addressMode"
-										// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
-										children={(field) => {
-											const hasErrors =
-												field.state.meta.errors &&
-												field.state.meta.errors.length > 0;
-											return (
-												<Field data-invalid={hasErrors}>
-													<RadioGroup
-														onValueChange={(value) =>
-															field.handleChange(value as "existing" | "new")
-														}
-														value={field.state.value}
-														className="grid grid-cols-1 sm:grid-cols-2 gap-2"
-														disabled={addressesLoading}
-													>
-														{addresses.length > 0 && (
-															<div className="flex items-center space-x-2 p-3 border rounded-lg">
-																<RadioGroupItem
-																	value="existing"
-																	id={existingId}
-																/>
-																<Label
-																	htmlFor={existingId}
-																	className="text-sm cursor-pointer flex-1"
-																>
-																	Select saved address
-																</Label>
-															</div>
-														)}
-														<div className="flex items-center space-x-2 p-3 border rounded-lg">
-															<RadioGroupItem value="new" id={newId} />
-															<Label
-																htmlFor={newId}
-																className="text-sm cursor-pointer flex-1"
-															>
-																Add new address
-															</Label>
-														</div>
-													</RadioGroup>
-													{hasErrors && (
-														<FieldError
-															errors={field.state.meta.errors}
-															className="text-xs sm:text-sm"
-														/>
-													)}
-												</Field>
-											);
-										}}
-									/>
-
-									{/* Existing Address Selection */}
-									{addressMode === "existing" && (
-										<form.Field
-											name="selectedAddressId"
-											// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
-											children={(field) => {
-												const hasErrors =
-													field.state.meta.errors &&
-													field.state.meta.errors.length > 0;
-												return (
-													<Field data-invalid={hasErrors}>
-														<FieldLabel className="text-sm sm:text-base">
-															Choose Address
-														</FieldLabel>
-														{addresses.length === 0 ? (
-															<div className="text-center py-8 text-muted-foreground">
-																<p className="text-sm">
-																	No saved addresses found
-																</p>
-																<p className="text-xs mt-1">
-																	Add a new address to continue
-																</p>
-															</div>
-														) : (
-															<RadioGroup
-																onValueChange={(value) =>
-																	field.handleChange(Number.parseInt(value))
-																}
-																value={field.state.value?.toString()}
-																className="space-y-2"
-															>
-																{addresses.map((address) => (
-																	<div
-																		key={address.id}
-																		className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-muted/50"
-																	>
-																		<RadioGroupItem
-																			value={address.id.toString()}
-																			id={`address-${address.id}`}
-																			className="mt-1"
-																		/>
-																		<Label
-																			htmlFor={`address-${address.id}`}
-																			className="text-sm cursor-pointer flex-1 leading-relaxed"
-																		>
-																			<div className="space-y-1">
-																				<div className="font-medium">
-																					{address.addressLine1}
-																				</div>
-																				{address.addressLine2 && (
-																					<div className="text-muted-foreground">
-																						{address.addressLine2}
-																					</div>
-																				)}
-																				<div className="text-muted-foreground">
-																					{address.city}, {address.state}{" "}
-																					{address.zip}
-																				</div>
-																			</div>
-																		</Label>
-																		<Button
-																			type="button"
-																			variant="ghost"
-																			size="sm"
-																			onClick={() => {
-																				handleDeleteAddress(address.id);
-																			}}
-																			disabled={deleteAddressMutation.isPending}
-																			title="Delete address"
-																		>
-																			{deleteAddressMutation.isPending ? (
-																				<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600" />
-																			) : (
-																				<Trash2 className="h-4 w-4 text-primary" />
-																			)}
-																		</Button>
-																	</div>
-																))}
-															</RadioGroup>
-														)}
-														{hasErrors && (
-															<FieldError
-																errors={field.state.meta.errors}
-																className="text-xs sm:text-sm"
-															/>
-														)}
-													</Field>
-												);
-											}}
-										/>
-									)}
-
-									{/* New Address Form */}
-									{addressMode === "new" && (
-										<div className="space-y-3 sm:space-y-4 lg:space-y-6">
-											<div className="grid grid-cols-1 gap-3 sm:gap-4 lg:gap-6">
-												<form.Field
-													name="addressLine1"
-													// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
-													children={(field) => {
-														const hasErrors =
-															field.state.meta.errors &&
-															field.state.meta.errors.length > 0;
-														return (
-															<Field data-invalid={hasErrors}>
-																<FieldLabel
-																	htmlFor={field.name}
-																	className="text-sm sm:text-base"
-																>
-																	Address Line 1 *
-																</FieldLabel>
-																<Input
-																	id={field.name}
-																	name={field.name}
-																	value={field.state.value ?? ""}
-																	onBlur={field.handleBlur}
-																	onChange={(e) =>
-																		field.handleChange(e.target.value)
-																	}
-																	placeholder="Street address, building number"
-																	className="text-sm sm:text-base"
-																/>
-																{hasErrors && (
-																	<FieldError
-																		errors={field.state.meta.errors}
-																		className="text-xs sm:text-sm"
-																	/>
-																)}
-															</Field>
-														);
-													}}
-												/>
-
-												<form.Field
-													name="addressLine2"
-													// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
-													children={(field) => {
-														const hasErrors =
-															field.state.meta.errors &&
-															field.state.meta.errors.length > 0;
-														return (
-															<Field data-invalid={hasErrors}>
-																<FieldLabel
-																	htmlFor={field.name}
-																	className="text-sm sm:text-base"
-																>
-																	Address Line 2
-																</FieldLabel>
-																<Input
-																	id={field.name}
-																	name={field.name}
-																	value={field.state.value ?? ""}
-																	onBlur={field.handleBlur}
-																	onChange={(e) =>
-																		field.handleChange(e.target.value)
-																	}
-																	placeholder="Apartment, suite, unit (optional)"
-																	className="text-sm sm:text-base"
-																/>
-																{hasErrors && (
-																	<FieldError
-																		errors={field.state.meta.errors}
-																		className="text-xs sm:text-sm"
-																	/>
-																)}
-															</Field>
-														);
-													}}
-												/>
-
-												<div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-													<form.Field
-														name="city"
-														// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
-														children={(field) => {
-															const hasErrors =
-																field.state.meta.errors &&
-																field.state.meta.errors.length > 0;
-															return (
-																<Field data-invalid={hasErrors}>
-																	<FieldLabel
-																		htmlFor={field.name}
-																		className="text-sm sm:text-base"
-																	>
-																		City *
-																	</FieldLabel>
-																	<Input
-																		id={field.name}
-																		name={field.name}
-																		value={field.state.value ?? ""}
-																		onBlur={field.handleBlur}
-																		onChange={(e) =>
-																			field.handleChange(e.target.value)
-																		}
-																		placeholder="City"
-																		className="text-sm sm:text-base"
-																	/>
-																	{hasErrors && (
-																		<FieldError
-																			errors={field.state.meta.errors}
-																			className="text-xs sm:text-sm"
-																		/>
-																	)}
-																</Field>
-															);
-														}}
-													/>
-
-													<form.Field
-														name="state"
-														// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
-														children={(field) => {
-															const hasErrors =
-																field.state.meta.errors &&
-																field.state.meta.errors.length > 0;
-															return (
-																<Field data-invalid={hasErrors}>
-																	<FieldLabel
-																		htmlFor={field.name}
-																		className="text-sm sm:text-base"
-																	>
-																		State *
-																	</FieldLabel>
-																	<Input
-																		id={field.name}
-																		name={field.name}
-																		value={field.state.value ?? ""}
-																		onBlur={field.handleBlur}
-																		onChange={(e) =>
-																			field.handleChange(e.target.value)
-																		}
-																		placeholder="State"
-																		className="text-sm sm:text-base"
-																	/>
-																	{hasErrors && (
-																		<FieldError
-																			errors={field.state.meta.errors}
-																			className="text-xs sm:text-sm"
-																		/>
-																	)}
-																</Field>
-															);
-														}}
-													/>
-												</div>
-
-												<form.Field
-													name="zip"
-													// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
-													children={(field) => {
-														const hasErrors =
-															field.state.meta.errors &&
-															field.state.meta.errors.length > 0;
-														return (
-															<Field data-invalid={hasErrors}>
-																<FieldLabel
-																	htmlFor={field.name}
-																	className="text-sm sm:text-base"
-																>
-																	ZIP Code *
-																</FieldLabel>
-																<Input
-																	id={field.name}
-																	name={field.name}
-																	value={field.state.value ?? ""}
-																	onBlur={field.handleBlur}
-																	onChange={(e) =>
-																		field.handleChange(e.target.value)
-																	}
-																	placeholder="ZIP Code"
-																	className="text-sm sm:text-base"
-																/>
-																{hasErrors && (
-																	<FieldError
-																		errors={field.state.meta.errors}
-																		className="text-xs sm:text-sm"
-																	/>
-																)}
-															</Field>
-														);
-													}}
-												/>
-
-												{/* Create Address Button */}
-												<div className="pt-4">
-													<Button
-														type="button"
-														variant="outline"
-														onClick={handleCreateAddress}
-														disabled={isCreatingAddress}
-														className="w-full"
-													>
-														{isCreatingAddress ? (
-															<>
-																<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2" />
-																Creating Address...
-															</>
-														) : (
-															"Create & Save Address"
-														)}
-													</Button>
-													<p className="text-xs text-muted-foreground mt-2 text-center">
-														Address will be saved and automatically selected for
-														this order
-													</p>
-												</div>
-											</div>
-										</div>
-									)}
-								</div>
+								<AddressSelector
+									form={form}
+									addressMode={addressMode}
+									addresses={addresses}
+									addressesLoading={addressesLoading}
+									isCreatingAddress={isCreatingAddress}
+									isDeletePending={deleteAddressMutation.isPending}
+									onCreateAddress={handleCreateAddress}
+									onDeleteAddress={handleDeleteAddress}
+								/>
 							)}
 
 							{/* Pickup Date Selection for Specials Orders */}
 							{!isPostalBrownies && hasSpecials && specialsSettings && (
-								<div className="space-y-3 sm:space-y-4 lg:space-y-6">
-									<div className="border-t pt-3 sm:pt-4 lg:pt-6">
-										<h3 className="text-sm sm:text-base lg:text-lg font-semibold mb-2 sm:mb-3 lg:mb-4 flex items-center gap-2">
-											<CalendarIcon className="h-4 w-4 sm:h-4 sm:w-4 lg:h-5 lg:w-5 shrink-0" />
-											<span>Pickup Date Selection</span>
-										</h3>
-										<p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 leading-relaxed">
-											Select your preferred pickup date from the available
-											range. Pickup time: {specialsSettings.pickupStartTime} -{" "}
-											{specialsSettings.pickupEndTime}
-										</p>
-									</div>
-									<div className="space-y-3 sm:space-y-4 lg:space-y-6">
-										<form.Field
-											name="pickupDate"
-											// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
-											children={(field) => {
-												const hasErrors =
-													field.state.meta.errors &&
-													field.state.meta.errors.length > 0;
-												return (
-													<Field
-														data-invalid={hasErrors}
-														className="flex flex-col"
-													>
-														<FieldLabel className="text-sm sm:text-base font-medium">
-															Pickup Date (Available:{" "}
-															{formatLocalDate(
-																new Date(specialsSettings.pickupStartDate),
-															)}{" "}
-															to{" "}
-															{formatLocalDate(
-																new Date(specialsSettings.pickupEndDate),
-															)}
-															)
-														</FieldLabel>
-														<Popover>
-															<PopoverTrigger asChild>
-																<Button
-																	variant="outline"
-																	className={`w-full h-10 sm:h-11 px-3 py-2 text-left font-normal text-sm sm:text-base justify-between ${
-																		!field.state.value &&
-																		"text-muted-foreground"
-																	}`}
-																>
-																	<span className="truncate">
-																		{field.state.value
-																			? formatLocalDate(field.state.value)
-																			: "Select a pickup date"}
-																	</span>
-																	<CalendarIcon className="h-4 w-4 opacity-50 shrink-0 ml-2" />
-																</Button>
-															</PopoverTrigger>
-															<PopoverContent
-																className="w-auto p-0 z-50"
-																align="start"
-																side="bottom"
-																sideOffset={4}
-															>
-																<Calendar
-																	mode="single"
-																	selected={field.state.value}
-																	onSelect={field.handleChange}
-																	disabled={(date) => {
-																		const startDate = new Date(
-																			specialsSettings.pickupStartDate,
-																		);
-																		const endDate = new Date(
-																			specialsSettings.pickupEndDate,
-																		);
-																		startDate.setHours(0, 0, 0, 0);
-																		endDate.setHours(23, 59, 59, 999);
-																		const compareDate = new Date(date);
-																		compareDate.setHours(12, 0, 0, 0);
-																		return (
-																			compareDate < startDate ||
-																			compareDate > endDate
-																		);
-																	}}
-																	initialFocus
-																	className="rounded-md border-0"
-																/>
-															</PopoverContent>
-														</Popover>
-														{hasErrors && (
-															<FieldError
-																errors={field.state.meta.errors}
-																className="text-xs sm:text-sm"
-															/>
-														)}
-													</Field>
-												);
-											}}
-										/>
-									</div>
-								</div>
+								<PickupScheduler
+									form={form}
+									hasSpecials={true}
+									specialsSettings={specialsSettings}
+									maxLeadTime={maxLeadTime}
+									pickupDate={pickupDate}
+									pickupTime={pickupTime}
+								/>
 							)}
 
-							{/* Pickup Date and Time - Only for non-postal orders */}
+							{/* Pickup Date and Time - Only for non-postal, non-specials orders */}
 							{!isPostalBrownies && !hasSpecials && (
-								<div className="space-y-3 sm:space-y-4 lg:space-y-6">
-									<div className="border-t pt-3 sm:pt-4 lg:pt-6">
-										<h3 className="text-sm sm:text-base lg:text-lg font-semibold mb-2 sm:mb-3 lg:mb-4 flex items-center gap-2">
-											<CalendarIcon className="h-4 w-4 sm:h-4 sm:w-4 lg:h-5 lg:w-5 shrink-0" />
-											<span>Pickup Schedule</span>
-										</h3>
-										<p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 leading-relaxed">
-											Select your preferred pickup date and time. Available
-											Wednesday to Sunday, 12PM to 6PM. Minimum {maxLeadTime}{" "}
-											day{maxLeadTime > 1 ? "s" : ""} advance booking required
-											based on your cart items.
-										</p>
-									</div>
-
-									<div className="space-y-3 sm:space-y-4 lg:space-y-6">
-										<form.Field
-											name="pickupDate"
-											// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
-											children={(field) => {
-												const hasErrors =
-													field.state.meta.errors &&
-													field.state.meta.errors.length > 0;
-												return (
-													<Field
-														data-invalid={hasErrors}
-														className="flex flex-col"
-													>
-														<FieldLabel className="text-sm sm:text-base font-medium">
-															Pickup Date
-														</FieldLabel>
-														<Popover>
-															<PopoverTrigger asChild>
-																<Button
-																	variant="outline"
-																	className={`w-full h-10 sm:h-11 px-3 py-2 text-left font-normal text-sm sm:text-base justify-between ${
-																		!field.state.value &&
-																		"text-muted-foreground"
-																	}`}
-																>
-																	<span className="truncate">
-																		{field.state.value
-																			? formatLocalDate(field.state.value)
-																			: "Pick a date"}
-																	</span>
-																	<CalendarIcon className="h-4 w-4 opacity-50 shrink-0 ml-2" />
-																</Button>
-															</PopoverTrigger>
-															<PopoverContent
-																className="w-auto p-0 z-50"
-																align="start"
-																side="bottom"
-																sideOffset={4}
-															>
-																<Calendar
-																	mode="single"
-																	selected={field.state.value}
-																	onSelect={field.handleChange}
-																	disabled={(date) =>
-																		isDateDisabled(date, maxLeadTime)
-																	}
-																	initialFocus
-																	className="rounded-md border-0"
-																/>
-															</PopoverContent>
-														</Popover>
-														{hasErrors && (
-															<FieldError
-																errors={field.state.meta.errors}
-																className="text-xs sm:text-sm"
-															/>
-														)}
-													</Field>
-												);
-											}}
-										/>
-
-										<form.Field
-											name="pickupTime"
-											// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
-											children={(field) => {
-												const hasErrors =
-													field.state.meta.errors &&
-													field.state.meta.errors.length > 0;
-												return (
-													<Field data-invalid={hasErrors}>
-														<FieldLabel className="text-sm sm:text-base font-medium">
-															Pickup Time
-														</FieldLabel>
-														<Select
-															onValueChange={field.handleChange}
-															value={field.state.value}
-														>
-															<SelectTrigger className="w-full h-10 sm:h-11 text-sm sm:text-base">
-																<SelectValue placeholder="Select time" />
-															</SelectTrigger>
-															<SelectContent className="max-h-50 sm:max-h-75">
-																{timeSlots.map((slot) => (
-																	<SelectItem
-																		key={slot.value}
-																		value={slot.value}
-																		className="text-sm sm:text-base"
-																	>
-																		{slot.label}
-																	</SelectItem>
-																))}
-															</SelectContent>
-														</Select>
-														{hasErrors && (
-															<FieldError
-																errors={field.state.meta.errors}
-																className="text-xs sm:text-sm"
-															/>
-														)}
-													</Field>
-												);
-											}}
-										/>
-									</div>
-
-									{/* Quick Summary for Mobile */}
-									{(pickupDate || pickupTime) && (
-										<div className="bg-muted/50 rounded-lg p-3 sm:p-4 lg:hidden">
-											<div className="flex items-center gap-2 mb-2">
-												<Clock className="h-4 w-4 text-muted-foreground shrink-0" />
-												<span className="text-sm font-medium">
-													Selected Pickup
-												</span>
-											</div>
-											<div className="space-y-1">
-												{pickupDate && (
-													<p className="text-xs text-muted-foreground">
-														📅 {format(pickupDate, "EEEE, MMM d, yyyy")}
-													</p>
-												)}
-												{pickupTime && (
-													<p className="text-xs text-muted-foreground">
-														🕐{" "}
-														{
-															timeSlots.find((t) => t.value === pickupTime)
-																?.label
-														}
-													</p>
-												)}
-											</div>
-										</div>
-									)}
-								</div>
+								<PickupScheduler
+									form={form}
+									hasSpecials={false}
+									maxLeadTime={maxLeadTime}
+									pickupDate={pickupDate}
+									pickupTime={pickupTime}
+								/>
 							)}
 
 							<form.Subscribe
@@ -1675,7 +868,7 @@ export default function CheckoutPage({
 					specialsSettings={specialsSettings}
 					pickupDate={pickupDate}
 					pickupTime={pickupTime}
-					timeSlots={timeSlots}
+					timeSlots={TIME_SLOTS}
 					selectedAddress={
 						isPostalBrownies && selectedAddressId
 							? addresses.find((addr) => addr.id === selectedAddressId) || null
@@ -1712,7 +905,7 @@ export default function CheckoutPage({
 							(isPostalBrownies && !selectedAddressId)
 						}
 						size="lg"
-						className="flex-1 max-w-50 cursor-pointer"
+						className="flex-1 max-w-[200px] cursor-pointer"
 						variant={!isOrderingAllowed ? "secondary" : "default"}
 					>
 						{!isOrderingAllowed

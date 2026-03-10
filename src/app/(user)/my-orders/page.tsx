@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
-import { columns } from "./columns";
 import { MyOrdersContent } from "./my-orders-content";
 
 export const dynamic = "force-dynamic";
@@ -45,5 +44,5 @@ export default async function MyOrdersPage() {
 		},
 	});
 
-	return <MyOrdersContent userOrders={userOrders} columns={columns} />;
+	return <MyOrdersContent userOrders={userOrders} />;
 }

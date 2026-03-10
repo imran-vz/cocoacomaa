@@ -155,37 +155,44 @@ export default function SpecialsClientPage({
 
 					{/* Specials Description */}
 					{settings?.description && (
-						<div className="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
-							<p className="text-purple-800 text-center font-medium">
+						<div className="mb-6 p-4 bg-purple-50/50 border border-purple-100 rounded-xl relative overflow-hidden">
+							<div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+								<Sparkles className="w-16 h-16" />
+							</div>
+							<p className="text-purple-900/80 text-center font-medium leading-relaxed relative z-10 text-sm sm:text-base">
 								{settings.description}
 							</p>
 						</div>
 					)}
 
 					{settings && (
-						<Card className="mb-6">
-							<CardHeader>
-								<CardTitle className="flex items-center gap-2">
+						<Card className="mb-6 lg:mb-8 border-dashed shadow-sm">
+							<CardHeader className="pb-3 border-b bg-muted/20">
+								<CardTitle className="flex items-center gap-2 text-base sm:text-lg text-primary/90">
 									<CalendarDays className="h-5 w-5" />
 									Pickup Information
 								</CardTitle>
 							</CardHeader>
-							<CardContent>
-								<div className="space-y-2">
-									<div className="flex items-center gap-2">
-										<CalendarDays className="h-4 w-4 text-muted-foreground" />
-										<span className="font-medium">Pickup Dates:</span>
-										<Badge variant="outline">
+							<CardContent className="pt-4">
+								<div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+									<div className="flex flex-col gap-1.5 flex-1 p-3 bg-muted/30 rounded-lg border">
+										<div className="flex items-center gap-1.5 text-muted-foreground text-sm font-medium">
+											<CalendarDays className="h-3.5 w-3.5" />
+											<span>Pickup Dates</span>
+										</div>
+										<p className="font-semibold text-[15px]">
 											{formatDate(new Date(settings.pickupStartDate))} -{" "}
 											{formatDate(new Date(settings.pickupEndDate))}
-										</Badge>
+										</p>
 									</div>
-									<div className="flex items-center gap-2">
-										<Clock className="h-4 w-4 text-muted-foreground" />
-										<span className="font-medium">Pickup Time:</span>
-										<Badge variant="outline">
+									<div className="flex flex-col gap-1.5 flex-1 p-3 bg-muted/30 rounded-lg border">
+										<div className="flex items-center gap-1.5 text-muted-foreground text-sm font-medium">
+											<Clock className="h-3.5 w-3.5" />
+											<span>Pickup Time</span>
+										</div>
+										<p className="font-semibold text-[15px]">
 											{settings.pickupStartTime} - {settings.pickupEndTime}
-										</Badge>
+										</p>
 									</div>
 								</div>
 							</CardContent>
@@ -193,44 +200,44 @@ export default function SpecialsClientPage({
 					)}
 
 					{/* Egg Filter */}
-					<div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
-						<div className="flex items-center gap-2">
-							<span className="text-sm font-medium text-muted-foreground">
-								Filter by:
+					<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+						<div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
+							<span className="text-sm font-medium text-muted-foreground uppercase tracking-wider text-[11px] mb-1 sm:mb-0">
+								Filter
 							</span>
 							<ToggleGroup
 								type="single"
 								value={eggFilter}
 								onValueChange={setEggFilter}
-								className="justify-start"
+								className="justify-start w-full sm:w-auto border rounded-md p-1 bg-muted/20"
 							>
-								<ToggleGroupItem value="all" aria-label="Show all specials">
-									<span className="text-xs whitespace-nowrap text-nowrap">
-										All Specials
-									</span>
+								<ToggleGroupItem
+									value="all"
+									aria-label="Show all specials"
+									className="flex-1 sm:flex-initial text-xs h-8"
+								>
+									All
 								</ToggleGroupItem>
 								<ToggleGroupItem
 									value="eggless"
 									aria-label="Show eggless specials only"
+									className="flex-1 sm:flex-initial text-xs h-8 gap-1.5"
 								>
-									<EggOff className="h-4 w-4 mr-1" />
-									<span className="text-xs whitespace-nowrap text-nowrap">
-										Eggless
-									</span>
+									<EggOff className="h-3.5 w-3.5" />
+									Eggless
 								</ToggleGroupItem>
 								<ToggleGroupItem
 									value="contains-egg"
 									aria-label="Show specials containing egg"
+									className="flex-1 sm:flex-initial text-xs h-8 gap-1.5"
 								>
-									<Egg className="h-4 w-4 mr-1" />
-									<span className="text-xs whitespace-nowrap text-nowrap">
-										Contains Egg
-									</span>
+									<Egg className="h-3.5 w-3.5" />
+									Contains Egg
 								</ToggleGroupItem>
 							</ToggleGroup>
 						</div>
-						<p className="text-sm text-muted-foreground">
-							Showing {availableSpecials.length}{" "}
+						<p className="text-sm text-muted-foreground font-medium bg-muted px-3 py-1 rounded-full whitespace-nowrap self-end sm:self-auto">
+							{availableSpecials.length}{" "}
 							{availableSpecials.length === 1 ? "special" : "specials"}
 						</p>
 					</div>

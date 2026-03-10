@@ -164,7 +164,7 @@ export function usePaymentFlow(
 							error instanceof Error
 								? error
 								: new Error("Payment verification failed");
-						toast.error(err.message + ". Please contact support.");
+						toast.error(`${err.message}. Please contact support.`);
 						config.onError?.(err);
 					}
 				},

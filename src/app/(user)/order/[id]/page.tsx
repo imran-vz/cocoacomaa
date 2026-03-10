@@ -124,19 +124,24 @@ export default async function AdminOrderDetailsPage({
 		<div className="container mx-auto py-4 sm:py-6 lg:py-8 px-4">
 			<div className="max-w-6xl mx-auto">
 				{/* Header */}
-				<div className="flex items-center gap-4 mb-6">
-					<BackButton />
-					<div className="min-w-0 flex-1">
+				<div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6 relative">
+					<div className="flex items-center gap-3">
+						<BackButton />
 						<h1 className="text-2xl sm:text-3xl font-bold truncate">
 							Order Details
 						</h1>
-						<p className="text-muted-foreground text-sm sm:text-base">
-							Order ID: {order.id}
-						</p>
+					</div>
+					<div className="sm:ml-auto">
+						<Badge
+							variant="outline"
+							className="font-mono text-xs text-muted-foreground border-muted-foreground/30 uppercase"
+						>
+							ID: {order.id.slice(0, 8)}...
+						</Badge>
 					</div>
 				</div>
 
-				<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+				<div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
 					{/* Order Status & Info */}
 					<div className="lg:col-span-2 space-y-6">
 						{/* Status Card */}
@@ -245,30 +250,34 @@ export default async function AdminOrderDetailsPage({
 									{order.orderType === "postal-brownies" &&
 									order.deliveryCost &&
 									Number(order.deliveryCost) > 0 ? (
-										<div className="space-y-2">
-											<div className="flex justify-between items-center">
-												<span>Subtotal:</span>
+										<div className="space-y-2.5 pt-2">
+											<div className="flex justify-between items-center text-muted-foreground text-sm">
+												<span>Subtotal</span>
 												<span>
 													{formatCurrency(
 														Number(order.total) - Number(order.deliveryCost),
 													)}
 												</span>
 											</div>
-											<div className="flex justify-between items-center">
-												<span>Delivery:</span>
+											<div className="flex justify-between items-center text-muted-foreground text-sm">
+												<span>Delivery</span>
 												<span>
 													{formatCurrency(Number(order.deliveryCost))}
 												</span>
 											</div>
-											<div className="flex justify-between items-center font-semibold text-lg border-t pt-2">
-												<span>Total:</span>
-												<span>{formatCurrency(Number(order.total))}</span>
+											<div className="flex justify-between items-center font-bold text-lg sm:text-xl border-t bg-muted/20 p-3 rounded-lg mt-2">
+												<span>Total</span>
+												<span className="text-primary">
+													{formatCurrency(Number(order.total))}
+												</span>
 											</div>
 										</div>
 									) : (
-										<div className="flex justify-between items-center font-semibold text-lg">
-											<span>Total:</span>
-											<span>{formatCurrency(Number(order.total))}</span>
+										<div className="flex justify-between items-center font-bold text-lg sm:text-xl bg-muted/20 p-3 rounded-lg pt-2">
+											<span>Total</span>
+											<span className="text-primary">
+												{formatCurrency(Number(order.total))}
+											</span>
 										</div>
 									)}
 								</div>
@@ -277,19 +286,23 @@ export default async function AdminOrderDetailsPage({
 
 						{/* Notes */}
 						{order.notes && (
-							<Card>
-								<CardHeader>
-									<CardTitle>Order Notes</CardTitle>
+							<Card className="border-dashed bg-muted/10">
+								<CardHeader className="pb-3 border-b bg-muted/10">
+									<CardTitle className="text-sm sm:text-base text-muted-foreground font-medium">
+										Order Notes
+									</CardTitle>
 								</CardHeader>
-								<CardContent>
-									<p className="text-sm">{order.notes}</p>
+								<CardContent className="pt-4">
+									<p className="text-sm leading-relaxed text-foreground/90">
+										{order.notes}
+									</p>
 								</CardContent>
 							</Card>
 						)}
 					</div>
 
 					{/* Sidebar */}
-					<div className="space-y-6">
+					<div className="space-y-4 sm:space-y-6">
 						{/* Customer Information */}
 						<Card>
 							<CardHeader>

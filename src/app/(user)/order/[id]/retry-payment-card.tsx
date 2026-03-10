@@ -1,20 +1,21 @@
 "use client";
 
 import { AlertTriangle, CreditCard } from "lucide-react";
-import { useState } from "react";
+// useState is no longer needed
 import { toast } from "sonner";
 
 import { ProcessingOverlay } from "@/components/checkout/processing-overlay";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { usePaymentFlow } from "@/hooks/use-payment-flow";
 import { usePostalOrderSettings } from "@/hooks/use-postal-order-settings";
-import { useRazorpay } from "@/hooks/use-razorpay";
 import {
 	formatLocalShortDate,
 	formatLongDate,
 	formatYearMonth,
 } from "@/lib/format-timestamp";
+import type { OrderType } from "@/lib/payment/payment-service";
 import { formatCurrency } from "@/lib/utils";
-import type { RazorpayOptions, RazorpayResponse } from "@/types/razorpay";
 
 export default function RetryPaymentCard({
 	order,
@@ -32,9 +33,18 @@ export default function RetryPaymentCard({
 		};
 	};
 }) {
-	const [isProcessing, setIsProcessing] = useState(false);
-	const [processingStep, setProcessingStep] = useState("");
-	const { openCheckout } = useRazorpay();
+	const { stepDescription, isProcessing, payExistingOrder } = usePaymentFlow({
+		orderType: order.orderType as OrderType,
+		prefill: {
+			name: order.user.name || "",
+			email: order.user.email || "",
+			phone: order.user.phone || "",
+		},
+		description: "Order Payment Retry",
+		onSuccess: () => {
+			window.location.reload();
+		},
+	});
 
 	// Get current month for postal order settings check
 	const currentMonth = formatYearMonth(new Date());
@@ -82,14 +92,10 @@ export default function RetryPaymentCard({
 		}
 
 		try {
-			setIsProcessing(true);
-			setProcessingStep("Preparing payment...");
-
 			let razorpayOrderId = order.razorpayOrderId;
 			let amount = Number(order.total) * 100; // Convert to paise
 
 			if (!razorpayOrderId) {
-				setProcessingStep("Creating payment order...");
 				const response = await fetch("/api/payment/order", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
@@ -105,67 +111,12 @@ export default function RetryPaymentCard({
 				amount = data.amount;
 			}
 
-			setProcessingStep("Opening payment gateway...");
-
-			const options: RazorpayOptions = {
-				key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
-				amount,
-				currency: "INR",
-				name: "Cocoa Comaa",
-				description: "Dessert Order Payment",
-				order_id: razorpayOrderId!,
-				image: "/logo.png",
-				remember_customer: true,
-				handler: async (response: RazorpayResponse) => {
-					try {
-						setProcessingStep("Verifying payment...");
-
-						const verifyResponse = await fetch("/api/orders/verify", {
-							method: "POST",
-							headers: { "Content-Type": "application/json" },
-							body: JSON.stringify({
-								razorpay_order_id: response.razorpay_order_id,
-								razorpay_payment_id: response.razorpay_payment_id,
-								razorpay_signature: response.razorpay_signature,
-								orderId: order.id,
-								orderType: order.orderType,
-							}),
-						});
-
-						if (verifyResponse.ok) {
-							setProcessingStep("Payment confirmed!");
-							toast.success("Payment successful! Order confirmed.");
-							window.location.reload();
-						} else {
-							throw new Error("Payment verification failed");
-						}
-					} catch (error) {
-						console.error("Payment verification error:", error);
-						toast.error("Payment verification failed. Please contact support.");
-						setIsProcessing(false);
-						setProcessingStep("");
-					}
-				},
-				modal: {
-					ondismiss: () => {
-						setIsProcessing(false);
-						setProcessingStep("");
-					},
-				},
-				prefill: {
-					name: order.user.name || "",
-					email: order.user.email || "",
-					contact: order.user.phone || "",
-				},
-				theme: { color: "#551303" },
-			};
-
-			openCheckout(options);
+			if (razorpayOrderId) {
+				payExistingOrder(order.id, razorpayOrderId, amount);
+			}
 		} catch (error) {
 			console.error("Retry payment error:", error);
 			toast.error("Failed to initiate payment. Please try again.");
-			setIsProcessing(false);
-			setProcessingStep("");
 		}
 	};
 
@@ -239,36 +190,39 @@ export default function RetryPaymentCard({
 
 	// Show normal payment retry card
 	return (
-		<Card className="border-orange-200 bg-orange-50">
+		<Card className="border-orange-200 bg-orange-50 overflow-hidden shadow-sm">
 			<ProcessingOverlay
 				isProcessing={isProcessing}
-				stepDescription={processingStep}
+				stepDescription={stepDescription}
 			/>
-			<CardHeader className="pb-3">
-				<CardTitle className="flex items-center gap-2 text-orange-800 text-base">
-					<CreditCard className="h-5 w-5" />
+			<CardHeader className="pb-3 border-b border-orange-200/50 bg-orange-100/50">
+				<CardTitle className="flex items-center gap-2 text-orange-800 text-base sm:text-lg">
+					<CreditCard className="h-5 w-5 shrink-0" />
 					Payment Required
 				</CardTitle>
 			</CardHeader>
-			<CardContent className="space-y-3">
-				<div className="text-sm text-orange-700">
+			<CardContent className="space-y-4 pt-4">
+				<div className="text-sm sm:text-base text-orange-800/90 leading-relaxed">
 					<p>Your payment is pending. Complete it to confirm your order.</p>
-					<p className="font-semibold mt-1">
-						Total: {formatCurrency(Number(order.total))}
-					</p>
+					<div className="mt-4 p-3 bg-white/60 rounded-lg flex items-center justify-between">
+						<span className="font-medium text-orange-900">Total Amount</span>
+						<span className="font-bold text-lg text-orange-950">
+							{formatCurrency(Number(order.total))}
+						</span>
+					</div>
 				</div>
-				<button
+				<Button
 					type="button"
-					className="w-full bg-orange-600 hover:bg-orange-700 text-white font-medium py-2.5 px-4 rounded-md transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed cursor-pointer"
+					className="w-full sm:text-base h-11 sm:h-12 bg-orange-600 hover:bg-orange-700 text-white font-medium shadow-sm transition-all active:scale-[0.98] mt-2"
 					onClick={handleRetryPayment}
 					disabled={isPostalOrderDisabled || isSettingsLoading || isProcessing}
 				>
 					{isSettingsLoading
-						? "Checking..."
+						? "Checking Availability..."
 						: isProcessing
-							? "Processing..."
-							: "Retry Payment"}
-				</button>
+							? "Processing Payment..."
+							: "Pay Now to Confirm Order"}
+				</Button>
 			</CardContent>
 		</Card>
 	);
