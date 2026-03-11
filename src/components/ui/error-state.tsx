@@ -286,6 +286,8 @@ export function getToastErrorMessage(error: unknown, context?: string): string {
 				"Couldn't register for the workshop. Please try again.",
 			"retry-payment":
 				"Couldn't initiate payment. Please try again or contact support.",
+			"validate-cart":
+				"Couldn't verify item availability. Proceeding with checkout — any issues will be caught during order creation.",
 		};
 
 		if (contextMessages[context]) {

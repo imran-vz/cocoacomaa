@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, CreditCard } from "lucide-react";
+import { AlertTriangle, CreditCard, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 import { ProcessingOverlay } from "@/components/checkout/processing-overlay";
@@ -33,7 +33,14 @@ export default function RetryPaymentCard({
 		};
 	};
 }) {
-	const { stepDescription, isProcessing, payExistingOrder } = usePaymentFlow({
+	const {
+		stepDescription,
+		isProcessing,
+		payExistingOrder,
+		hasScriptError,
+		scriptErrorMessage,
+		retryScriptLoad,
+	} = usePaymentFlow({
 		orderType: order.orderType as OrderType,
 		prefill: {
 			name: order.user.name || "",
@@ -213,17 +220,51 @@ export default function RetryPaymentCard({
 						</span>
 					</div>
 				</div>
+
+				{/* Razorpay Script Load Error */}
+				{hasScriptError && (
+					<div className="p-3 rounded-lg border border-red-200 bg-red-50 flex items-start gap-2.5">
+						<AlertTriangle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+						<div className="flex-1 min-w-0">
+							<p className="text-sm text-red-700 font-medium">
+								Payment gateway unavailable
+							</p>
+							<p className="text-xs text-red-600/80 mt-0.5">
+								{scriptErrorMessage ||
+									"Unable to load the payment gateway. Please check your connection."}
+							</p>
+							<Button
+								type="button"
+								variant="outline"
+								size="sm"
+								className="mt-2 h-7 text-xs gap-1.5"
+								onClick={retryScriptLoad}
+							>
+								<RefreshCw className="h-3 w-3" />
+								Try Again
+							</Button>
+						</div>
+					</div>
+				)}
+
 				<Button
 					type="button"
 					className="w-full sm:text-base h-11 sm:h-12 bg-orange-600 hover:bg-orange-700 text-white font-medium shadow-sm transition-all active:scale-[0.98] mt-2"
 					onClick={handleRetryPayment}
-					disabled={isPostalOrderDisabled || isSettingsLoading || isProcessing}
+					disabled={
+						isPostalOrderDisabled ||
+						isSettingsLoading ||
+						isProcessing ||
+						hasScriptError
+					}
 				>
 					{isSettingsLoading
 						? "Checking Availability..."
-						: isProcessing
-							? "Processing Payment..."
-							: "Pay Now to Confirm Order"}
+						: hasScriptError
+							? "Payment Unavailable"
+							: isProcessing
+								? "Processing Payment..."
+								: "Pay Now to Confirm Order"}
 				</Button>
 			</CardContent>
 		</Card>

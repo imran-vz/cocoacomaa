@@ -27,7 +27,9 @@ interface CartState {
 type CartAction =
 	| { type: "ADD_ITEM"; payload: CartItem }
 	| { type: "REMOVE_ITEM"; payload: number }
+	| { type: "REMOVE_ITEMS"; payload: number[] }
 	| { type: "UPDATE_QUANTITY"; payload: { id: number; quantity: number } }
+	| { type: "UPDATE_PRICE"; payload: { id: number; price: number } }
 	| { type: "CLEAR_CART" }
 	| { type: "CLEAR_NON_SPECIALS" }
 	| { type: "RESTORE_CART"; payload: CartState };
@@ -36,6 +38,10 @@ const initialState: CartState = {
 	items: [],
 	total: 0,
 };
+
+function recalculateTotal(items: CartItem[]): number {
+	return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+}
 
 function cartReducer(state: CartState, action: CartAction): CartState {
 	switch (action.type) {
@@ -74,6 +80,24 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 			};
 		}
 
+		case "REMOVE_ITEMS": {
+			const idsToRemove = new Set(action.payload);
+			if (idsToRemove.size === 0) return state;
+
+			const remainingItems = state.items.filter(
+				(item) => !idsToRemove.has(item.id),
+			);
+
+			// Short-circuit if nothing was actually removed
+			if (remainingItems.length === state.items.length) return state;
+
+			return {
+				...state,
+				items: remainingItems,
+				total: recalculateTotal(remainingItems),
+			};
+		}
+
 		case "UPDATE_QUANTITY": {
 			const item = state.items.find((item) => item.id === action.payload.id);
 			if (!item) return state;
@@ -88,6 +112,23 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 						: item,
 				),
 				total: state.total + item.price * quantityDiff,
+			};
+		}
+
+		case "UPDATE_PRICE": {
+			const item = state.items.find((item) => item.id === action.payload.id);
+			if (!item) return state;
+
+			const updatedItems = state.items.map((item) =>
+				item.id === action.payload.id
+					? { ...item, price: action.payload.price }
+					: item,
+			);
+
+			return {
+				...state,
+				items: updatedItems,
+				total: recalculateTotal(updatedItems),
 			};
 		}
 
@@ -123,7 +164,9 @@ const CartContext = createContext<{
 	total: number;
 	addItem: (item: CartItem) => void;
 	removeItem: (id: number) => void;
+	removeItems: (ids: number[]) => void;
 	updateQuantity: (id: number, quantity: number) => void;
+	updatePrice: (id: number, price: number) => void;
 	clearCart: () => void;
 	clearNonSpecials: () => void;
 } | null>(null);
@@ -134,8 +177,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
 	useEffect(() => {
 		const savedCart = localStorage.getItem("cart");
 		if (savedCart) {
-			const cartState = JSON.parse(savedCart) as CartState;
-			dispatch({ type: "RESTORE_CART", payload: cartState });
+			try {
+				const cartState = JSON.parse(savedCart) as CartState;
+				dispatch({ type: "RESTORE_CART", payload: cartState });
+			} catch {
+				// If localStorage is corrupted, start fresh
+				localStorage.removeItem("cart");
+			}
 		}
 	}, []);
 
@@ -151,8 +199,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
 		dispatch({ type: "REMOVE_ITEM", payload: id });
 	}, []);
 
+	const removeItems = useCallback((ids: number[]) => {
+		dispatch({ type: "REMOVE_ITEMS", payload: ids });
+	}, []);
+
 	const updateQuantity = useCallback((id: number, quantity: number) => {
 		dispatch({ type: "UPDATE_QUANTITY", payload: { id, quantity } });
+	}, []);
+
+	const updatePrice = useCallback((id: number, price: number) => {
+		dispatch({ type: "UPDATE_PRICE", payload: { id, price } });
 	}, []);
 
 	const clearCart = useCallback(() => {
@@ -169,7 +225,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
 			total: state.total,
 			addItem,
 			removeItem,
+			removeItems,
 			updateQuantity,
+			updatePrice,
 			clearCart,
 			clearNonSpecials,
 		}),
@@ -178,7 +236,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
 			state.total,
 			addItem,
 			removeItem,
+			removeItems,
 			updateQuantity,
+			updatePrice,
 			clearCart,
 			clearNonSpecials,
 		],

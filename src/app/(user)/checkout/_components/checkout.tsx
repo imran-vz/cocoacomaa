@@ -3,7 +3,7 @@
 import { useForm, useStore } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { AlertTriangle, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -27,6 +27,7 @@ import {
 	useCreateAddress,
 	useDeleteAddress,
 } from "@/hooks/use-addresses";
+import { useCartValidation } from "@/hooks/use-cart-validation";
 import { useCakeOrderSettings } from "@/hooks/use-order-settings";
 import { usePostalOrderSettings } from "@/hooks/use-postal-order-settings";
 import { useRazorpay } from "@/hooks/use-razorpay";
@@ -193,6 +194,11 @@ export default function CheckoutPage({
 	const [isPhoneEditDialogOpen, setIsPhoneEditDialogOpen] = useState(false);
 	const { areOrdersAllowed: ordersAllowed, settings } = useCakeOrderSettings();
 	const { settings: specialsSettings } = useSpecialsSettings();
+	const {
+		validateCart,
+		resolveIssues,
+		isValidating: isValidatingCart,
+	} = useCartValidation();
 
 	// Fetch desserts to get lead time information
 	const { data: desserts = [] } = useQuery({
@@ -292,6 +298,29 @@ export default function CheckoutPage({
 
 			try {
 				setIsProcessing(true);
+
+				// ─── Validate cart items before creating order ─────────
+				// Check that all items are still available and prices haven't changed.
+				// Skip validation if we already have an existing order (retry flow).
+				if (!existingOrderId) {
+					setProcessingStep("Checking item availability...");
+					const isCartValid = await validateCart();
+					if (!isCartValid) {
+						// Cart has issues — auto-resolve by removing invalid items
+						const removedCount = resolveIssues();
+						if (removedCount > 0) {
+							setIsProcessing(false);
+							setProcessingStep("");
+							// Go back to step 1 so the user sees the updated cart
+							setStep(1);
+							return;
+						}
+						// If nothing was removed but validation failed (edge case), just stop
+						setIsProcessing(false);
+						setProcessingStep("");
+						return;
+					}
+				}
 
 				// Update phone number if it has changed and field was enabled
 				if (isPhoneFieldEnabled && value.phone !== originalPhone) {
@@ -495,7 +524,14 @@ export default function CheckoutPage({
 	const finalTotal = Number(total) + deliveryCost;
 
 	// Load Razorpay script using shared hook
-	const { openCheckout: openRazorpayCheckout } = useRazorpay();
+	const {
+		openCheckout: openRazorpayCheckout,
+		hasError: razorpayLoadError,
+		errorMessage: razorpayErrorMessage,
+		retryLoad: retryRazorpayLoad,
+		isLoading: razorpayLoading,
+		isReady: razorpayReady,
+	} = useRazorpay();
 
 	// Check for existing order ID in URL params
 	useEffect(() => {
@@ -649,6 +685,45 @@ export default function CheckoutPage({
 		orderId: string,
 		razorpayOrderData: RazorpayOrderData,
 	) => {
+		// ── Guard: Razorpay script not loaded ──────────────────────
+		if (razorpayLoadError) {
+			toast.error(
+				razorpayErrorMessage ||
+					"Payment gateway failed to load. Please refresh the page and try again.",
+				{ duration: 8000 },
+			);
+			setIsProcessing(false);
+			setProcessingStep("");
+			return;
+		}
+
+		if (!razorpayReady) {
+			setProcessingStep("Waiting for payment gateway...");
+			// Give it a couple of seconds — the script may still be loading
+			await new Promise<void>((resolve) => {
+				const checkInterval = setInterval(() => {
+					if (window.Razorpay) {
+						clearInterval(checkInterval);
+						resolve();
+					}
+				}, 500);
+				// Timeout after 5 seconds
+				setTimeout(() => {
+					clearInterval(checkInterval);
+					resolve();
+				}, 5000);
+			});
+
+			if (!window.Razorpay) {
+				toast.error(
+					"Payment gateway could not be loaded. Please refresh the page and try again.",
+				);
+				setIsProcessing(false);
+				setProcessingStep("");
+				return;
+			}
+		}
+
 		setProcessingStep("Opening payment gateway...");
 
 		const options: RazorpayOptions = {
@@ -664,19 +739,33 @@ export default function CheckoutPage({
 				try {
 					setProcessingStep("Verifying payment...");
 
-					// Verify payment
-					const verifyResponse = await fetch("/api/orders/verify", {
-						method: "POST",
-						headers: {
-							"Content-Type": "application/json",
+					// Verify payment with retry logic (verification is idempotent)
+					const { fetchWithRetry } = await import("@/lib/fetch-with-retry");
+					const verifyResponse = await fetchWithRetry(
+						"/api/orders/verify",
+						{
+							method: "POST",
+							headers: {
+								"Content-Type": "application/json",
+							},
+							body: JSON.stringify({
+								razorpay_order_id: response.razorpay_order_id,
+								razorpay_payment_id: response.razorpay_payment_id,
+								razorpay_signature: response.razorpay_signature,
+								orderId,
+							}),
 						},
-						body: JSON.stringify({
-							razorpay_order_id: response.razorpay_order_id,
-							razorpay_payment_id: response.razorpay_payment_id,
-							razorpay_signature: response.razorpay_signature,
-							orderId,
-						}),
-					});
+						{
+							maxRetries: 2,
+							baseDelay: 1000,
+							maxDelay: 5000,
+							timeout: 20000,
+							retryMutations: true, // POST but idempotent (signature check)
+							onRetry: (attempt) => {
+								setProcessingStep(`Verifying payment (retry ${attempt})...`);
+							},
+						},
+					);
 
 					if (verifyResponse.ok) {
 						setProcessingStep("Finalizing order...");
@@ -699,7 +788,20 @@ export default function CheckoutPage({
 					}
 				} catch (error) {
 					console.error("Payment verification error:", error);
-					toast.error(getToastErrorMessage(error, "verify-payment"));
+
+					// Provide more helpful messaging for network errors
+					const isNetworkError =
+						error instanceof TypeError && error.message === "Failed to fetch";
+
+					if (isNetworkError) {
+						toast.error(
+							"We couldn't verify your payment due to a connection issue. Don't worry — if payment was deducted, it will be confirmed automatically via our payment provider, or refunded within 5-7 business days.",
+							{ duration: 10000 },
+						);
+					} else {
+						toast.error(getToastErrorMessage(error, "verify-payment"));
+					}
+
 					setIsProcessing(false);
 					setProcessingStep("");
 				}
@@ -1002,6 +1104,35 @@ export default function CheckoutPage({
 
 							{/* Desktop Pay Button (always visible under step 2 on desktop) */}
 							<div className="hidden lg:block mt-8 pt-6 border-t">
+								{/* Razorpay Script Load Error */}
+								{razorpayLoadError && (
+									<div className="mb-4 p-3 rounded-lg border border-destructive/30 bg-destructive/5 flex items-start gap-2.5">
+										<AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+										<div className="flex-1 min-w-0">
+											<p className="text-sm text-destructive font-medium">
+												Payment gateway unavailable
+											</p>
+											<p className="text-xs text-muted-foreground mt-0.5">
+												{razorpayErrorMessage ||
+													"Unable to load the payment gateway. Please check your connection."}
+											</p>
+											<Button
+												type="button"
+												variant="outline"
+												size="sm"
+												className="mt-2 h-7 text-xs"
+												onClick={retryRazorpayLoad}
+											>
+												Try Again
+											</Button>
+										</div>
+									</div>
+								)}
+								{razorpayLoading && !razorpayReady && !razorpayLoadError && (
+									<p className="text-xs text-muted-foreground text-center mb-3">
+										Loading payment gateway...
+									</p>
+								)}
 								<form.Subscribe
 									selector={(state) => state.isSubmitting}
 									// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
@@ -1013,6 +1144,8 @@ export default function CheckoutPage({
 												!isOrderingAllowed ||
 												formIsSubmitting ||
 												isProcessing ||
+												isValidatingCart ||
+												razorpayLoadError ||
 												!isStep1Valid ||
 												!isStep2Valid ||
 												(isPostalBrownies && addressMode === "new") ||
@@ -1023,15 +1156,19 @@ export default function CheckoutPage({
 										>
 											{!isOrderingAllowed
 												? "Orders Unavailable"
-												: formIsSubmitting || isProcessing
-													? "Processing..."
-													: !isStep1Valid
-														? "Complete Contact Info"
-														: isPostalBrownies && addressMode === "new"
-															? "Create Address First"
-															: isPostalBrownies && !selectedAddressId
-																? "Select Address to Continue"
-																: "Place Order & Pay"}
+												: razorpayLoadError
+													? "Payment Unavailable"
+													: isValidatingCart
+														? "Checking Availability..."
+														: formIsSubmitting || isProcessing
+															? "Processing..."
+															: !isStep1Valid
+																? "Complete Contact Info"
+																: isPostalBrownies && addressMode === "new"
+																	? "Create Address First"
+																	: isPostalBrownies && !selectedAddressId
+																		? "Select Address to Continue"
+																		: "Place Order & Pay"}
 										</Button>
 									)}
 								/>
@@ -1128,6 +1265,8 @@ export default function CheckoutPage({
 						disabled={
 							!isOrderingAllowed ||
 							isProcessing ||
+							isValidatingCart ||
+							razorpayLoadError ||
 							!isStep1Valid ||
 							!isStep2Valid ||
 							(isPostalBrownies && addressMode === "new") ||
@@ -1135,13 +1274,19 @@ export default function CheckoutPage({
 						}
 						size="lg"
 						className="flex-1 max-w-50 cursor-pointer shadow-md active:scale-95 transition-transform"
-						variant={!isOrderingAllowed ? "secondary" : "default"}
+						variant={
+							!isOrderingAllowed || razorpayLoadError ? "secondary" : "default"
+						}
 					>
 						{!isOrderingAllowed
 							? "Unavailable"
-							: isProcessing
-								? "Processing..."
-								: "Place Order & Pay"}
+							: razorpayLoadError
+								? "Payment Unavailable"
+								: isValidatingCart
+									? "Checking..."
+									: isProcessing
+										? "Processing..."
+										: "Place Order & Pay"}
 					</Button>
 				</div>
 			</div>
