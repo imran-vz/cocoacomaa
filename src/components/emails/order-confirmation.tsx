@@ -89,33 +89,33 @@ export default function OrderConfirmationEmail({
 			</Preview>
 			<Tailwind>
 				<Body className="bg-gray-50 font-sans">
-					<Container className="mx-auto py-8 px-4 max-w-2xl bg-white">
+					<Container className="mx-auto py-8 px-4 max-w-2xl bg-white rounded-xl shadow-sm border border-gray-100 my-8">
 						{/* Header */}
 						<Section className="text-center mb-8">
-							<Heading className="text-3xl font-bold text-amber-800 mb-2">
+							<Heading className="text-4xl font-bold text-[#4B2E1E] mb-2 font-serif">
 								Cocoa Comaa
 							</Heading>
-							<Text className="text-gray-600 text-lg mb-0">
+							<Text className="text-gray-500 mb-0 tracking-wide uppercase text-sm">
 								Desserts & Delights
 							</Text>
 						</Section>
 
 						{/* Confirmation Banner */}
-						<Section className="bg-green-50 border-2 border-green-500 rounded-lg p-6 text-center mb-8">
-							<Heading className="text-2xl font-bold text-green-700 mb-2">
+						<Section className="bg-amber-50 border border-amber-200 rounded-xl p-8 text-center mb-8">
+							<Heading className="text-2xl font-bold text-amber-900 mb-2">
 								🎉 Order Confirmed!
 							</Heading>
-							<Text className="text-gray-700 text-lg mb-0">
+							<Text className="text-amber-800 text-lg mb-0">
 								Thank you for your order, {customerName}!
 							</Text>
 						</Section>
 
 						{/* Order Details */}
-						<Section className="mb-8">
-							<Heading className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-amber-800">
+						<Section className="mb-8 px-4">
+							<Heading className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
 								Order Details
 							</Heading>
-							<div className="bg-gray-50 p-4 rounded-lg">
+							<div className="bg-gray-50 p-5 rounded-xl text-sm">
 								<Row className="mb-2">
 									<Column>
 										<Text className="font-semibold text-gray-700 mb-1">
@@ -168,13 +168,13 @@ export default function OrderConfirmationEmail({
 						</Section>
 
 						{/* Order Items */}
-						<Section className="mb-8">
-							<Heading className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-amber-800">
+						<Section className="mb-8 px-4">
+							<Heading className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
 								Order Items
 							</Heading>
-							<div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+							<div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden text-sm">
 								{/* Table Header */}
-								<div className="bg-amber-800 text-white">
+								<div className="bg-[#4B2E1E] text-white">
 									<Row className="p-3">
 										<Column className="font-semibold">Item</Column>
 										<Column className="font-semibold text-center w-16">
@@ -251,14 +251,14 @@ export default function OrderConfirmationEmail({
 									)}
 
 									{/* Grand Total Row */}
-									<Row className="p-4 border-t-2 border-amber-800">
+									<Row className="p-4 border-t-2 border-[#4B2E1E]">
 										<Column className="text-right" colSpan={3}>
-											<Text className="text-lg font-semibold text-gray-800 mb-0">
+											<Text className="text-base font-semibold text-gray-800 mb-0">
 												Grand Total:
 											</Text>
 										</Column>
 										<Column className="text-right w-24">
-											<Text className="text-xl font-bold text-amber-800 mb-0">
+											<Text className="text-lg font-bold text-[#4B2E1E] mb-0">
 												{formatCurrency(totalAmount)}
 											</Text>
 										</Column>
@@ -269,11 +269,11 @@ export default function OrderConfirmationEmail({
 
 						{/* Notes Section */}
 						{orderDetails.notes && (
-							<Section className="mb-8">
-								<Heading className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-amber-800">
+							<Section className="mb-8 px-4">
+								<Heading className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
 									{isPostalOrder ? "Delivery Instructions" : "Special Message"}
 								</Heading>
-								<div className="bg-gray-50 p-4 rounded-lg">
+								<div className="bg-gray-50 p-5 rounded-xl text-sm">
 									<Text className="text-gray-700 italic mb-0">
 										"{orderDetails.notes}"
 									</Text>
@@ -283,11 +283,11 @@ export default function OrderConfirmationEmail({
 
 						{/* Pickup Information (for non-postal orders) */}
 						{!isPostalOrder && (
-							<Section className="mb-8">
-								<Heading className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-amber-800">
+							<Section className="mb-8 px-4">
+								<Heading className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
 									Pickup Information
 								</Heading>
-								<div className="bg-gray-50 p-4 rounded-lg">
+								<div className="bg-gray-50 p-5 rounded-xl text-sm">
 									<Text className="font-semibold text-gray-800 mb-2">
 										Cocoa Comaa
 									</Text>
@@ -307,11 +307,11 @@ export default function OrderConfirmationEmail({
 
 						{/* Postal Brownies Care Instructions */}
 						{isPostalOrder && (
-							<Section className="mb-8">
-								<Heading className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-amber-800">
+							<Section className="mb-8 px-4">
+								<Heading className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
 									📦 Postal Brownies Care Instructions
 								</Heading>
-								<div className="bg-gradient-to-r from-amber-50 to-orange-50 p-4 rounded-lg border border-amber-200">
+								<div className="bg-amber-50 p-5 rounded-xl border border-amber-100 text-sm">
 									<Text className="text-gray-700 mb-2 font-medium">
 										🍫 Upon Delivery:
 									</Text>
@@ -336,11 +336,11 @@ export default function OrderConfirmationEmail({
 						)}
 
 						{/* What's Next */}
-						<Section className="mb-8">
-							<Heading className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-amber-800">
+						<Section className="mb-8 px-4">
+							<Heading className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
 								What's Next?
 							</Heading>
-							<div className="bg-gray-50 p-4 rounded-lg">
+							<div className="bg-gray-50 p-5 rounded-xl text-sm">
 								{isPostalOrder ? (
 									<>
 										<Text className="text-gray-700 mb-2">
@@ -382,57 +382,57 @@ export default function OrderConfirmationEmail({
 						</Section>
 
 						{/* Contact Information */}
-						<Section className="mb-8">
-							<Heading className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-amber-800">
+						<Section className="mb-8 px-4">
+							<Heading className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
 								Need Help?
 							</Heading>
-							<div className="bg-gray-50 p-4 rounded-lg">
-								<Text className="text-gray-700 mb-2">
+							<div className="bg-gray-50 p-5 rounded-xl text-sm">
+								<Text className="text-gray-600 mb-2">
 									📞 Call us: {process.env.NEXT_PUBLIC_BUSINESS_PHONE}
 								</Text>
-								<Text className="text-gray-700 mb-2">
+								<Text className="text-gray-600 mb-2">
 									📧 Email us:{" "}
 									<Link
 										href="mailto:contact@cocoacomaa.com"
-										className="text-blue-600 no-underline"
+										className="text-amber-700 hover:underline"
 									>
 										contact@cocoacomaa.com
 									</Link>
 								</Text>
-								<Text className="text-gray-700 mb-2">
+								<Text className="text-gray-600 mb-2">
 									💬 WhatsApp:{" "}
 									<Link
 										href="https://wa.me/918431873579"
-										className="text-green-600 no-underline"
+										className="text-amber-700 hover:underline"
 									>
 										Chat with us
 									</Link>
 								</Text>
-								<Text className="text-gray-700 mb-0">
+								<Text className="text-gray-600 mb-0">
 									⏰ Available: Wednesday to Sunday, 9 AM - 6 PM IST
 								</Text>
 							</div>
 						</Section>
 
 						{/* Footer */}
-						<Section className="text-center pt-6 border-t border-gray-200">
-							<Text className="text-amber-800 text-lg font-semibold mb-2">
-								Thank you for choosing Cocoa Comaa! 🍰
+						<Section className="text-center pt-8 border-t border-gray-100">
+							<Text className="text-[#4B2E1E] text-lg font-serif italic mb-2">
+								Thank you for choosing Cocoa Comaa!
 							</Text>
-							<Text className="text-gray-600 text-sm mb-4">
+							<Text className="text-gray-500 text-sm mb-4">
 								Follow us on{" "}
 								<Link
 									href="https://www.instagram.com/cocoa_comaa/"
-									className="text-pink-600 no-underline"
+									className="text-amber-700 hover:underline"
 								>
 									Instagram @cocoa_comaa
 								</Link>
 							</Text>
 						</Section>
 
-						<Hr className="border-gray-300 my-6" />
-						<Text className="text-center text-gray-500 text-xs mb-0">
-							© 2024 Cocoa Comaa. All rights reserved.
+						<Hr className="border-gray-100 my-6 mx-4" />
+						<Text className="text-center text-gray-400 text-xs mb-4">
+							© {new Date().getFullYear()} Cocoa Comaa. All rights reserved.
 						</Text>
 					</Container>
 				</Body>
