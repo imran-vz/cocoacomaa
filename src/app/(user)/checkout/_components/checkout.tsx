@@ -3,6 +3,7 @@
 import { useForm, useStore } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -37,6 +38,7 @@ import {
 } from "@/lib/delivery-pricing";
 import { formatYearMonth } from "@/lib/format-timestamp";
 import { validatePhoneNumber } from "@/lib/phone-validation";
+import { cn } from "@/lib/utils";
 import type {
 	RazorpayOptions,
 	RazorpayOrderData,
@@ -419,6 +421,29 @@ export default function CheckoutPage({
 	);
 	const pickupDate = useStore(form.store, (state) => state.values.pickupDate);
 	const pickupTime = useStore(form.store, (state) => state.values.pickupTime);
+	const nameValue = useStore(form.store, (state) => state.values.name);
+	const emailValue = useStore(form.store, (state) => state.values.email);
+	const phoneValue = useStore(form.store, (state) => state.values.phone);
+
+	// Wizard step state
+	const [step, setStep] = useState<1 | 2 | 3>(1);
+
+	// Step validation
+	const isStep1Valid =
+		nameValue &&
+		nameValue.length >= 2 &&
+		emailValue &&
+		emailValue.includes("@") &&
+		phoneValue &&
+		phoneValue.length >= 10;
+
+	// Note: For existing address, we just need an ID. For new address, it has to be created (which auto-selects).
+	// Therefore, as long as it's a postal order, they must have selected an address ID to proceed.
+	const isStep2Valid = isPostalBrownies
+		? !!selectedAddressId
+		: hasSpecials
+			? !!pickupDate
+			: !!(pickupDate && pickupTime);
 
 	// Calculate delivery cost and check for Bengaluru discount
 	const { deliveryCost, isDiscountApplied } = isPostalBrownies
@@ -730,10 +755,92 @@ export default function CheckoutPage({
 
 			<FadeIn
 				delay={0.1}
-				className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6 lg:gap-8"
+				className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-6 lg:gap-8"
 			>
-				{/* Customer Information */}
-				<Card className="order-2 lg:order-1">
+				{/* Wizard Progress Header (Mobile Only) */}
+				<div className="lg:hidden col-span-1 flex items-center justify-between px-1 mb-2">
+					<div className="flex flex-col items-center gap-1">
+						<div
+							className={cn(
+								"w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
+								step >= 1
+									? "bg-primary text-primary-foreground"
+									: "bg-muted text-muted-foreground",
+							)}
+						>
+							{step > 1 ? <Check className="w-3.5 h-3.5" /> : "1"}
+						</div>
+						<span
+							className={cn(
+								"text-[10px] uppercase font-semibold",
+								step >= 1 ? "text-primary" : "text-muted-foreground",
+							)}
+						>
+							Details
+						</span>
+					</div>
+					<div
+						className={cn(
+							"h-0.5 flex-1 mx-2",
+							step >= 2 ? "bg-primary" : "bg-muted",
+						)}
+					/>
+					<div className="flex flex-col items-center gap-1">
+						<div
+							className={cn(
+								"w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
+								step >= 2
+									? "bg-primary text-primary-foreground"
+									: "bg-muted text-muted-foreground",
+							)}
+						>
+							{step > 2 ? <Check className="w-3.5 h-3.5" /> : "2"}
+						</div>
+						<span
+							className={cn(
+								"text-[10px] uppercase font-semibold",
+								step >= 2 ? "text-primary" : "text-muted-foreground",
+							)}
+						>
+							{isPostalBrownies ? "Delivery" : "Pickup"}
+						</span>
+					</div>
+					<div
+						className={cn(
+							"h-0.5 flex-1 mx-2",
+							step >= 3 ? "bg-primary" : "bg-muted",
+						)}
+					/>
+					<div className="flex flex-col items-center gap-1">
+						<div
+							className={cn(
+								"w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
+								step >= 3
+									? "bg-primary text-primary-foreground"
+									: "bg-muted text-muted-foreground",
+							)}
+						>
+							3
+						</div>
+						<span
+							className={cn(
+								"text-[10px] uppercase font-semibold",
+								step >= 3 ? "text-primary" : "text-muted-foreground",
+							)}
+						>
+							Review
+						</span>
+					</div>
+				</div>
+
+				{/* Main Flow (Left/Center) */}
+				<Card
+					className={cn(
+						"order-2 lg:order-1",
+						"lg:col-span-7 xl:col-span-8",
+						step === 3 && "hidden lg:block", // Hide form column entirely on mobile step 3
+					)}
+				>
 					<CardContent className="pt-4 sm:pt-6">
 						<form
 							onSubmit={(e) => {
@@ -749,133 +856,240 @@ export default function CheckoutPage({
 								value={isPostalBrownies ? "postal-brownies" : "cake-orders"}
 							/>
 
-							{/* Contact Info Section */}
-							<ContactInfoForm
-								name={name}
-								email={email}
-								isPhoneFieldEnabled={isPhoneFieldEnabled}
-								isProcessing={isProcessing}
-								form={form}
-								hasSpecials={hasSpecials}
-								isPostalBrownies={isPostalBrownies}
-								onOpenPhoneEdit={() => setIsPhoneEditDialogOpen(true)}
-							/>
+							{/* Step 1: Contact Info */}
+							<div className={cn("space-y-4", step !== 1 && "hidden lg:block")}>
+								<div className="hidden lg:flex items-center gap-2 mb-4 pb-2 border-b">
+									<div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
+										1
+									</div>
+									<h2 className="text-lg font-semibold">Contact Information</h2>
+								</div>
 
-							{/* Address Fields - Only for postal brownies */}
-							{isPostalBrownies && (
-								<AddressSelector
+								<ContactInfoForm
+									name={name}
+									email={email}
+									isPhoneFieldEnabled={isPhoneFieldEnabled}
+									isProcessing={isProcessing}
 									form={form}
-									addressMode={addressMode}
-									addresses={addresses}
-									addressesLoading={addressesLoading}
-									isCreatingAddress={isCreatingAddress}
-									isDeletePending={deleteAddressMutation.isPending}
-									onCreateAddress={handleCreateAddress}
-									onDeleteAddress={handleDeleteAddress}
+									hasSpecials={hasSpecials}
+									isPostalBrownies={isPostalBrownies}
+									onOpenPhoneEdit={() => setIsPhoneEditDialogOpen(true)}
 								/>
-							)}
 
-							{/* Pickup Date Selection for Specials Orders */}
-							{!isPostalBrownies && hasSpecials && specialsSettings && (
-								<PickupScheduler
-									form={form}
-									hasSpecials={true}
-									specialsSettings={specialsSettings}
-									maxLeadTime={maxLeadTime}
-									pickupDate={pickupDate}
-									pickupTime={pickupTime}
-								/>
-							)}
-
-							{/* Pickup Date and Time - Only for non-postal, non-specials orders */}
-							{!isPostalBrownies && !hasSpecials && (
-								<PickupScheduler
-									form={form}
-									hasSpecials={false}
-									maxLeadTime={maxLeadTime}
-									pickupDate={pickupDate}
-									pickupTime={pickupTime}
-								/>
-							)}
-
-							<form.Subscribe
-								selector={(state) => state.isSubmitting}
-								// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
-								children={(formIsSubmitting) => (
+								{/* Mobile Continue Button */}
+								<div className="lg:hidden mt-6 pt-4 border-t">
 									<Button
-										type="submit"
-										className="w-full text-sm sm:text-base cursor-pointer"
+										type="button"
+										className="w-full"
+										disabled={!isStep1Valid}
+										onClick={() => {
+											document.documentElement.scrollIntoView({
+												behavior: "smooth",
+												block: "start",
+											});
+											setStep(2);
+										}}
+									>
+										Continue to {isPostalBrownies ? "Delivery" : "Pickup"}
+										<ChevronRight className="w-4 h-4 ml-1.5" />
+									</Button>
+								</div>
+							</div>
+
+							{/* Step 2: Fulfillment */}
+							<div className={cn("space-y-4", step !== 2 && "hidden lg:block")}>
+								<div className="hidden lg:flex items-center gap-2 mb-4 mt-8 pb-2 border-b">
+									<div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
+										2
+									</div>
+									<h2 className="text-lg font-semibold">
+										{isPostalBrownies
+											? "Delivery Information"
+											: "Pickup Details"}
+									</h2>
+								</div>
+
+								<div className="lg:hidden mb-4">
+									<Button
+										variant="ghost"
+										size="sm"
+										onClick={() => setStep(1)}
+										className="px-0 hover:bg-transparent text-muted-foreground hover:text-foreground"
+									>
+										<ChevronLeft className="w-4 h-4 mr-1" /> Back to Details
+									</Button>
+								</div>
+
+								{/* Address Fields - Only for postal brownies */}
+								{isPostalBrownies && (
+									<AddressSelector
+										form={form}
+										addressMode={addressMode}
+										addresses={addresses}
+										addressesLoading={addressesLoading}
+										isCreatingAddress={isCreatingAddress}
+										isDeletePending={deleteAddressMutation.isPending}
+										onCreateAddress={handleCreateAddress}
+										onDeleteAddress={handleDeleteAddress}
+									/>
+								)}
+
+								{/* Pickup Date Selection for Specials Orders */}
+								{!isPostalBrownies && hasSpecials && specialsSettings && (
+									<PickupScheduler
+										form={form}
+										hasSpecials={true}
+										specialsSettings={specialsSettings}
+										maxLeadTime={maxLeadTime}
+										pickupDate={pickupDate}
+										pickupTime={pickupTime}
+									/>
+								)}
+
+								{/* Pickup Date and Time - Only for non-postal, non-specials orders */}
+								{!isPostalBrownies && !hasSpecials && (
+									<PickupScheduler
+										form={form}
+										hasSpecials={false}
+										maxLeadTime={maxLeadTime}
+										pickupDate={pickupDate}
+										pickupTime={pickupTime}
+									/>
+								)}
+
+								{/* Mobile Continue to Review Button */}
+								<div className="lg:hidden mt-6 pt-4 border-t w-full space-y-3">
+									<Button
+										type="button"
+										className="w-full"
 										disabled={
-											!isOrderingAllowed ||
-											formIsSubmitting ||
-											isProcessing ||
+											!isStep2Valid ||
 											(isPostalBrownies && addressMode === "new") ||
 											(isPostalBrownies && !selectedAddressId)
 										}
-										size="lg"
-										variant={!isOrderingAllowed ? "secondary" : "default"}
+										onClick={() => {
+											document.documentElement.scrollIntoView({
+												behavior: "smooth",
+												block: "start",
+											});
+											setStep(3);
+										}}
 									>
-										{!isOrderingAllowed
-											? "Orders Unavailable"
-											: formIsSubmitting || isProcessing
-												? "Processing..."
-												: isPostalBrownies && addressMode === "new"
-													? "Create Address First"
-													: isPostalBrownies && !selectedAddressId
-														? "Select Address to Continue"
-														: "Place Order & Pay"}
+										Continue to Review Order
+										<ChevronRight className="w-4 h-4 ml-1.5" />
 									</Button>
-								)}
-							/>
 
-							{/* Helper text for postal brownies and order restrictions */}
-							{(isPostalBrownies || !isOrderingAllowed) && (
+									<div className="text-center">
+										{isPostalBrownies && addressMode === "new" ? (
+											<p className="text-xs text-muted-foreground">
+												Please create and save your address before proceeding
+											</p>
+										) : isPostalBrownies && !selectedAddressId ? (
+											<p className="text-xs text-muted-foreground">
+												Please select a delivery address to continue
+											</p>
+										) : null}
+									</div>
+								</div>
+							</div>
+
+							{/* Desktop Pay Button (always visible under step 2 on desktop) */}
+							<div className="hidden lg:block mt-8 pt-6 border-t">
+								<form.Subscribe
+									selector={(state) => state.isSubmitting}
+									// biome-ignore lint/correctness/noChildrenProp: TanStack Form API
+									children={(formIsSubmitting) => (
+										<Button
+											type="submit"
+											className="w-full text-base cursor-pointer"
+											disabled={
+												!isOrderingAllowed ||
+												formIsSubmitting ||
+												isProcessing ||
+												!isStep1Valid ||
+												!isStep2Valid ||
+												(isPostalBrownies && addressMode === "new") ||
+												(isPostalBrownies && !selectedAddressId)
+											}
+											size="lg"
+											variant={!isOrderingAllowed ? "secondary" : "default"}
+										>
+											{!isOrderingAllowed
+												? "Orders Unavailable"
+												: formIsSubmitting || isProcessing
+													? "Processing..."
+													: !isStep1Valid
+														? "Complete Contact Info"
+														: isPostalBrownies && addressMode === "new"
+															? "Create Address First"
+															: isPostalBrownies && !selectedAddressId
+																? "Select Address to Continue"
+																: "Place Order & Pay"}
+										</Button>
+									)}
+								/>
 								<div className="text-center mt-2">
-									{!isOrderingAllowed ? (
+									{!isOrderingAllowed && (
 										<p className="text-xs text-muted-foreground">
 											{!settings?.isActive
 												? "Cake order system is currently disabled"
 												: "Orders are only accepted on allowed days"}
 										</p>
-									) : isPostalBrownies && addressMode === "new" ? (
-										<p className="text-xs text-muted-foreground">
-											Please create and save your address before placing the
-											order
-										</p>
-									) : isPostalBrownies && !selectedAddressId ? (
-										<p className="text-xs text-muted-foreground">
-											Please select a delivery address to continue
-										</p>
-									) : null}
+									)}
 								</div>
-							)}
+							</div>
 						</form>
 					</CardContent>
 				</Card>
 
-				<OrderSummary
-					items={items.map((item) => ({ ...item, price: Number(item.price) }))}
-					desserts={desserts.map((d) => ({
-						id: d.id,
-						leadTimeDays: d.leadTimeDays,
-					}))}
-					total={Number(total)}
-					deliveryCost={deliveryCost}
-					isDiscountApplied={isDiscountApplied}
-					isPostalBrownies={isPostalBrownies}
-					hasSpecials={hasSpecials}
-					maxLeadTime={maxLeadTime}
-					specialsSettings={specialsSettings}
-					pickupDate={pickupDate}
-					pickupTime={pickupTime}
-					timeSlots={TIME_SLOTS}
-					selectedAddress={
-						isPostalBrownies && selectedAddressId
-							? addresses.find((addr) => addr.id === selectedAddressId) || null
-							: null
-					}
-					currentSlot={isPostalBrownies ? getCurrentActiveSlot() : null}
-				/>
+				<div
+					className={cn(
+						"order-1 lg:order-2",
+						"lg:col-span-5 xl:col-span-4",
+						step !== 3 && "hidden lg:block", // Hide summary column entirely on mobile step 1 and 2
+					)}
+				>
+					{step === 3 && (
+						<div className="lg:hidden mb-4 px-1">
+							<Button
+								variant="ghost"
+								size="sm"
+								onClick={() => setStep(2)}
+								className="px-0 hover:bg-transparent text-muted-foreground hover:text-foreground"
+							>
+								<ChevronLeft className="w-4 h-4 mr-1" /> Back to{" "}
+								{isPostalBrownies ? "Delivery" : "Pickup"}
+							</Button>
+						</div>
+					)}
+					<OrderSummary
+						items={items.map((item) => ({
+							...item,
+							price: Number(item.price),
+						}))}
+						desserts={desserts.map((d) => ({
+							id: d.id,
+							leadTimeDays: d.leadTimeDays,
+						}))}
+						total={Number(total)}
+						deliveryCost={deliveryCost}
+						isDiscountApplied={isDiscountApplied}
+						isPostalBrownies={isPostalBrownies}
+						hasSpecials={hasSpecials}
+						maxLeadTime={maxLeadTime}
+						specialsSettings={specialsSettings}
+						pickupDate={pickupDate}
+						pickupTime={pickupTime}
+						timeSlots={TIME_SLOTS}
+						selectedAddress={
+							isPostalBrownies && selectedAddressId
+								? addresses.find((addr) => addr.id === selectedAddressId) ||
+									null
+								: null
+						}
+						currentSlot={isPostalBrownies ? getCurrentActiveSlot() : null}
+					/>
+				</div>
 			</FadeIn>
 
 			{/* Phone Edit Dialog */}
@@ -886,12 +1100,18 @@ export default function CheckoutPage({
 				onSave={handlePhoneEditSave}
 			/>
 
-			{/* Sticky Mobile Pay Bar */}
-			<div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t shadow-lg p-3 z-40 lg:hidden">
+			{/* Sticky Mobile Pay Bar - Only visible on step 3 where we actually submit */}
+			<div
+				className={cn(
+					"fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t shadow-lg p-3 z-40 lg:hidden",
+					step === 3 ? "translate-y-0" : "translate-y-full",
+					"transition-transform duration-300 ease-in-out",
+				)}
+			>
 				<div className="container mx-auto flex items-center justify-between gap-3">
 					<div className="flex flex-col min-w-0">
-						<span className="text-xs text-muted-foreground">Total</span>
-						<span className="text-lg font-bold">
+						<span className="text-xs text-muted-foreground">Total to Pay</span>
+						<span className="text-lg font-bold text-primary">
 							₹{finalTotal.toLocaleString("en-IN")}
 						</span>
 					</div>
@@ -901,11 +1121,13 @@ export default function CheckoutPage({
 						disabled={
 							!isOrderingAllowed ||
 							isProcessing ||
+							!isStep1Valid ||
+							!isStep2Valid ||
 							(isPostalBrownies && addressMode === "new") ||
 							(isPostalBrownies && !selectedAddressId)
 						}
 						size="lg"
-						className="flex-1 max-w-[200px] cursor-pointer"
+						className="flex-1 max-w-50 cursor-pointer shadow-md active:scale-95 transition-transform"
 						variant={!isOrderingAllowed ? "secondary" : "default"}
 					>
 						{!isOrderingAllowed

@@ -48,7 +48,7 @@ export default function MyOrdersLoading() {
 									<Skeleton className="h-8 w-8 rounded-md shrink-0" />
 									<div className="w-full">
 										<Skeleton className="h-4 w-24 mb-2" />
-										<Skeleton className="h-3 w-full max-w-[180px]" />
+										<Skeleton className="h-3 w-full max-w-45" />
 									</div>
 								</div>
 							</div>
