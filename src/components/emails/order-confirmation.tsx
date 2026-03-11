@@ -55,8 +55,47 @@ function formatCurrency(amount: number): string {
 	}).format(amount);
 }
 
+const previewData: OrderConfirmationEmailProps["orderDetails"] = {
+	id: "ord_20260311_7H9K2Q1M",
+	total: "1860",
+	deliveryCost: "120",
+	createdAt: new Date("2026-03-10T14:30:00+05:30"),
+	notes:
+		"Please call on arrival. Leave package with security if no one answers.",
+	pickupDateTime: null,
+	user: {
+		name: "Aarav Sharma",
+		email: "aarav.sharma@example.com",
+	},
+	orderItems: [
+		{
+			itemName: "Classic Fudge Brownie Box (6 pcs)",
+			quantity: 2,
+			price: "420",
+		},
+		{
+			itemName: "Walnut Brownie Box (6 pcs)",
+			quantity: 1,
+			price: "480",
+		},
+		{
+			itemName: "Sea Salt Caramel Brownie Box (6 pcs)",
+			quantity: 1,
+			price: "420",
+		},
+	],
+	orderType: "postal-brownies",
+	address: {
+		addressLine1: "Flat 804, Maple Heights",
+		addressLine2: "17th Cross, HSR Layout Sector 2",
+		city: "Bengaluru",
+		state: "Karnataka",
+		zip: "560102",
+	},
+};
+
 export default function OrderConfirmationEmail({
-	orderDetails,
+	orderDetails = previewData,
 }: OrderConfirmationEmailProps) {
 	const customerName = orderDetails.user.name || "Customer";
 	const orderDate = formatDateTime(orderDetails.createdAt);
@@ -82,12 +121,12 @@ export default function OrderConfirmationEmail({
 
 	return (
 		<Html>
-			<Head />
 			<Preview>
 				🎉 Order Confirmed #{orderDetails.id.slice(-8).toUpperCase()} - Thank
 				you for choosing Cocoa Comaa!
 			</Preview>
 			<Tailwind>
+				<Head />
 				<Body className="bg-gray-50 font-sans">
 					<Container className="mx-auto py-8 px-4 max-w-2xl bg-white rounded-xl shadow-sm border border-gray-100 my-8">
 						{/* Header */}
@@ -176,14 +215,14 @@ export default function OrderConfirmationEmail({
 								{/* Table Header */}
 								<div className="bg-[#4B2E1E] text-white">
 									<Row className="p-3">
-										<Column className="font-semibold">Item</Column>
-										<Column className="font-semibold text-center w-16">
+										<Column className="font-semibold w-[55%]">Item</Column>
+										<Column className="font-semibold text-center w-[15%]">
 											Qty
 										</Column>
-										<Column className="font-semibold text-right w-24">
+										<Column className="font-semibold text-right w-[15%]">
 											Price
 										</Column>
-										<Column className="font-semibold text-right w-24">
+										<Column className="font-semibold text-right w-[15%]">
 											Total
 										</Column>
 									</Row>
@@ -192,25 +231,29 @@ export default function OrderConfirmationEmail({
 								{orderDetails.orderItems.map((item, index) => (
 									<div
 										key={`${item.itemName}-${item.quantity}-${item.price}-${index}`}
-										className="border-b border-gray-100 last:border-b-0"
+										className={
+											index === orderDetails.orderItems.length - 1
+												? ""
+												: "border-b border-gray-100"
+										}
 									>
 										<Row className="p-3">
-											<Column>
+											<Column className="w-[55%]">
 												<Text className="font-medium text-gray-800 mb-0">
 													{item.itemName}
 												</Text>
 											</Column>
-											<Column className="text-center w-16">
+											<Column className="text-center w-[15%]">
 												<Text className="text-gray-600 mb-0">
 													{item.quantity}
 												</Text>
 											</Column>
-											<Column className="text-right w-24">
+											<Column className="text-right w-[15%]">
 												<Text className="text-gray-600 mb-0">
 													{formatCurrency(Number(item.price))}
 												</Text>
 											</Column>
-											<Column className="text-right w-24">
+											<Column className="text-right w-[15%]">
 												<Text className="font-medium text-gray-800 mb-0">
 													{formatCurrency(Number(item.price) * item.quantity)}
 												</Text>
@@ -222,12 +265,12 @@ export default function OrderConfirmationEmail({
 								<div className="bg-gray-50">
 									{/* Subtotal Row */}
 									<Row className="p-3">
-										<Column className="text-right" colSpan={3}>
+										<Column className="text-right w-[85%]" colSpan={3}>
 											<Text className="text-base font-medium text-gray-700 mb-0">
 												Subtotal:
 											</Text>
 										</Column>
-										<Column className="text-right w-24">
+										<Column className="text-right w-[15%]">
 											<Text className="text-base font-medium text-gray-800 mb-0">
 												{formatCurrency(subtotalAmount)}
 											</Text>
@@ -237,12 +280,12 @@ export default function OrderConfirmationEmail({
 									{/* Delivery Cost Row (only for postal brownies) */}
 									{isPostalOrder && deliveryCostAmount > 0 && (
 										<Row className="p-3 border-t border-gray-200">
-											<Column className="text-right" colSpan={3}>
+											<Column className="text-right w-[85%]" colSpan={3}>
 												<Text className="text-base font-medium text-gray-700 mb-0">
 													Delivery:
 												</Text>
 											</Column>
-											<Column className="text-right w-24">
+											<Column className="text-right w-[15%]">
 												<Text className="text-base font-medium text-gray-800 mb-0">
 													{formatCurrency(deliveryCostAmount)}
 												</Text>
@@ -252,12 +295,12 @@ export default function OrderConfirmationEmail({
 
 									{/* Grand Total Row */}
 									<Row className="p-4 border-t-2 border-[#4B2E1E]">
-										<Column className="text-right" colSpan={3}>
+										<Column className="text-right w-[85%]" colSpan={3}>
 											<Text className="text-base font-semibold text-gray-800 mb-0">
 												Grand Total:
 											</Text>
 										</Column>
-										<Column className="text-right w-24">
+										<Column className="text-right w-[15%]">
 											<Text className="text-lg font-bold text-[#4B2E1E] mb-0">
 												{formatCurrency(totalAmount)}
 											</Text>
@@ -394,7 +437,7 @@ export default function OrderConfirmationEmail({
 									📧 Email us:{" "}
 									<Link
 										href="mailto:contact@cocoacomaa.com"
-										className="text-amber-700 hover:underline"
+										className="text-amber-700 underline"
 									>
 										contact@cocoacomaa.com
 									</Link>
@@ -403,7 +446,7 @@ export default function OrderConfirmationEmail({
 									💬 WhatsApp:{" "}
 									<Link
 										href="https://wa.me/918431873579"
-										className="text-amber-700 hover:underline"
+										className="text-amber-700 underline"
 									>
 										Chat with us
 									</Link>
@@ -423,7 +466,7 @@ export default function OrderConfirmationEmail({
 								Follow us on{" "}
 								<Link
 									href="https://www.instagram.com/cocoa_comaa/"
-									className="text-amber-700 hover:underline"
+									className="text-amber-700 underline"
 								>
 									Instagram @cocoa_comaa
 								</Link>

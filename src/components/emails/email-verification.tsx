@@ -20,10 +20,16 @@ interface EmailVerificationProps {
 	verificationUrl: string;
 }
 
+const previewProps: EmailVerificationProps = {
+	userName: "Ananya Rao",
+	verificationUrl:
+		"https://cocoacomaa.com/verify-email?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.preview-email-verification-token&email=ananya.rao%40gmail.com",
+};
+
 export default function EmailVerificationEmail({
 	userName,
 	verificationUrl,
-}: EmailVerificationProps) {
+}: EmailVerificationProps = previewProps) {
 	return (
 		<Html>
 			<Head />
@@ -119,7 +125,7 @@ export default function EmailVerificationEmail({
 									📧 Email us:{" "}
 									<Link
 										href="mailto:contact@cocoacomaa.com"
-										className="text-amber-700 hover:underline"
+										className="text-amber-700 underline"
 									>
 										contact@cocoacomaa.com
 									</Link>
@@ -128,7 +134,7 @@ export default function EmailVerificationEmail({
 									💬 WhatsApp:{" "}
 									<Link
 										href="https://wa.me/918431873579"
-										className="text-amber-700 hover:underline"
+										className="text-amber-700 underline"
 									>
 										Chat with us
 									</Link>
@@ -148,7 +154,7 @@ export default function EmailVerificationEmail({
 								Follow us on{" "}
 								<Link
 									href="https://www.instagram.com/cocoa_comaa/"
-									className="text-amber-700 hover:underline"
+									className="text-amber-700 underline"
 								>
 									Instagram @cocoa_comaa
 								</Link>

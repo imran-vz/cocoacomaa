@@ -20,9 +20,15 @@ interface PasswordResetProps {
 	resetUrl: string;
 }
 
+const previewProps: PasswordResetProps = {
+	userName: "Ananya Rao",
+	resetUrl:
+		"https://cocoacomaa.com/reset-password?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.preview-token-9f3b2d1a7c4e",
+};
+
 export default function PasswordResetEmail({
-	userName,
-	resetUrl,
+	userName = previewProps.userName,
+	resetUrl = previewProps.resetUrl,
 }: PasswordResetProps) {
 	return (
 		<Html>
@@ -113,7 +119,7 @@ export default function PasswordResetEmail({
 									📧 Email us:{" "}
 									<Link
 										href="mailto:contact@cocoacomaa.com"
-										className="text-amber-700 hover:underline"
+										className="text-amber-700 underline"
 									>
 										contact@cocoacomaa.com
 									</Link>
@@ -122,7 +128,7 @@ export default function PasswordResetEmail({
 									💬 WhatsApp:{" "}
 									<Link
 										href="https://wa.me/918431873579"
-										className="text-amber-700 hover:underline"
+										className="text-amber-700 underline"
 									>
 										Chat with us
 									</Link>
@@ -142,7 +148,7 @@ export default function PasswordResetEmail({
 								Follow us on{" "}
 								<Link
 									href="https://www.instagram.com/cocoa_comaa/"
-									className="text-amber-700 hover:underline"
+									className="text-amber-700 underline"
 								>
 									Instagram @cocoa_comaa
 								</Link>

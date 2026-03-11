@@ -139,8 +139,30 @@ function getStatusBannerText(status: string, customerName: string): string {
 	);
 }
 
+const previewData: OrderStatusUpdateEmailProps["orderDetails"] = {
+	id: "ord_2026_03_ccm_91f7a2d4",
+	status: "ready",
+	total: "2375",
+	createdAt: new Date("2026-03-10T09:15:00+05:30"),
+	notes:
+		"Please add a handwritten birthday note: 'Happy Birthday Aisha!'. Ring the bell at pickup.",
+	pickupDateTime: new Date("2026-03-12T18:30:00+05:30"),
+	orderType: "order",
+	user: {
+		name: "Aisha Khan",
+		email: "aisha.khan@example.com",
+	},
+	address: {
+		addressLine1: "Akshaya Gold Apartment, Flat B-302",
+		addressLine2: "Pipe Line Rd, VGS Layout, Ejipura",
+		city: "Bengaluru",
+		state: "Karnataka",
+		zip: "560047",
+	},
+};
+
 export default function OrderStatusUpdateEmail({
-	orderDetails,
+	orderDetails = previewData,
 }: OrderStatusUpdateEmailProps) {
 	const customerName = orderDetails.user.name || "Customer";
 	const statusInfo = getStatusInfo(orderDetails.status);
@@ -330,7 +352,7 @@ export default function OrderStatusUpdateEmail({
 									📧 Email us:{" "}
 									<Link
 										href="mailto:contact@cocoacomaa.com"
-										className="text-amber-700 hover:underline"
+										className="text-amber-700 underline"
 									>
 										contact@cocoacomaa.com
 									</Link>
@@ -339,7 +361,7 @@ export default function OrderStatusUpdateEmail({
 									💬 WhatsApp:{" "}
 									<Link
 										href="https://wa.me/918431873579"
-										className="text-amber-700 hover:underline"
+										className="text-amber-700 underline"
 									>
 										Chat with us
 									</Link>
@@ -359,7 +381,7 @@ export default function OrderStatusUpdateEmail({
 								Follow us on{" "}
 								<Link
 									href="https://www.instagram.com/cocoa_comaa/"
-									className="text-amber-700 hover:underline"
+									className="text-amber-700 underline"
 								>
 									Instagram @cocoa_comaa
 								</Link>
