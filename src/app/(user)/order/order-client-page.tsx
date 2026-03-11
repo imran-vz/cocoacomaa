@@ -6,7 +6,6 @@ import { CakeSlice, Egg, EggOff, Minus, Plus } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
 
 import { FadeIn } from "@/components/fade-in";
 import { StaggerContainer, StaggerItem } from "@/components/stagger-container";
@@ -20,6 +19,7 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from "@/components/ui/empty";
+import { ErrorState, getToastErrorMessage } from "@/components/ui/error-state";
 import OrderRestrictionBanner from "@/components/ui/order-restriction-banner";
 import {
 	Tooltip,
@@ -35,14 +35,8 @@ import { cn, formatCurrency } from "@/lib/utils";
 export const dynamic = "force-dynamic";
 
 const fetchDesserts = async () => {
-	try {
-		const { data } = await axios.get<Dessert[]>("/api/desserts");
-		return data;
-	} catch (error) {
-		console.error("Error fetching desserts:", error);
-		toast.error("Failed to load desserts");
-	} finally {
-	}
+	const { data } = await axios.get<Dessert[]>("/api/desserts");
+	return data;
 };
 
 export default function OrderClientPage({
@@ -59,10 +53,20 @@ export default function OrderClientPage({
 	>("all");
 	const { areOrdersAllowed: ordersAllowed } = useCakeOrderSettings();
 
-	const { data: desserts } = useQuery({
+	const {
+		data: desserts,
+		isError,
+		error,
+		refetch,
+		isRefetching,
+	} = useQuery({
 		queryKey: ["desserts"],
 		queryFn: fetchDesserts,
 		initialData: initialDesserts,
+		retry: 2,
+		meta: {
+			errorMessage: getToastErrorMessage(null, "load-desserts"),
+		},
 	});
 
 	// Filter desserts by category and sort by price (lowest to highest)
@@ -152,7 +156,25 @@ export default function OrderClientPage({
 					{/* Show order restriction banner */}
 					{!ordersAllowed && <OrderRestrictionBanner />}
 
-					{filteredDesserts?.length === 0 ? (
+					{isError && !desserts?.length ? (
+						<FadeIn delay={0.2}>
+							<ErrorState
+								title="Couldn't Load Desserts"
+								message="We had trouble loading the dessert menu. This is usually temporary."
+								isNetworkError={
+									error instanceof Error && error.message === "Network Error"
+								}
+								onRetry={() => refetch()}
+								isRetrying={isRefetching}
+								action={{
+									label: "Back to Home",
+									onClick: () => router.push("/"),
+									variant: "ghost",
+								}}
+								size="lg"
+							/>
+						</FadeIn>
+					) : filteredDesserts?.length === 0 ? (
 						<FadeIn delay={0.2}>
 							<Empty>
 								<EmptyHeader>
@@ -205,7 +227,7 @@ export default function OrderClientPage({
 												<div className="flex justify-between items-start gap-2">
 													<Tooltip>
 														<TooltipTrigger asChild>
-															<CardTitle className="text-lg sm:text-xl leading-tight truncate max-w-[200px]">
+															<CardTitle className="text-lg sm:text-xl leading-tight truncate max-w-50">
 																{dessert.name}
 															</CardTitle>
 														</TooltipTrigger>

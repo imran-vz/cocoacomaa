@@ -66,7 +66,7 @@ export function MyOrdersContent({ userOrders }: MyOrdersContentProps) {
 				<FadeIn delay={0.1}>
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mt-6">
 						{userOrders.map((order) => {
-							const orderType = order.orderType;
+							const orderType = order.orderType as string;
 							const isSpecial = orderType === "specials";
 							const isPostal = orderType === "postal-brownies";
 							const isWorkshop = orderType === "workshop";

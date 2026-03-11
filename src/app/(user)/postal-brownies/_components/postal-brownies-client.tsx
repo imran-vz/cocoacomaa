@@ -10,7 +10,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
-
 import { FadeIn } from "@/components/fade-in";
 import { StaggerContainer, StaggerItem } from "@/components/stagger-container";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +22,7 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from "@/components/ui/empty";
+import { getToastErrorMessage } from "@/components/ui/error-state";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -56,16 +56,10 @@ interface PostalCombo {
 }
 
 async function fetchPostalCombos() {
-	try {
-		const { data } = await axios.get<{ data: PostalCombo[] }>(
-			"/api/postal-combos",
-		);
-		return data.data;
-	} catch (error) {
-		console.error("Error fetching postal combos:", error);
-		toast.error("Failed to load postal combos");
-		return [];
-	}
+	const { data } = await axios.get<{ data: PostalCombo[] }>(
+		"/api/postal-combos",
+	);
+	return data.data;
 }
 
 export default function PostalBrowniesClient({
@@ -106,7 +100,7 @@ export default function PostalBrowniesClient({
 		onSubmit: async ({ value }) => {
 			if (!arePostalOrdersAllowed) {
 				toast.error(
-					"Postal brownie orders are not currently being accepted for this month",
+					"Postal brownie orders aren't open right now. Check back for the next ordering window!",
 				);
 				return;
 			}
@@ -139,7 +133,7 @@ export default function PostalBrowniesClient({
 				router.push("/checkout");
 			} catch (error) {
 				console.error("Error adding to cart:", error);
-				toast.error("Failed to add to cart. Please try again.");
+				toast.error(getToastErrorMessage(error, "add-to-cart"));
 			} finally {
 				setIsSubmitting(false);
 			}

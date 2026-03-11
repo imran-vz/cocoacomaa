@@ -26,6 +26,7 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from "@/components/ui/empty";
+import { ErrorState, getToastErrorMessage } from "@/components/ui/error-state";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useCart } from "@/lib/cart-context";
 import type { Dessert, SpecialsSettings } from "@/lib/db/schema";
@@ -34,26 +35,13 @@ import { cn, formatCurrency, formatDate } from "@/lib/utils";
 export const dynamic = "force-dynamic";
 
 const fetchSpecials = async () => {
-	try {
-		const { data } = await axios.get<Dessert[]>(
-			"/api/desserts?category=special",
-		);
-		return data;
-	} catch (error) {
-		console.error("Error fetching specials:", error);
-		toast.error("Failed to load specials");
-		return [];
-	}
+	const { data } = await axios.get<Dessert[]>("/api/desserts?category=special");
+	return data;
 };
 
 const fetchSpecialsSettings = async () => {
-	try {
-		const { data } = await axios.get("/api/specials-settings");
-		return data.settings as SpecialsSettings;
-	} catch (error) {
-		console.error("Error fetching specials settings:", error);
-		return null;
-	}
+	const { data } = await axios.get("/api/specials-settings");
+	return data.settings as SpecialsSettings;
 };
 
 export default function SpecialsClientPage({
@@ -72,16 +60,24 @@ export default function SpecialsClientPage({
 		("all" | "eggless" | "contains-egg") | (string & {})
 	>("all");
 
-	const { data: specials } = useQuery({
+	const {
+		data: specials,
+		isError: isSpecialsError,
+		error: specialsError,
+		refetch: refetchSpecials,
+		isRefetching: isRefetchingSpecials,
+	} = useQuery({
 		queryKey: ["specials"],
 		queryFn: fetchSpecials,
 		initialData: initialSpecials,
+		retry: 2,
 	});
 
 	const { data: settings } = useQuery({
 		queryKey: ["specials-settings"],
 		queryFn: fetchSpecialsSettings,
 		initialData: initialSettings,
+		retry: 2,
 	});
 
 	// If specials are not active, show message
@@ -112,17 +108,21 @@ export default function SpecialsClientPage({
 			return;
 		}
 
-		// Clear non-special items from cart before adding special
-		clearNonSpecials();
+		try {
+			// Clear non-special items from cart before adding special
+			clearNonSpecials();
 
-		addItem({
-			id: special.id,
-			name: special.name,
-			price: Number(special.price),
-			quantity: 1,
-			type: "cake-orders",
-			category: "special",
-		});
+			addItem({
+				id: special.id,
+				name: special.name,
+				price: Number(special.price),
+				quantity: 1,
+				type: "cake-orders",
+				category: "special",
+			});
+		} catch (error) {
+			toast.error(getToastErrorMessage(error, "add-to-cart"));
+		}
 	};
 
 	const getItemQuantity = (specialId: number) => {
@@ -243,7 +243,24 @@ export default function SpecialsClientPage({
 					</div>
 				</div>
 
-				{availableSpecials.length === 0 ? (
+				{isSpecialsError && !specials?.length ? (
+					<ErrorState
+						title="Couldn't Load Specials"
+						message="We had trouble loading the specials menu. This is usually temporary."
+						isNetworkError={
+							specialsError instanceof Error &&
+							specialsError.message === "Network Error"
+						}
+						onRetry={() => refetchSpecials()}
+						isRetrying={isRefetchingSpecials}
+						action={{
+							label: "Back to Home",
+							onClick: () => router.push("/"),
+							variant: "ghost",
+						}}
+						size="lg"
+					/>
+				) : availableSpecials.length === 0 ? (
 					<Empty>
 						<EmptyHeader>
 							<EmptyMedia variant="icon">

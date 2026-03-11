@@ -17,7 +17,7 @@ export function ProcessingOverlay({
 
 	return (
 		<div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
-			<div className="bg-white rounded-lg p-6 sm:p-8 max-w-sm mx-4 text-center shadow-xl">
+			<div className="bg-background rounded-lg p-6 sm:p-8 max-w-sm mx-4 text-center shadow-xl">
 				<div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-primary mx-auto mb-4" />
 				<h3 className="text-lg sm:text-xl font-semibold mb-2">
 					Processing Order

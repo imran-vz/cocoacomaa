@@ -13,6 +13,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import { getToastErrorMessage } from "@/components/ui/error-state";
 import {
 	Field,
 	FieldDescription,
@@ -71,7 +72,7 @@ export function PhoneEditDialog({
 				onClose();
 			} catch (error) {
 				console.error("Error updating phone number:", error);
-				toast.error("Failed to update phone number. Please try again.");
+				toast.error(getToastErrorMessage(error, "update-phone"));
 			} finally {
 				setIsSubmitting(false);
 			}

@@ -16,6 +16,7 @@
 		"test:email": "bun scripts/test-email.ts",
 		"test:status-email": "bun scripts/test-status-email.ts",
 		"lint": "biome check ./src",
+		"lint:fix:unsafe": "biome check --write --unsafe ./src",
 		"lint:fix": "biome check --write ./src",
 		"format": "biome format --write ./src",
 		"knip": "knip"

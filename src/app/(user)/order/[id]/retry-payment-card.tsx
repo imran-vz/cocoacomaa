@@ -1,12 +1,12 @@
 "use client";
 
 import { AlertTriangle, CreditCard } from "lucide-react";
-// useState is no longer needed
 import { toast } from "sonner";
 
 import { ProcessingOverlay } from "@/components/checkout/processing-overlay";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getToastErrorMessage } from "@/components/ui/error-state";
 import { usePaymentFlow } from "@/hooks/use-payment-flow";
 import { usePostalOrderSettings } from "@/hooks/use-postal-order-settings";
 import {
@@ -87,7 +87,9 @@ export default function RetryPaymentCard({
 
 	const handleRetryPayment = async () => {
 		if (isPostalOrderDisabled) {
-			toast.error("Payment window for this order has expired");
+			toast.error(
+				"The payment window for this postal brownie order has closed. Please check back for the next ordering window.",
+			);
 			return;
 		}
 
@@ -116,7 +118,7 @@ export default function RetryPaymentCard({
 			}
 		} catch (error) {
 			console.error("Retry payment error:", error);
-			toast.error("Failed to initiate payment. Please try again.");
+			toast.error(getToastErrorMessage(error, "retry-payment"));
 		}
 	};
 

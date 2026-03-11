@@ -20,6 +20,7 @@ import { confirm } from "@/components/confirm-dialog";
 import { FadeIn } from "@/components/fade-in";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { getToastErrorMessage } from "@/components/ui/error-state";
 import OrderRestrictionBanner from "@/components/ui/order-restriction-banner";
 import {
 	useAddresses,
@@ -278,9 +279,13 @@ export default function CheckoutPage({
 				const isSystemDisabled = !settings?.isActive;
 
 				if (isSystemDisabled) {
-					toast.error("Cake order system is currently disabled");
+					toast.error(
+						"Our cake order system is currently paused. Please check back later or contact us for more info.",
+					);
 				} else {
-					toast.error("Cake orders are only accepted on allowed days");
+					toast.error(
+						"We only accept cake orders on specific days. Check the banner above for the next available ordering day.",
+					);
 				}
 				return;
 			}
@@ -295,7 +300,7 @@ export default function CheckoutPage({
 						await updateUserPhone(value.phone);
 					} catch (error) {
 						console.error("Failed to update phone number:", error);
-						toast.error("Failed to update phone number. Please try again.");
+						toast.error(getToastErrorMessage(error, "update-phone"));
 						setIsProcessing(false);
 						setProcessingStep("");
 						return;
@@ -375,13 +380,19 @@ export default function CheckoutPage({
 
 					if (!orderResponse.ok) {
 						const errorData = await orderResponse.json();
-						throw new Error(errorData.error || "Failed to create order");
+						throw new Error(
+							errorData.error ||
+								"We couldn't create your order. Please check your details and try again.",
+						);
 					}
 
 					const newOrderData = await orderResponse.json();
 
 					if (!newOrderData.success) {
-						throw new Error(newOrderData.error || "Failed to create order");
+						throw new Error(
+							newOrderData.error ||
+								"We couldn't create your order. Please check your details and try again.",
+						);
 					}
 
 					orderData = newOrderData;
@@ -400,11 +411,7 @@ export default function CheckoutPage({
 				await handlePayment(value, orderId, orderData);
 			} catch (error) {
 				console.error("Error processing order:", error);
-				const errorMessage =
-					error instanceof Error
-						? error.message
-						: "Failed to process order. Please try again.";
-				toast.error(errorMessage);
+				toast.error(getToastErrorMessage(error, "create-order"));
 				setIsProcessing(false);
 				setProcessingStep("");
 			}
@@ -543,7 +550,7 @@ export default function CheckoutPage({
 		if (!validation.success) {
 			const errors = validation.error.issues;
 			const errorMessage = errors.map((error) => error.message).join(", ");
-			toast.error(errorMessage);
+			toast.error(`Please fix the address: ${errorMessage}`);
 			return;
 		}
 
@@ -567,7 +574,7 @@ export default function CheckoutPage({
 			toast.success("Address created and selected successfully!");
 		} catch (error) {
 			console.error("Error creating address:", error);
-			toast.error("Failed to create address. Please try again.");
+			toast.error(getToastErrorMessage(error, "create-address"));
 		} finally {
 			setIsCreatingAddress(false);
 		}
@@ -692,7 +699,7 @@ export default function CheckoutPage({
 					}
 				} catch (error) {
 					console.error("Payment verification error:", error);
-					toast.error("Payment verification failed. Please contact support.");
+					toast.error(getToastErrorMessage(error, "verify-payment"));
 					setIsProcessing(false);
 					setProcessingStep("");
 				}

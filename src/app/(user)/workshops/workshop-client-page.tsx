@@ -29,6 +29,7 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from "@/components/ui/empty";
+import { getToastErrorMessage } from "@/components/ui/error-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRazorpay } from "@/hooks/use-razorpay";
@@ -136,13 +137,15 @@ export default function WorkshopsClientPage({
 		try {
 			const { data: user } = await axios.get("/api/user");
 			if (user.error) {
-				toast.error(user.error);
+				toast.error(
+					"We couldn't verify your account. Please try logging in again.",
+				);
 				return;
 			}
 
 			if (!user.phone) {
 				toast.error(
-					"Please update your phone number to register for workshops.",
+					"A phone number is required for workshop registration. Please add one below.",
 				);
 				setShowPhoneNumberModal(true);
 				setIsProcessing(false);
@@ -161,7 +164,9 @@ export default function WorkshopsClientPage({
 			);
 
 			if (!currentWorkshop || currentWorkshop.availableSlots <= 0) {
-				toast.error("Sorry, this workshop is now fully booked!");
+				toast.error(
+					"Sorry, this workshop just filled up! Refreshing to show the latest availability.",
+				);
 				setIsProcessing(false);
 				setProcessingWorkshopId(null);
 				// Refresh the workshop list to show updated availability
@@ -220,13 +225,15 @@ export default function WorkshopsClientPage({
 					newUrl.searchParams.set("workshopId", workshop.id.toString());
 					router.replace(newUrl.pathname + newUrl.search, { scroll: false });
 				} else {
-					throw new Error("Failed to create workshop order");
+					throw new Error(
+						"We couldn't complete your registration. Please try again.",
+					);
 				}
 			}
 
 			// Initiate payment
 			if (!orderData) {
-				throw new Error("Failed to get order data");
+				throw new Error("We couldn't prepare your payment. Please try again.");
 			}
 
 			await handlePayment(
@@ -238,11 +245,12 @@ export default function WorkshopsClientPage({
 		} catch (error) {
 			console.error("Error creating workshop order:", error);
 			if (axios.isAxiosError(error)) {
+				const serverMessage = error.response?.data.message;
 				toast.error(
-					error.response?.data.message || "Failed to register for workshop",
+					serverMessage || getToastErrorMessage(error, "register-workshop"),
 				);
 			} else {
-				toast.error("Failed to register for workshop");
+				toast.error(getToastErrorMessage(error, "register-workshop"));
 			}
 			setIsProcessing(false);
 			setProcessingWorkshopId(null);
@@ -299,7 +307,7 @@ export default function WorkshopsClientPage({
 					}
 				} catch (error) {
 					console.error("Payment verification error:", error);
-					toast.error("Payment verification failed. Please contact support.");
+					toast.error(getToastErrorMessage(error, "verify-payment"));
 				} finally {
 					setIsProcessing(false);
 					setProcessingWorkshopId(null);
@@ -324,7 +332,7 @@ export default function WorkshopsClientPage({
 
 	const updatePhoneNumber = async () => {
 		if (!phoneNumber.trim()) {
-			toast.error("Please enter a valid phone number");
+			toast.error("Please enter your phone number to continue.");
 			return;
 		}
 
@@ -347,10 +355,11 @@ export default function WorkshopsClientPage({
 			console.error("Error updating phone number:", error);
 			if (axios.isAxiosError(error)) {
 				toast.error(
-					error.response?.data.message || "Failed to update phone number",
+					error.response?.data.message ||
+						getToastErrorMessage(error, "update-phone"),
 				);
 			} else {
-				toast.error("Failed to update phone number");
+				toast.error(getToastErrorMessage(error, "update-phone"));
 			}
 		} finally {
 			setIsUpdatingPhone(false);
@@ -603,7 +612,7 @@ export default function WorkshopsClientPage({
 					open={showPhoneNumberModal}
 					onOpenChange={setShowPhoneNumberModal}
 				>
-					<DialogContent className="sm:max-w-[425px]">
+					<DialogContent className="sm:max-w-106.25">
 						<DialogHeader>
 							<DialogTitle>Update Phone Number</DialogTitle>
 							<DialogDescription>
