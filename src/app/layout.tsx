@@ -1,6 +1,6 @@
 import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { DM_Mono, Instrument_Serif } from "next/font/google";
 
 import Footer from "@/components/footer";
 import { Navigation } from "@/components/navigation";
@@ -17,7 +17,18 @@ import { Providers } from "./providers";
 
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const dmMono = DM_Mono({
+	subsets: ["latin"],
+	weight: ["300", "400", "500"],
+	variable: "--font-dm-mono",
+});
+
+const instrumentSerif = Instrument_Serif({
+	subsets: ["latin"],
+	weight: "400",
+	style: ["normal", "italic"],
+	variable: "--font-instrument-serif",
+});
 
 export const metadata: Metadata = {
 	metadataBase: new URL("https://cocoacomaa.com"),
@@ -83,7 +94,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-	themeColor: { media: "(prefers-color-scheme: dark)", color: "#502922" },
+	themeColor: { media: "(prefers-color-scheme: dark)", color: "#0a0a08" },
 	width: "device-width",
 	initialScale: 1,
 	maximumScale: 1,
@@ -102,7 +113,9 @@ export default function RootLayout({
 					data={[generateLocalBusinessSchema(), generateOrganizationSchema()]}
 				/>
 			</head>
-			<body className={inter.className}>
+			<body
+				className={`${dmMono.variable} ${instrumentSerif.variable} ${dmMono.className}`}
+			>
 				<Analytics />
 				<Providers>
 					<CartProvider>

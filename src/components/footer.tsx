@@ -8,28 +8,28 @@ export default function Footer() {
 	if (pathname.includes("/admin") || pathname.includes("/manager")) return null;
 
 	return (
-		<footer className="bg-secondary text-primary py-8 px-4">
+		<footer className="bg-card text-foreground py-8 px-4 border-t border-border">
 			<div className="max-w-7xl mx-auto">
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
 					{/* Legal Links */}
 					<div className="space-y-4">
-						<h3 className="font-semibold text-lg">Legal</h3>
+						<h3 className="font-semibold text-lg font-serif">Legal</h3>
 						<div className="flex flex-col space-y-2">
 							<Link
 								href="/terms-of-use"
-								className="text-sm hover:text-secondary-foreground transition-colors"
+								className="text-sm text-muted-foreground hover:text-primary transition-colors"
 							>
 								Terms of Use
 							</Link>
 							<Link
 								href="/terms-of-sale"
-								className="text-sm hover:text-secondary-foreground transition-colors"
+								className="text-sm text-muted-foreground hover:text-primary transition-colors"
 							>
 								Terms of Sale
 							</Link>
 							<Link
 								href="/data-protection"
-								className="text-sm hover:text-secondary-foreground transition-colors"
+								className="text-sm text-muted-foreground hover:text-primary transition-colors"
 							>
 								Data Protection
 							</Link>
@@ -38,17 +38,17 @@ export default function Footer() {
 
 					{/* Company Links */}
 					<div className="space-y-4">
-						<h3 className="font-semibold text-lg">Company</h3>
+						<h3 className="font-semibold text-lg font-serif">Company</h3>
 						<div className="flex flex-col space-y-2">
 							<Link
 								href="/about"
-								className="text-sm hover:text-secondary-foreground transition-colors"
+								className="text-sm text-muted-foreground hover:text-primary transition-colors"
 							>
 								About Us
 							</Link>
 							<Link
 								href="/contact-us"
-								className="text-sm hover:text-secondary-foreground transition-colors"
+								className="text-sm text-muted-foreground hover:text-primary transition-colors"
 							>
 								Contact Us
 							</Link>
@@ -56,7 +56,7 @@ export default function Footer() {
 								href="https://www.instagram.com/cocoa_comaa/"
 								target="_blank"
 								rel="noreferrer"
-								className="text-sm hover:text-secondary-foreground transition-colors"
+								className="text-sm text-muted-foreground hover:text-primary transition-colors"
 							>
 								Instagram
 							</a>
@@ -65,8 +65,8 @@ export default function Footer() {
 
 					{/* Contact Info */}
 					<div className="space-y-4">
-						<h3 className="font-semibold text-lg">Contact</h3>
-						<div className="flex flex-col space-y-2">
+						<h3 className="font-semibold text-lg font-serif">Contact</h3>
+						<div className="flex flex-col space-y-2 text-muted-foreground">
 							<p className="text-sm">Email: contact@cocoacomaa.com</p>
 							<p className="text-sm">
 								Phone: {process.env.NEXT_PUBLIC_BUSINESS_PHONE}
@@ -76,7 +76,7 @@ export default function Footer() {
 					</div>
 				</div>
 
-				<div className="text-center text-sm text-muted-foreground pt-8 border-t">
+				<div className="text-center text-sm text-muted-foreground pt-8 border-t border-border">
 					&copy; {new Date().getFullYear()} Cocoa Comaa. All rights reserved.
 				</div>
 			</div>

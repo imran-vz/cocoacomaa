@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { CartPopover } from "@/components/cart-popover";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -67,14 +66,14 @@ export function Navigation() {
 	}
 
 	return (
-		<nav className="bg-background shadow-md border-b sticky top-0 z-50">
+		<nav className="bg-background border-b border-border sticky top-0 z-50">
 			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 				<div className="flex justify-between h-16 items-center">
 					{/* Logo */}
 					<div className="shrink-0 flex items-center">
 						<Link
 							href={"/"}
-							className="text-xl sm:text-2xl uppercase font-bold text-foreground"
+							className="text-xl sm:text-2xl uppercase tracking-wide text-foreground font-serif"
 						>
 							Cocoa Comaa
 						</Link>
@@ -103,7 +102,6 @@ export function Navigation() {
 								}
 							/>
 						)}
-						<ThemeToggle />
 					</div>
 					{/* Navigation */}
 					<div className="flex items-center space-x-4">
@@ -165,7 +163,7 @@ export function Navigation() {
 									)}
 									<DropdownMenuItem
 										onClick={handleLogout}
-										className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer"
+										className="text-destructive cursor-pointer"
 									>
 										<LogOut className="h-4 w-4 mr-2" />
 										Logout
