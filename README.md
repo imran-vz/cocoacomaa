@@ -144,6 +144,7 @@ pnpm test:status-email
 
 - `pnpm db:push` - Push schema changes to database
 - `pnpm db:studio` - Open Drizzle Studio (database GUI)
+- `pnpm db:clone` - Clone remote DB schema data into local database
 - `pnpm db:seed` - Seed database with initial data
 - `pnpm create-admin` - Create admin user via CLI
 - `pnpm create-manager` - Create manager user via CLI

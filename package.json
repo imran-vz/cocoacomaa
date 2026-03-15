@@ -9,6 +9,7 @@
 		"start": "bun run --bun next start",
 		"db:push": "drizzle-kit push",
 		"db:studio": "drizzle-kit studio",
+		"db:clone": "bash scripts/clone-remote-db.sh",
 		"db:seed": "bun src/lib/db/seed.ts",
 		"create-admin": "bun scripts/create-admin.ts",
 		"create-manager": "bun scripts/create-manager.ts",
