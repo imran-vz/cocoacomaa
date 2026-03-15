@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import confetti from "canvas-confetti";
 import { format } from "date-fns";
-import { Calendar, MapPin, Monitor, Users } from "lucide-react";
+import { Calendar, Clock, MapPin, Monitor, Users } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { MyWorkshopOrder } from "@/lib/db/workshop-order";
+import { formatWorkshopDate, formatWorkshopTime } from "@/lib/format-timestamp";
 import { formatCurrency } from "@/lib/utils";
 
 const fetchMyWorkshops = async (): Promise<MyWorkshopOrder[]> => {
@@ -157,6 +158,32 @@ export default function MyWorkshopPage({
 											</div>
 											<span className="font-semibold">{order.slots || 1}</span>
 										</div>
+
+										{order.workshop.date && (
+											<>
+												<div className="flex justify-between items-center text-sm">
+													<div className="flex items-center gap-2 text-muted-foreground">
+														<Calendar className="w-4 h-4 text-primary" />
+														<span className="font-medium">Workshop Date</span>
+													</div>
+													<span className="font-semibold text-right">
+														{formatWorkshopDate(order.workshop.date)}
+													</span>
+												</div>
+												{order.workshop.startTime && order.workshop.endTime && (
+													<div className="flex justify-between items-center text-sm">
+														<div className="flex items-center gap-2 text-muted-foreground">
+															<Clock className="w-4 h-4 text-primary" />
+															<span className="font-medium">Time</span>
+														</div>
+														<span className="font-semibold text-right">
+															{formatWorkshopTime(order.workshop.startTime)} -{" "}
+															{formatWorkshopTime(order.workshop.endTime)}
+														</span>
+													</div>
+												)}
+											</>
+										)}
 
 										<div className="flex justify-between items-center text-sm">
 											<div className="flex items-center gap-2 text-muted-foreground">

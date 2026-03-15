@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { GraduationCap, Minus, Plus } from "lucide-react";
+import { CalendarDays, Clock, GraduationCap, Minus, Plus } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useId, useState } from "react";
@@ -33,6 +33,7 @@ import { getToastErrorMessage } from "@/components/ui/error-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRazorpay } from "@/hooks/use-razorpay";
+import { formatWorkshopDate, formatWorkshopTime } from "@/lib/format-timestamp";
 import { cn, formatCurrency } from "@/lib/utils";
 import type { RazorpayOptions, RazorpayResponse } from "@/types/razorpay";
 
@@ -47,6 +48,9 @@ interface Workshop {
 	availableSlots: number;
 	status: "active" | "inactive" | "completed";
 	imageUrl?: string | null;
+	date?: string | null;
+	startTime?: string | null;
+	endTime?: string | null;
 	createdAt: Date;
 }
 
@@ -473,6 +477,23 @@ export default function WorkshopsClientPage({
 												{workshop.type}
 											</Badge>
 										</div>
+										{workshop.date && (
+											<div className="space-y-1.5 text-sm text-muted-foreground">
+												<div className="flex items-center gap-2">
+													<CalendarDays className="h-4 w-4 text-primary shrink-0" />
+													<span>{formatWorkshopDate(workshop.date)}</span>
+												</div>
+												{workshop.startTime && workshop.endTime && (
+													<div className="flex items-center gap-2">
+														<Clock className="h-4 w-4 text-primary shrink-0" />
+														<span>
+															{formatWorkshopTime(workshop.startTime)} -{" "}
+															{formatWorkshopTime(workshop.endTime)}
+														</span>
+													</div>
+												)}
+											</div>
+										)}
 									</CardHeader>
 									<CardContent className="flex-1 flex flex-col">
 										<div className="mb-4 flex-1">

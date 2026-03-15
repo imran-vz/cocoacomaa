@@ -54,8 +54,18 @@ export async function PUT(
 
 		const { id } = await params;
 		const body = await request.json();
-		const { title, description, amount, type, maxBookings, status, imageUrl } =
-			body;
+		const {
+			title,
+			description,
+			amount,
+			type,
+			maxBookings,
+			status,
+			imageUrl,
+			date,
+			startTime,
+			endTime,
+		} = body;
 
 		if (!title || !description || !amount || !type || !maxBookings) {
 			return NextResponse.json(
@@ -78,6 +88,76 @@ export async function PUT(
 			);
 		}
 
+		// Date/time validation: all-or-nothing
+		const hasDate = date && date.trim() !== "";
+		const hasStartTime = startTime && startTime.trim() !== "";
+		const hasEndTime = endTime && endTime.trim() !== "";
+		const dateTimeFieldCount = [hasDate, hasStartTime, hasEndTime].filter(
+			Boolean,
+		).length;
+
+		if (dateTimeFieldCount > 0 && dateTimeFieldCount < 3) {
+			return NextResponse.json(
+				{
+					success: false,
+					message:
+						"If setting a schedule, date, start time, and end time are all required",
+				},
+				{ status: 400 },
+			);
+		}
+
+		if (hasDate) {
+			// Validate date format (YYYY-MM-DD)
+			if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+				return NextResponse.json(
+					{
+						success: false,
+						message: "Invalid date format. Expected YYYY-MM-DD",
+					},
+					{ status: 400 },
+				);
+			}
+
+			// Validate the date is a real date
+			const parsedDate = new Date(`${date}T12:00:00`);
+			if (Number.isNaN(parsedDate.getTime())) {
+				return NextResponse.json(
+					{ success: false, message: "Invalid date value" },
+					{ status: 400 },
+				);
+			}
+
+			// Validate time format (HH:mm)
+			const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
+			if (!timeRegex.test(startTime)) {
+				return NextResponse.json(
+					{
+						success: false,
+						message: "Invalid start time format. Expected HH:mm (24-hour)",
+					},
+					{ status: 400 },
+				);
+			}
+			if (!timeRegex.test(endTime)) {
+				return NextResponse.json(
+					{
+						success: false,
+						message: "Invalid end time format. Expected HH:mm (24-hour)",
+					},
+					{ status: 400 },
+				);
+			}
+
+			// Validate end time is after start time
+			if (endTime <= startTime) {
+				return NextResponse.json(
+					{ success: false, message: "End time must be after start time" },
+					{ status: 400 },
+				);
+			}
+		}
+
 		const [updatedWorkshop] = await db
 			.update(workshops)
 			.set({
@@ -88,6 +168,9 @@ export async function PUT(
 				maxBookings: parseInt(maxBookings.toString()),
 				imageUrl,
 				status: status || "active",
+				date: hasDate ? date : null,
+				startTime: hasStartTime ? startTime : null,
+				endTime: hasEndTime ? endTime : null,
 				updatedAt: new Date(),
 			})
 			.where(eq(workshops.id, parseInt(id)))

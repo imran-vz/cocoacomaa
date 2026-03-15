@@ -87,7 +87,17 @@ export async function POST(request: NextRequest) {
 		}
 
 		const body = await request.json();
-		const { title, description, amount, type, maxBookings, imageUrl } = body;
+		const {
+			title,
+			description,
+			amount,
+			type,
+			maxBookings,
+			imageUrl,
+			date,
+			startTime,
+			endTime,
+		} = body;
 
 		if (!title || !description || !amount || !type || !maxBookings) {
 			return NextResponse.json(
@@ -103,6 +113,63 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
+		// Date and time are required for new workshops
+		if (!date || !startTime || !endTime) {
+			return NextResponse.json(
+				{
+					success: false,
+					message: "Date, start time, and end time are required",
+				},
+				{ status: 400 },
+			);
+		}
+
+		// Validate date format (YYYY-MM-DD)
+		if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+			return NextResponse.json(
+				{ success: false, message: "Invalid date format. Expected YYYY-MM-DD" },
+				{ status: 400 },
+			);
+		}
+
+		// Validate the date is a real date
+		const parsedDate = new Date(`${date}T12:00:00`);
+		if (Number.isNaN(parsedDate.getTime())) {
+			return NextResponse.json(
+				{ success: false, message: "Invalid date value" },
+				{ status: 400 },
+			);
+		}
+
+		// Validate time format (HH:mm)
+		const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
+		if (!timeRegex.test(startTime)) {
+			return NextResponse.json(
+				{
+					success: false,
+					message: "Invalid start time format. Expected HH:mm (24-hour)",
+				},
+				{ status: 400 },
+			);
+		}
+		if (!timeRegex.test(endTime)) {
+			return NextResponse.json(
+				{
+					success: false,
+					message: "Invalid end time format. Expected HH:mm (24-hour)",
+				},
+				{ status: 400 },
+			);
+		}
+
+		// Validate end time is after start time
+		if (endTime <= startTime) {
+			return NextResponse.json(
+				{ success: false, message: "End time must be after start time" },
+				{ status: 400 },
+			);
+		}
+
 		const [workshop] = await db
 			.insert(workshops)
 			.values({
@@ -112,6 +179,9 @@ export async function POST(request: NextRequest) {
 				type,
 				maxBookings: parseInt(maxBookings.toString()),
 				imageUrl,
+				date,
+				startTime,
+				endTime,
 			})
 			.returning();
 

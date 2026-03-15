@@ -11,6 +11,9 @@ export type WorkshopWithSlotData = {
 	maxBookings: number;
 	status: "active" | "inactive" | "completed";
 	createdAt: Date;
+	date: string | null;
+	startTime: string | null;
+	endTime: string | null;
 	currentSlotsUsed: number;
 	currentBookings: number;
 	availableSlots: number;

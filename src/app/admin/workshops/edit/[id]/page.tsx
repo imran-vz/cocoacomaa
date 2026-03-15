@@ -36,6 +36,9 @@ export default async function EditWorkshopPage({
 					maxBookings: workshop.maxBookings.toString(),
 					imageUrl: workshop.imageUrl || undefined,
 					status: workshop.status as "active" | "inactive",
+					date: workshop.date || null,
+					startTime: workshop.startTime || null,
+					endTime: workshop.endTime || null,
 				}}
 			/>
 		</FadeIn>

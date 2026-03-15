@@ -42,6 +42,9 @@ export async function POST(
 				type: originalWorkshop.type,
 				maxBookings: originalWorkshop.maxBookings,
 				imageUrl: originalWorkshop.imageUrl,
+				date: originalWorkshop.date,
+				startTime: originalWorkshop.startTime,
+				endTime: originalWorkshop.endTime,
 				status: "inactive",
 			})
 			.returning();

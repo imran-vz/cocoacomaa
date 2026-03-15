@@ -94,3 +94,48 @@ export function formatLocalDate(date: Date): string {
 export function formatLocalShortDate(date: Date): string {
 	return _format(date, FORMAT_OPTIONS.SHORT);
 }
+
+/**
+ * Format a 24h time string (e.g., "10:00" or "13:30") to 12h format (e.g., "10:00 AM" or "1:30 PM")
+ */
+export function formatWorkshopTime(time: string): string {
+	const [hours, minutes] = time.split(":").map(Number);
+	if (
+		hours === undefined ||
+		minutes === undefined ||
+		Number.isNaN(hours) ||
+		Number.isNaN(minutes)
+	) {
+		return time;
+	}
+	// Create a dummy date with the time to leverage date-fns formatting
+	const dummyDate = new Date(2000, 0, 1, hours, minutes);
+	return format(dummyDate, FORMAT_OPTIONS.TIME);
+}
+
+/**
+ * Format a workshop date string (YYYY-MM-DD) with day name: "Sunday, Mar 20, 2026"
+ */
+export function formatWorkshopDate(dateStr: string): string {
+	const date = new Date(`${dateStr}T12:00:00`);
+	return _format(date, "EEEE, MMM d, yyyy");
+}
+
+/**
+ * Format a full workshop schedule summary.
+ * Returns e.g., "Sunday, Mar 20, 2026 | 10:00 AM - 1:00 PM"
+ * Returns null if any field is missing.
+ */
+export function formatWorkshopSchedule(
+	date: string | null | undefined,
+	startTime: string | null | undefined,
+	endTime: string | null | undefined,
+): string | null {
+	if (!date || !startTime || !endTime) {
+		return null;
+	}
+	const formattedDate = formatWorkshopDate(date);
+	const formattedStart = formatWorkshopTime(startTime);
+	const formattedEnd = formatWorkshopTime(endTime);
+	return `${formattedDate} | ${formattedStart} - ${formattedEnd}`;
+}

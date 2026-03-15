@@ -396,6 +396,9 @@ export const workshops = pgTable("workshops", (d) => {
 		type: d.varchar("type", { enum: ["online", "offline"] }).notNull(),
 		maxBookings: d.integer("max_bookings").notNull().default(10),
 		imageUrl: d.text("image_url"),
+		date: d.date("date"),
+		startTime: d.varchar("start_time", { length: 10 }),
+		endTime: d.varchar("end_time", { length: 10 }),
 		status: d
 			.varchar("status", { enum: ["active", "inactive", "completed"] })
 			.notNull()

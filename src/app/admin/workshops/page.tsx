@@ -16,6 +16,9 @@ export default async function AdminWorkshopsPage() {
 			maxBookings: workshops.maxBookings,
 			status: workshops.status,
 			createdAt: workshops.createdAt,
+			date: workshops.date,
+			startTime: workshops.startTime,
+			endTime: workshops.endTime,
 			currentSlotsUsed: sql<number>`coalesce(sum(case when ${workshopOrders.isDeleted} = false and ${workshopOrders.razorpayPaymentId} is not null then ${workshopOrders.slots} else 0 end), 0)`,
 			currentBookings: sql<number>`coalesce(count(case when ${workshopOrders.isDeleted} = false and ${workshopOrders.razorpayPaymentId} is not null then 1 else null end), 0)`,
 		})
@@ -32,6 +35,9 @@ export default async function AdminWorkshopsPage() {
 			workshops.maxBookings,
 			workshops.status,
 			workshops.createdAt,
+			workshops.date,
+			workshops.startTime,
+			workshops.endTime,
 		)
 		.orderBy(desc(workshops.createdAt))
 		.then((results) =>
