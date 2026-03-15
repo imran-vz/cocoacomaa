@@ -3,6 +3,7 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { authClient } from "@/lib/auth-client";
 
@@ -65,10 +66,22 @@ const GOOGLE_REVIEWS_URL =
 
 export function HomeContent() {
 	const { data: session, isPending } = authClient.useSession();
+	const router = useRouter();
 	const containerRef = useRef<HTMLDivElement>(null);
 	const { scrollYProgress } = useScroll({ target: containerRef });
 	const heroScale = useTransform(scrollYProgress, [0, 0.3], [1, 0.92]);
 	const heroOpacity = useTransform(scrollYProgress, [0, 0.25], [1, 0]);
+
+	// Redirect admin/manager users to their dashboards
+	useEffect(() => {
+		if (isPending) return;
+		const role = session?.user?.role;
+		if (role === "admin") {
+			router.replace("/admin");
+		} else if (role === "manager") {
+			router.replace("/manager");
+		}
+	}, [session?.user?.role, isPending, router]);
 
 	useEffect(() => {
 		if (!session?.user?.id && !isPending) {
